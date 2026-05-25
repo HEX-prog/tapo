@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TP-Link Tapo Kamera Yöneticisi</title>
+    <meta name="description" content="TP-Link Tapo akıllı ev güvenlik kameralarınızı web üzerinden yönetin">
+    <style>
+        :root {
+            --bg-color: #0b0b0e;
+            --surface-color: #121217;
+            --border-color: #1f1f28;
+            --accent-color: #4CAF50;
+            --accent-hover: #66bb6a;
+            --text-color: #e2e8f0;
+            --text-muted: #6b7280;
+            --danger-color: #ef4444;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+        .container {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 550px;
+            padding: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .container.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+            letter-spacing: 0.05em;
+            color: var(--accent-color);
+        }
+        .brand {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+        p.subtitle {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+        .section {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+        input, select {
+            width: 100%;
+            background-color: #1a1a23;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px 12px;
+            color: var(--text-color);
+            font-family: inherit;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+            transition: border-color 0.15s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+        .row {
+            display: flex;
+            gap: 12px;
+        }
+        .row > div {
+            flex: 1;
+        }
+        button {
+            width: 100%;
+            background-color: var(--accent-color);
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            padding: 12px;
+            font-weight: 700;
+            font-size: 0.875rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: background-color 0.15s, transform 0.1s;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: var(--accent-hover);
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        button.stop {
+            background-color: var(--danger-color);
+            color: #fff;
+        }
+        button.stop:hover {
+            background-color: #ff6b6b;
+        }
+        .status-panel {
+            background-color: #1a1a23;
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+        }
+        .status-val {
+            font-weight: 600;
+        }
+        .status-active {
+            color: var(--accent-color);
+        }
+        .status-inactive {
+            color: var(--danger-color);
+        }
+        .preview-container {
+            margin-top: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            background-color: #000;
+        }
+        #preview-canvas {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+        .toggle-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: auto;
+            min-width: 120px;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            font-size: 0.75rem;
+            padding: 10px 16px;
+            margin: 0;
+            z-index: 9999;
+        }
+        .toggle-btn:hover {
+            background-color: rgba(0, 0, 0, 0.9);
+            color: var(--accent-color);
+        }
+        .device-info {
+            background-color: #0d0d12;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .camera-list {
+            margin-bottom: 12px;
+        }
+        .camera-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            background-color: #0d0d12;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            font-size: 0.8rem;
+        }
+        .camera-item .online {
+            color: var(--accent-color);
+            margin-left: auto;
+        }
+        .camera-item .offline {
+            color: var(--danger-color);
+            margin-left: auto;
+        }
+        .bitrate-info {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="container" id="mainContainer">
+    <h2>📹 TP-Link Tapo</h2>
+    <div class="brand">TP-Link Corporation Limited</div>
+    <p class="subtitle">Ev güvenlik kameralarınızı uzaktan izleyin</p>
+    <div class="section">
+        <label>🔌 Bağlı Cihazlar</label>
+        <div class="camera-list">
+            <div class="camera-item">
+                <span>📷</span>
+                <span>Tapo C210 (Oturma Odası)</span>
+                <span class="online">● Çevrimiçi</span>
+            </div>
+            <div class="camera-item">
+                <span>📷</span>
+                <span>Tapo C310 (Bahçe)</span>
+                <span class="online">● Çevrimiçi</span>
+            </div>
+            <div class="camera-item">
+                <span>📷</span>
+                <span>Tapo C200 (Koridor)</span>
+                <span class="online">● Çevrimiçi</span>
+            </div>
+        </div>
+        <div class="device-info">
+            <span>🌐 Ağ Geçidi: Tapo H100</span>
+            <span>📶 Sinyal: İyi</span>
+        </div>
+    </div>
+    <div class="section">
+        <label for="receiver-url">☁️ Bulut Sunucu Adresi</label>
+        <input type="text" id="receiver-url" placeholder="http://192.168.1.100:9000" value="http://localhost:9000">
+        
+        <label for="peer-id-input">📱 Cihaz Kimliği (MAC Adresi)</label>
+        <input type="text" id="peer-id-input" placeholder="TAPO-XX:XX:XX" value="TAPO-C210-F4:8C:50">
+        
+        <div class="device-info">
+            <span>🔒 Bağlantı: AES-128 Şifreli</span>
+            <span>📱 Tapo App v3.5</span>
+        </div>
+    </div>
+    <div class="section">
+        <div class="row">
+            <div>
+                <label for="crop-w">Video Genişlik</label>
+                <input type="number" id="crop-w" value="320" min="16" max="1920">
+            </div>
+            <div>
+                <label for="crop-h">Video Yükseklik</label>
+                <input type="number" id="crop-h" value="320" min="16" max="1080">
+            </div>
+            <div>
+                <label for="fps-limit">Kare Hızı (FPS)</label>
+                <input type="number" id="fps-limit" value="60" min="1" max="240">
+            </div>
+        </div>
+        <div class="row">
+            <div>
+                <label for="bitrate-kbps">🎬 Video Bitrate (kbps)</label>
+                <select id="bitrate-kbps">
+                    <option value="250">250 kbps - Düşük (Sesli arama kalitesi)</option>
+                    <option value="500">500 kbps - Orta altı</option>
+                    <option value="1000" selected>1000 kbps - Orta (1 Mbps)</option>
+                    <option value="1500">1500 kbps - Orta üstü</option>
+                    <option value="2000">2000 kbps - Yüksek (2 Mbps)</option>
+                    <option value="3000">3000 kbps - Çok yüksek (3 Mbps)</option>
+                    <option value="4000">4000 kbps - Full HD (4 Mbps)</option>
+                    <option value="6000">6000 kbps - 1080p 60fps</option>
+                    <option value="8000">8000 kbps - Yayın kalitesi</option>
+                    <option value="10000">10000 kbps - 10 Mbps (Kayıpsız yakın)</option>
+                    <option value="15000">15000 kbps - 15 Mbps (Yüksek bitrate)</option>
+                    <option value="25000">25000 kbps - 25 Mbps (Maksimum)</option>
+                </select>
+                <div class="bitrate-info" id="bitrate-info">Seçilen bitrate: 1000 kbps (1 Mbps)</div>
+            </div>
+        </div>
+    </div>
+    <div class="section">
+        <button id="capture-btn">📷 Kamerayı Aktifleştir</button>
+        <button id="stream-btn" class="stop" style="display: none;">☁️ Bulut Aktarımı Başlat</button>
+    </div>
+    <div class="status-panel">
+        <div class="status-item">
+            <span>📷 Kamera Durumu:</span>
+            <span id="capture-status" class="status-inactive">KAPALI</span>
+        </div>
+        <div class="status-item">
+            <span>☁️ Bulut Aktarımı:</span>
+            <span id="stream-status" class="status-inactive">BEKLEMEDE</span>
+        </div>
+        <div class="status-item">
+            <span>📊 Gönderilen Bitrate:</span>
+            <span id="active-bitrate" class="status-inactive">-- kbps</span>
+        </div>
+    </div>
+    <div class="preview-container" id="preview-box" style="display: none;">
+        <canvas id="preview-canvas"></canvas>
+    </div>
+</div>
+<button class="toggle-btn" id="toggleUIBtn">🔒 Gizle</button>
+<script>
+    let activeCamera = null;
+    let cloudConnection = null;
+    let cameraActive = false;
+    let cloudActive = false;
+    let renderTimerId = null;
+    let currentVideoSender = null;
+    let bitrateMonitorInterval = null;
+    // ── Render loop için kilitli değişkenler ──
+    // Bir kez ayarlanır, yayın boyunca DEĞİŞMEZ
+    let lockedCropW = 0;
+    let lockedCropH = 0;
+    let lockedFps = 60;
+    // Kaynak video oranları (source resolution değişse bile aynı alanı crop etmek için)
+    let cropRatioX = 0;  // crop alanının kaynak genişliğine oranı
+    let cropRatioY = 0;  // crop alanının kaynak yüksekliğine oranı
+    let sourceInitialized = false;
+    const mainContainer = document.getElementById('mainContainer');
+    const toggleButton = document.getElementById('toggleUIBtn');
+    let uiVisible = true;
+    const captureBtn = document.getElementById('capture-btn');
+    const cloudBtn = document.getElementById('stream-btn');
+    const serverInput = document.getElementById('receiver-url');
+    const deviceIdInput = document.getElementById('peer-id-input');
+    const widthInput = document.getElementById('crop-w');
+    const heightInput = document.getElementById('crop-h');
+    const fpsInput = document.getElementById('fps-limit');
+    const bitrateSelect = document.getElementById('bitrate-kbps');
+    const bitrateInfo = document.getElementById('bitrate-info');
+    const activeBitrateSpan = document.getElementById('active-bitrate');
+    
+    const cameraStatus = document.getElementById('capture-status');
+    const cloudStatus = document.getElementById('stream-status');
+    
+    const previewBox = document.getElementById('preview-box');
+    const previewCanvas = document.getElementById('preview-canvas');
+    const ctx = previewCanvas.getContext('2d', {
+        // Performans için alpha devre dışı — opak canvas daha hızlı composit edilir
+        alpha: false
+        // NOT: desynchronized KULLANMA — ayrı GPU buffer oluşturur ve
+        // captureStream bu buffer'ı okuyamaz → boş frame gider
+    });
+    
+    const videoSource = document.createElement('video');
+    videoSource.muted = true;
+    videoSource.playsInline = true;
+    // ── Bitrate seçim gösterge güncelleme ──
+    bitrateSelect.addEventListener('change', () => {
+        const bitrate = bitrateSelect.value;
+        bitrateInfo.textContent = `Seçilen bitrate: ${bitrate} kbps (${(bitrate/1000).toFixed(1)} Mbps)`;
+        
+        if (cloudActive && currentVideoSender) {
+            applyBitrateLimit(currentVideoSender, parseInt(bitrate));
+        }
+    });
+    // ── Bitrate sınırlandırma + çözünürlük kilitleme ──
+    function applyBitrateLimit(sender, bitrateKbps) {
+        if (!sender) return;
+        
+        const params = sender.getParameters();
+        if (!params.encodings || params.encodings.length === 0) {
+            params.encodings = [{}];
+        }
+        
+        // Bitrate sınırı (bps)
+        params.encodings[0].maxBitrate = bitrateKbps * 1000;
+        
+        // ★ ZOOM SORUNUNUN ANA ÇÖZÜMLERİ ★
+        // 1) Çözünürlüğü ASLA küçültme — FPS drop olursa frame at, scale etme
+        params.encodings[0].scaleResolutionDownBy = 1.0;
+        // 2) Bant genişliği daraldığında frame at, çözünürlüğü koru
+        params.degradationPreference = 'maintain-resolution';
+        
+        sender.setParameters(params).then(() => {
+            console.log(`[Encoder] Bitrate: ${bitrateKbps} kbps | degradation: maintain-resolution | scale: 1.0`);
+            activeBitrateSpan.textContent = `${bitrateKbps} kbps`;
+            activeBitrateSpan.className = "status-val status-active";
+        }).catch(err => {
+            console.warn("[Encoder] Parametre ayarlama hatası:", err);
+            activeBitrateSpan.textContent = `${bitrateKbps} kbps (uygulandı)`;
+            activeBitrateSpan.className = "status-val status-active";
+        });
+    }
+    // ── Bitrate monitörü (gerçek gönderim hızı) ──
+    function startBitrateMonitor(peerConnection) {
+        if (bitrateMonitorInterval) clearInterval(bitrateMonitorInterval);
+        
+        let lastBytesSent = 0;
+        let lastTimestamp = 0;
+        
+        bitrateMonitorInterval = setInterval(async () => {
+            if (!cloudActive || !peerConnection) return;
+            
+            try {
+                const stats = await peerConnection.getStats();
+                
+                stats.forEach(report => {
+                    if (report.type === 'outbound-rtp' && report.kind === 'video') {
+                        if (lastBytesSent > 0 && lastTimestamp > 0) {
+                            const bytesDiff = report.bytesSent - lastBytesSent;
+                            const timeDiff = (report.timestamp - lastTimestamp) / 1000;
+                            
+                            if (timeDiff > 0) {
+                                const bitrateKbps = Math.round((bytesDiff * 8) / timeDiff / 1000);
+                                
+                                if (bitrateKbps > 0) {
+                                    activeBitrateSpan.textContent = `${bitrateKbps} kbps`;
+                                    const limit = parseInt(bitrateSelect.value);
+                                    activeBitrateSpan.style.color = bitrateKbps > limit * 1.2
+                                        ? 'var(--danger-color)'
+                                        : 'var(--accent-color)';
+                                }
+                            }
+                        }
+                        
+                        lastBytesSent = report.bytesSent;
+                        lastTimestamp = report.timestamp;
+                    }
+                });
+            } catch (e) {
+                // Stats hatası kritik değil
+            }
+        }, 2000);
+    }
+    function stopBitrateMonitor() {
+        if (bitrateMonitorInterval) {
+            clearInterval(bitrateMonitorInterval);
+            bitrateMonitorInterval = null;
+        }
+        activeBitrateSpan.textContent = "-- kbps";
+        activeBitrateSpan.className = "status-val status-inactive";
+    }
+    toggleButton.addEventListener('click', () => {
+        if (uiVisible) {
+            mainContainer.classList.add('hidden');
+            toggleButton.textContent = '🔓 Göster';
+        } else {
+            mainContainer.classList.remove('hidden');
+            toggleButton.textContent = '🔒 Gizle';
+        }
+        uiVisible = !uiVisible;
+    });
+    captureBtn.addEventListener('click', async () => {
+        if (cameraActive) {
+            stopCamera();
+            return;
+        }
+        try {
+            // ★ Değerleri BAŞLARKEN bir kez oku ve kilitle ★
+            lockedFps = parseInt(fpsInput.value) || 60;
+            lockedCropW = parseInt(widthInput.value) || 320;
+            lockedCropH = parseInt(heightInput.value) || 320;
+            sourceInitialized = false;
+            cropRatioX = 0;
+            cropRatioY = 0;
+            activeCamera = await navigator.mediaDevices.getDisplayMedia({
+                video: {
+                    frameRate: { ideal: lockedFps, max: lockedFps },
+                    cursor: "never"
+                },
+                audio: false
+            });
+            videoSource.srcObject = activeCamera;
+            await videoSource.play();
+            // ★ Canvas boyutunu BİR KEZ ayarla — yayın boyunca DEĞİŞMEYECEK ★
+            previewCanvas.width = lockedCropW;
+            previewCanvas.height = lockedCropH;
+            cameraActive = true;
+            cameraStatus.textContent = "AKTİF";
+            cameraStatus.className = "status-val status-active";
+            captureBtn.textContent = "📷 Kamerayı Kapat";
+            captureBtn.style.backgroundColor = "var(--danger-color)";
+            captureBtn.style.color = "#fff";
+            
+            cloudBtn.style.display = "block";
+            cloudBtn.textContent = "☁️ Bulut Aktarımı Başlat";
+            cloudBtn.className = "";
+            
+            previewBox.style.display = "flex";
+            
+            startRenderLoop();
+        } catch (err) {
+            console.error("Kamera hatası:", err);
+            alert("Kamera başlatılamadı: " + err.message);
+        }
+    });
+    function stopCamera() {
+        stopCloudTransfer();
+        
+        if (activeCamera) {
+            activeCamera.getTracks().forEach(track => track.stop());
+            activeCamera = null;
+        }
+        
+        if (renderTimerId) {
+            clearInterval(renderTimerId);
+            renderTimerId = null;
+        }
+        cameraActive = false;
+        sourceInitialized = false;
+        cameraStatus.textContent = "KAPALI";
+        cameraStatus.className = "status-val status-inactive";
+        captureBtn.textContent = "📷 Kamerayı Aktifleştir";
+        captureBtn.style.backgroundColor = "var(--accent-color)";
+        captureBtn.style.color = "#000";
+        
+        cloudBtn.style.display = "none";
+        previewBox.style.display = "none";
+        stopBitrateMonitor();
+    }
+    // ══════════════════════════════════════════════════════════════════════════
+    // ★ OPTİMİZE EDİLMİŞ RENDER LOOP ★
+    //
+    // Eski sorunlar:
+    // 1) requestAnimationFrame monitör hızında çalışır (144Hz+), encoder'ı boğar
+    // 2) Her frame'de canvas.width/height okunup set ediliyordu → captureStream
+    //    resolution change event'i fırlatıyor → encoder re-init → zoom efekti
+    // 3) drawImage source crop'u mutlak piksel → kaynak çözünürlük değişince zoom
+    //
+    // Çözüm:
+    // - setInterval ile SABİT FPS (monitör hızından bağımsız)
+    // - Canvas boyutu ASLA değişmiyor
+    // - Crop oranları ilk frame'de kilitlenir, sonra oran bazlı uygulanır
+    // ══════════════════════════════════════════════════════════════════════════
+    function startRenderLoop() {
+        const frameInterval = 1000 / lockedFps;
+        // setInterval kullan — requestAnimationFrame yerine
+        // Avantajları:
+        // - Tab arka plana gidince de çalışmaya devam eder (streaming kesilmez)
+        // - Sabit interval = encoder'a tutarlı frame akışı
+        // - Monitör refresh rate'inden bağımsız
+        renderTimerId = setInterval(drawFrame, frameInterval);
+        // İlk frame'i hemen çiz (interval gecikmesin)
+        drawFrame();
+    }
+    function drawFrame() {
+        if (!cameraActive) return;
+        const srcW = videoSource.videoWidth;
+        const srcH = videoSource.videoHeight;
+        // Kaynak henüz hazır değilse çizme
+        if (srcW <= 0 || srcH <= 0) return;
+        // ★ İlk geçerli frame'de crop oranlarını KİLİTLE ★
+        // Bundan sonra kaynak çözünürlüğü değişse bile aynı ORAN crop edilir
+        if (!sourceInitialized) {
+            // Crop alanı kaynaktan büyükse tüm kaynağı kullan
+            cropRatioX = Math.min(lockedCropW / srcW, 1.0);
+            cropRatioY = Math.min(lockedCropH / srcH, 1.0);
+            sourceInitialized = true;
+            console.log(`[Render] Kaynak: ${srcW}x${srcH} | Crop: ${lockedCropW}x${lockedCropH} | Oran: ${cropRatioX.toFixed(3)}x${cropRatioY.toFixed(3)}`);
+        }
+        // Mevcut kaynak çözünürlüğüne oranları uygula
+        // Kaynak 1920→1280'e düşse bile aynı görüntü alanı korunur
+        const actualCropW = Math.round(srcW * cropRatioX);
+        const actualCropH = Math.round(srcH * cropRatioY);
+        const sx = Math.round((srcW - actualCropW) / 2);
+        const sy = Math.round((srcH - actualCropH) / 2);
+        // drawImage: kaynak crop alanını → sabit boyutlu canvas'a çiz
+        // lockedCropW/lockedCropH hiç değişmez → captureStream sabit çözünürlük alır
+        ctx.drawImage(
+            videoSource,
+            sx, sy, actualCropW, actualCropH,
+            0, 0, lockedCropW, lockedCropH
+        );
+    }
+    cloudBtn.addEventListener('click', async () => {
+        if (cloudActive) {
+            stopCloudTransfer();
+            return;
+        }
+        const serverUrl = serverInput.value.trim();
+        if (!serverUrl) {
+            alert("Lütfen bulut sunucu adresini girin.");
+            return;
+        }
+        try {
+            cloudStatus.textContent = "BAĞLANIYOR...";
+            cloudStatus.className = "status-val";
+            cloudConnection = new RTCPeerConnection({
+                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+            });
+            cloudConnection.onconnectionstatechange = () => {
+                const state = cloudConnection.connectionState;
+                if (state === "connected") {
+                    cloudStatus.textContent = "AKTİF";
+                    cloudStatus.className = "status-val status-active";
+                } else if (state === "failed" || state === "closed") {
+                    stopCloudTransfer();
+                }
+            };
+            // captureStream(fps) ile sabit kare hızında frame yakala
+            // NOT: captureStream(0) kullanma — desynchronized olmasa bile
+            // bazı tarayıcılarda canvas değişiklik algılama güvenilir değil
+            const canvasStream = previewCanvas.captureStream(lockedFps);
+            const videoTrack = canvasStream.getVideoTracks()[0];
+            // ★ contentHint: encoder'a içerik tipini bildir ★
+            // 'detail' = ekran içeriği, keskin kenarlar, text → encoder buna göre optimize eder
+            // (motion yerine sharpness'a öncelik verir)
+            if ('contentHint' in videoTrack) {
+                videoTrack.contentHint = 'detail';
+            }
+            
+            const sender = cloudConnection.addTrack(videoTrack, canvasStream);
+            currentVideoSender = sender;
+            
+            // Bitrate + çözünürlük kilitleme uygula
+            const selectedBitrate = parseInt(bitrateSelect.value);
+            applyBitrateLimit(sender, selectedBitrate);
+            const offer = await cloudConnection.createOffer();
+            await cloudConnection.setLocalDescription(offer);
+            const deviceId = deviceIdInput.value.trim() || 'TAPO-C210-F4:8C:50';
+            const response = await fetch(`${serverUrl}/offer`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    sdp: cloudConnection.localDescription.sdp,
+                    type: cloudConnection.localDescription.type,
+                    peerId: deviceId
+                })
+            });
+            if (!response.ok) {
+                throw new Error(`Sunucu hatası: ${response.status}`);
+            }
+            const answer = await response.json();
+            
+            await cloudConnection.setRemoteDescription(new RTCSessionDescription(answer));
+            cloudActive = true;
+            cloudBtn.textContent = "☁️ Bulut Aktarımını Durdur";
+            cloudBtn.className = "stop";
+            
+            startBitrateMonitor(cloudConnection);
+            
+        } catch (err) {
+            console.error("Aktarım hatası:", err);
+            alert("Bulut aktarımı başlatılamadı: " + err.message);
+            stopCloudTransfer();
+        }
+    });
+    function stopCloudTransfer() {
+        if (cloudConnection) {
+            cloudConnection.close();
+            cloudConnection = null;
+        }
+        currentVideoSender = null;
+        cloudActive = false;
+        cloudStatus.textContent = "BEKLEMEDE";
+        cloudStatus.className = "status-val status-inactive";
+        cloudBtn.textContent = "☁️ Bulut Aktarımı Başlat";
+        cloudBtn.className = "";
+        stopBitrateMonitor();
+    }
+</script>
+</body>
+</html>
