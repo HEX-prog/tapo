@@ -304,6 +304,24 @@
                 <div class="bitrate-info" id="bitrate-info">Seçilen bitrate: 1000 kbps (1 Mbps)</div>
             </div>
         </div>
+        <div class="row" style="margin-top: 4px;">
+            <div>
+                <label for="encoder-mode">⚙️ Encoder Modu (GPU/CPU)</label>
+                <select id="encoder-mode">
+                    <option value="auto">Otomatik — En iyi codec'i seç</option>
+                    <option value="h264-hw">H.264 Donanım — Intel/AMD/NVIDIA GPU</option>
+                    <option value="h264-baseline">H.264 Baseline — En düşük gecikme</option>
+                    <option value="vp8">VP8 Yazılım — CPU (evrensel uyumluluk)</option>
+                    <option value="vp9">VP9 Yazılım — CPU (yüksek sıkıştırma)</option>
+                    <option value="av1">AV1 — Yeni nesil (destekleniyorsa)</option>
+                </select>
+                <div class="bitrate-info" id="encoder-info">Codec desteği algılanıyor...</div>
+            </div>
+        </div>
+        <div class="device-info" id="hw-capabilities" style="margin-top: 8px;">
+            <span id="hw-gpu-info">💻 GPU: Algılanıyor...</span>
+            <span id="hw-codec-info">🎬 Codec: Algılanıyor...</span>
+        </div>
     </div>
     <div class="section">
         <button id="capture-btn">📷 Kamerayı Aktifleştir</button>
@@ -321,6 +339,10 @@
         <div class="status-item">
             <span>📊 Gönderilen Bitrate:</span>
             <span id="active-bitrate" class="status-inactive">-- kbps</span>
+        </div>
+        <div class="status-item">
+            <span>⚙️ Aktif Encoder:</span>
+            <span id="active-encoder" class="status-inactive">--</span>
         </div>
     </div>
     <div class="preview-container" id="preview-box" style="display: none;">
@@ -358,6 +380,11 @@
     const bitrateSelect = document.getElementById('bitrate-kbps');
     const bitrateInfo = document.getElementById('bitrate-info');
     const activeBitrateSpan = document.getElementById('active-bitrate');
+    const encoderSelect = document.getElementById('encoder-mode');
+    const encoderInfoSpan = document.getElementById('encoder-info');
+    const activeEncoderSpan = document.getElementById('active-encoder');
+    const hwGpuInfo = document.getElementById('hw-gpu-info');
+    const hwCodecInfo = document.getElementById('hw-codec-info');
     
     const cameraStatus = document.getElementById('capture-status');
     const cloudStatus = document.getElementById('stream-status');
@@ -365,11 +392,11 @@
     const previewBox = document.getElementById('preview-box');
     const previewCanvas = document.getElementById('preview-canvas');
     const ctx = previewCanvas.getContext('2d', {
-        // Performans için alpha devre dışı — opak canvas daha hızlı composit edilir
         alpha: false
-        // NOT: desynchronized KULLANMA — ayrı GPU buffer oluşturur ve
-        // captureStream bu buffer'ı okuyamaz → boş frame gider
     });
+    // ★ Interpolasyon kapatma — piksel kopyalama daha hızlı ★
+    // Crop boyutu kaynak boyutuyla eşleştiğinde (çoğu durumda) bu gereksiz GPU işi önler
+    ctx.imageSmoothingEnabled = false;
     
     const videoSource = document.createElement('video');
     videoSource.muted = true;
@@ -385,30 +412,73 @@
     });
     // ── Bitrate sınırlandırma + çözünürlük kilitleme ──
     function applyBitrateLimit(sender, bitrateKbps) {
-        if (!sender) return;
+        if (!sender) return Promise.resolve();
         
         const params = sender.getParameters();
         if (!params.encodings || params.encodings.length === 0) {
             params.encodings = [{}];
         }
         
-        // Bitrate sınırı (bps)
-        params.encodings[0].maxBitrate = bitrateKbps * 1000;
+        const enc = params.encodings[0];
         
-        // ★ ZOOM SORUNUNUN ANA ÇÖZÜMLERİ ★
-        // 1) Çözünürlüğü ASLA küçültme — FPS drop olursa frame at, scale etme
-        params.encodings[0].scaleResolutionDownBy = 1.0;
-        // 2) Bant genişliği daraldığında frame at, çözünürlüğü koru
+        // Bitrate sınırı (bps)
+        enc.maxBitrate = bitrateKbps * 1000;
+        
+        // ★ FPS kilidini encoder seviyesinde de uygula ★
+        enc.maxFramerate = lockedFps;
+        
+        // ★ Çözünürlüğü ASLA küçültme ★
+        enc.scaleResolutionDownBy = 1.0;
+        
+        // ★ Ağ önceliği — yüksek öncelik = daha az paket kaybı ★
+        enc.networkPriority = 'high';
+        enc.priority = 'high';
+        
+        // ★ degradationPreference — HER İKİ KONUMA DA YAZ ★
+        // Chrome (M103+): encodings[0].degradationPreference kullanır
+        // Firefox/Safari: params.degradationPreference kullanır
+        // İkisini de set et → tüm tarayıcılarda çalışır
+        enc.degradationPreference = 'maintain-resolution';
         params.degradationPreference = 'maintain-resolution';
         
-        sender.setParameters(params).then(() => {
-            console.log(`[Encoder] Bitrate: ${bitrateKbps} kbps | degradation: maintain-resolution | scale: 1.0`);
+        // ★ Promise döndür — await ile kullanılabilir ★
+        return sender.setParameters(params).then(() => {
+            console.log(`[Encoder] Bitrate: ${bitrateKbps} kbps | maxFps: ${lockedFps} | degradation: maintain-resolution | scale: 1.0 | priority: high`);
             activeBitrateSpan.textContent = `${bitrateKbps} kbps`;
             activeBitrateSpan.className = "status-val status-active";
         }).catch(err => {
             console.warn("[Encoder] Parametre ayarlama hatası:", err);
-            activeBitrateSpan.textContent = `${bitrateKbps} kbps (uygulandı)`;
+            activeBitrateSpan.textContent = `${bitrateKbps} kbps (fallback)`;
             activeBitrateSpan.className = "status-val status-active";
+        });
+    }
+    // ── ICE adaylarının toplanmasını bekle ──
+    // Offer göndermeden önce tüm ICE adaylarının SDP'ye dahil olmasını sağlar
+    // Timeout ile korunur — gathering takılırsa 3sn sonra mevcut adaylarla devam eder
+    function waitForIceGathering(pc, timeoutMs = 3000) {
+        return new Promise((resolve) => {
+            // Zaten tamamlandıysa hemen devam
+            if (pc.iceGatheringState === 'complete') {
+                resolve();
+                return;
+            }
+            
+            const timeout = setTimeout(() => {
+                pc.removeEventListener('icegatheringstatechange', onStateChange);
+                console.warn('[ICE] Gathering timeout — mevcut adaylarla devam ediliyor');
+                resolve();
+            }, timeoutMs);
+            
+            function onStateChange() {
+                if (pc.iceGatheringState === 'complete') {
+                    clearTimeout(timeout);
+                    pc.removeEventListener('icegatheringstatechange', onStateChange);
+                    console.log('[ICE] Gathering tamamlandı');
+                    resolve();
+                }
+            }
+            
+            pc.addEventListener('icegatheringstatechange', onStateChange);
         });
     }
     // ── Bitrate monitörü (gerçek gönderim hızı) ──
@@ -567,25 +637,17 @@
         if (!cameraActive) return;
         const srcW = videoSource.videoWidth;
         const srcH = videoSource.videoHeight;
-        // Kaynak henüz hazır değilse çizme
         if (srcW <= 0 || srcH <= 0) return;
-        // ★ İlk geçerli frame'de crop oranlarını KİLİTLE ★
-        // Bundan sonra kaynak çözünürlüğü değişse bile aynı ORAN crop edilir
         if (!sourceInitialized) {
-            // Crop alanı kaynaktan büyükse tüm kaynağı kullan
             cropRatioX = Math.min(lockedCropW / srcW, 1.0);
             cropRatioY = Math.min(lockedCropH / srcH, 1.0);
             sourceInitialized = true;
             console.log(`[Render] Kaynak: ${srcW}x${srcH} | Crop: ${lockedCropW}x${lockedCropH} | Oran: ${cropRatioX.toFixed(3)}x${cropRatioY.toFixed(3)}`);
         }
-        // Mevcut kaynak çözünürlüğüne oranları uygula
-        // Kaynak 1920→1280'e düşse bile aynı görüntü alanı korunur
         const actualCropW = Math.round(srcW * cropRatioX);
         const actualCropH = Math.round(srcH * cropRatioY);
         const sx = Math.round((srcW - actualCropW) / 2);
         const sy = Math.round((srcH - actualCropH) / 2);
-        // drawImage: kaynak crop alanını → sabit boyutlu canvas'a çiz
-        // lockedCropW/lockedCropH hiç değişmez → captureStream sabit çözünürlük alır
         ctx.drawImage(
             videoSource,
             sx, sy, actualCropW, actualCropH,
@@ -605,38 +667,64 @@
         try {
             cloudStatus.textContent = "BAĞLANIYOR...";
             cloudStatus.className = "status-val";
+            // ★ RTCPeerConnection — düşük gecikme konfigürasyonu ★
             cloudConnection = new RTCPeerConnection({
-                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+                // Tüm medyayı TEK transport üzerinden gönder — bağlantı kurulum süresini azaltır
+                bundlePolicy: 'max-bundle',
+                // RTP ve RTCP aynı port — NAT traversal kolaylaşır, gecikme düşer
+                rtcpMuxPolicy: 'require',
+                // ICE adaylarını önceden ayır — gathering süresi kısalır
+                iceCandidatePoolSize: 1
             });
+            // ★ Bağlantı kopması durumunda otomatik ICE restart ★
             cloudConnection.onconnectionstatechange = () => {
                 const state = cloudConnection.connectionState;
                 if (state === "connected") {
                     cloudStatus.textContent = "AKTİF";
                     cloudStatus.className = "status-val status-active";
+                } else if (state === "disconnected") {
+                    // Geçici kopma — ICE restart ile kurtarmayı dene
+                    cloudStatus.textContent = "YENİDEN BAĞLANIYOR...";
+                    cloudStatus.className = "status-val";
+                    attemptIceRestart();
                 } else if (state === "failed" || state === "closed") {
                     stopCloudTransfer();
                 }
             };
-            // captureStream(fps) ile sabit kare hızında frame yakala
-            // NOT: captureStream(0) kullanma — desynchronized olmasa bile
-            // bazı tarayıcılarda canvas değişiklik algılama güvenilir değil
             const canvasStream = previewCanvas.captureStream(lockedFps);
             const videoTrack = canvasStream.getVideoTracks()[0];
-            // ★ contentHint: encoder'a içerik tipini bildir ★
-            // 'detail' = ekran içeriği, keskin kenarlar, text → encoder buna göre optimize eder
-            // (motion yerine sharpness'a öncelik verir)
             if ('contentHint' in videoTrack) {
                 videoTrack.contentHint = 'detail';
             }
             
-            const sender = cloudConnection.addTrack(videoTrack, canvasStream);
-            currentVideoSender = sender;
-            
-            // Bitrate + çözünürlük kilitleme uygula
-            const selectedBitrate = parseInt(bitrateSelect.value);
-            applyBitrateLimit(sender, selectedBitrate);
+            // ★ addTransceiver — addTrack yerine ★
+            // Avantaj: encoding parametreleri baştan set edilebilir, codec sırası kontrol edilir
+            const transceiver = cloudConnection.addTransceiver(videoTrack, {
+                direction: 'sendonly',
+                streams: [canvasStream],
+                sendEncodings: [{
+                    maxBitrate: parseInt(bitrateSelect.value) * 1000,
+                    maxFramerate: lockedFps,
+                    scaleResolutionDownBy: 1.0,
+                    networkPriority: 'high',
+                    priority: 'high'
+                }]
+            });
+            currentVideoSender = transceiver.sender;
+            // ★ Codec tercihi: H.264 > VP8 > VP9 ★
+            // H.264 = donanım hızlandırmalı encoding = en düşük gecikme
+            setCodecPreference(transceiver);
             const offer = await cloudConnection.createOffer();
-            await cloudConnection.setLocalDescription(offer);
+            
+            // ★ SDP'ye düşük gecikme bayrakları ekle ★
+            const optimizedSdp = injectLowLatencySdp(offer.sdp);
+            await cloudConnection.setLocalDescription({ type: offer.type, sdp: optimizedSdp });
+            cloudStatus.textContent = "ICE TOPLANIYOR...";
+            await waitForIceGathering(cloudConnection, 3000);
+            const completeOffer = cloudConnection.localDescription;
+            
+            cloudStatus.textContent = "SUNUCUYA BAĞLANIYOR...";
             const deviceId = deviceIdInput.value.trim() || 'TAPO-C210-F4:8C:50';
             const response = await fetch(`${serverUrl}/offer`, {
                 method: 'POST',
@@ -644,8 +732,8 @@
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    sdp: cloudConnection.localDescription.sdp,
-                    type: cloudConnection.localDescription.type,
+                    sdp: completeOffer.sdp,
+                    type: completeOffer.type,
                     peerId: deviceId
                 })
             });
@@ -655,6 +743,9 @@
             const answer = await response.json();
             
             await cloudConnection.setRemoteDescription(new RTCSessionDescription(answer));
+            // Negotiation sonrası encoding parametrelerini pekiştir
+            const selectedBitrate = parseInt(bitrateSelect.value);
+            await applyBitrateLimit(currentVideoSender, selectedBitrate);
             cloudActive = true;
             cloudBtn.textContent = "☁️ Bulut Aktarımını Durdur";
             cloudBtn.className = "stop";
@@ -680,6 +771,286 @@
         cloudBtn.className = "";
         stopBitrateMonitor();
     }
+    // ══════════════════════════════════════════════════════════════════════════
+    // ★ DÜŞÜK GECİKME YARDIMCI FONKSİYONLARI ★
+    // ══════════════════════════════════════════════════════════════════════════
+    // ── Codec tercihi: seçilen encoder moduna göre ayarla ──
+    function setCodecPreference(transceiver) {
+        if (!transceiver.setCodecPreferences) return;
+        
+        try {
+            const codecs = RTCRtpSender.getCapabilities('video')?.codecs;
+            if (!codecs) return;
+            
+            const mode = encoderSelect.value;
+            let preferred = [];
+            
+            switch (mode) {
+                case 'h264-hw': {
+                    // Tüm H.264 profilleri (GPU donanım enc)
+                    const h264 = codecs.filter(c => c.mimeType === 'video/H264');
+                    const rest = codecs.filter(c => c.mimeType !== 'video/H264');
+                    preferred = [...h264, ...rest];
+                    break;
+                }
+                case 'h264-baseline': {
+                    // Sadece Constrained Baseline profili — en düşük gecikme
+                    // profile-level-id 42e0xx veya 42c0xx = Constrained Baseline
+                    const baseline = codecs.filter(c => 
+                        c.mimeType === 'video/H264' && 
+                        c.sdpFmtpLine && 
+                        (c.sdpFmtpLine.includes('42e0') || c.sdpFmtpLine.includes('42c0') || c.sdpFmtpLine.includes('4200'))
+                    );
+                    const h264Other = codecs.filter(c => 
+                        c.mimeType === 'video/H264' && 
+                        (!c.sdpFmtpLine || !c.sdpFmtpLine.includes('42e0') && !c.sdpFmtpLine.includes('42c0') && !c.sdpFmtpLine.includes('4200'))
+                    );
+                    const rest = codecs.filter(c => c.mimeType !== 'video/H264');
+                    // Baseline varsa onu öncelikle, yoksa tüm H.264'ü dene
+                    preferred = baseline.length > 0 ? [...baseline, ...h264Other, ...rest] : [...h264Other, ...rest];
+                    break;
+                }
+                case 'vp8': {
+                    const vp8 = codecs.filter(c => c.mimeType === 'video/VP8');
+                    const rest = codecs.filter(c => c.mimeType !== 'video/VP8');
+                    preferred = [...vp8, ...rest];
+                    break;
+                }
+                case 'vp9': {
+                    const vp9 = codecs.filter(c => c.mimeType === 'video/VP9');
+                    const rest = codecs.filter(c => c.mimeType !== 'video/VP9');
+                    preferred = [...vp9, ...rest];
+                    break;
+                }
+                case 'av1': {
+                    const av1 = codecs.filter(c => c.mimeType === 'video/AV1');
+                    if (av1.length === 0) {
+                        console.warn('[Codec] AV1 desteklenmiyor, otomatik moda düşülüyor');
+                        // Fallback: auto mode
+                        return setCodecPreferenceAuto(transceiver, codecs);
+                    }
+                    const rest = codecs.filter(c => c.mimeType !== 'video/AV1');
+                    preferred = [...av1, ...rest];
+                    break;
+                }
+                case 'auto':
+                default: {
+                    return setCodecPreferenceAuto(transceiver, codecs);
+                }
+            }
+            
+            // RTX (retransmission) codec'lerini koru — filtreleme
+            transceiver.setCodecPreferences(preferred);
+            const activeCodec = preferred[0]?.mimeType?.split('/')[1] || 'Bilinmiyor';
+            console.log(`[Codec] Mod: ${mode} | Tercih: ${preferred.map(c => c.mimeType).filter((v,i,a) => a.indexOf(v) === i).join(' > ')}`);
+            activeEncoderSpan.textContent = activeCodec;
+            activeEncoderSpan.className = 'status-val status-active';
+        } catch (e) {
+            console.warn('[Codec] Tercih ayarlanamadı:', e);
+        }
+    }
+    // Otomatik mod: GPU varsa H.264, yoksa VP8
+    function setCodecPreferenceAuto(transceiver, codecs) {
+        const h264 = codecs.filter(c => c.mimeType === 'video/H264');
+        const vp8 = codecs.filter(c => c.mimeType === 'video/VP8');
+        const rest = codecs.filter(c => c.mimeType !== 'video/H264' && c.mimeType !== 'video/VP8');
+        
+        // H.264 varsa önce dene (GPU encode), yoksa VP8 (CPU)
+        const preferred = [...h264, ...vp8, ...rest];
+        transceiver.setCodecPreferences(preferred);
+        
+        const activeCodec = preferred[0]?.mimeType?.split('/')[1] || 'VP8';
+        console.log(`[Codec] Otomatik | Tercih: ${preferred.map(c => c.mimeType).filter((v,i,a) => a.indexOf(v) === i).join(' > ')}`);
+        activeEncoderSpan.textContent = `${activeCodec} (Oto)`;
+        activeEncoderSpan.className = 'status-val status-active';
+    }
+    // ── SDP'ye düşük gecikme bayrakları ekle ──
+    // Google WebRTC motoruna özel ipuçları
+    function injectLowLatencySdp(sdp) {
+        let modified = sdp;
+        
+        // x-google-flag:conference → encoder'ı düşük gecikme moduna sokar
+        // (keyframe aralığını kısaltır, buffer'ı azaltır)
+        if (!modified.includes('x-google-flag:conference')) {
+            modified = modified.replace(
+                /(m=video.*\r\n)/,
+                '$1a=x-google-flag:conference\r\n'
+            );
+        }
+        
+        return modified;
+    }
+    // ── Otomatik ICE restart ──
+    // Bağlantı geçici koparsa (WiFi geçişi, kısa ağ kesintisi) otomatik kurtarma
+    async function attemptIceRestart() {
+        if (!cloudConnection || !cloudActive) return;
+        
+        try {
+            console.log('[ICE] Restart başlatılıyor...');
+            const offer = await cloudConnection.createOffer({ iceRestart: true });
+            const optimizedSdp = injectLowLatencySdp(offer.sdp);
+            await cloudConnection.setLocalDescription({ type: offer.type, sdp: optimizedSdp });
+            
+            await waitForIceGathering(cloudConnection, 3000);
+            
+            const completeOffer = cloudConnection.localDescription;
+            const serverUrl = serverInput.value.trim();
+            const deviceId = deviceIdInput.value.trim() || 'TAPO-C210-F4:8C:50';
+            
+            const response = await fetch(`${serverUrl}/offer`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sdp: completeOffer.sdp,
+                    type: completeOffer.type,
+                    peerId: deviceId
+                })
+            });
+            
+            if (response.ok) {
+                const answer = await response.json();
+                await cloudConnection.setRemoteDescription(new RTCSessionDescription(answer));
+                console.log('[ICE] Restart başarılı — bağlantı kurtarıldı');
+            }
+        } catch (e) {
+            console.error('[ICE] Restart başarısız:', e);
+            stopCloudTransfer();
+        }
+    }
+    // ── Donanım ve codec algılama ──
+    // Sayfa yüklenince desteklenen codec'leri ve GPU bilgisini göster
+    function detectHardwareCapabilities() {
+        // GPU algılama (WebGL renderer string)
+        try {
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            if (gl) {
+                const debugExt = gl.getExtension('WEBGL_debug_renderer_info');
+                if (debugExt) {
+                    const renderer = gl.getParameter(debugExt.UNMASKED_RENDERER_WEBGL);
+                    const vendor = gl.getParameter(debugExt.UNMASKED_VENDOR_WEBGL);
+                    
+                    let gpuBrand = 'Bilinmiyor';
+                    let gpuIcon = '💻';
+                    const r = renderer.toLowerCase();
+                    
+                    if (r.includes('nvidia') || r.includes('geforce') || r.includes('rtx') || r.includes('gtx')) {
+                        gpuBrand = 'NVIDIA';
+                        gpuIcon = '🟢';
+                    } else if (r.includes('amd') || r.includes('radeon') || r.includes('rx ')) {
+                        gpuBrand = 'AMD';
+                        gpuIcon = '🟠';
+                    } else if (r.includes('intel') || r.includes('uhd') || r.includes('iris') || r.includes('arc')) {
+                        gpuBrand = 'Intel';
+                        gpuIcon = '🔵';
+                    } else if (r.includes('apple') || r.includes('m1') || r.includes('m2') || r.includes('m3')) {
+                        gpuBrand = 'Apple';
+                        gpuIcon = '⚪';
+                    }
+                    
+                    // Kısa renderer ismi oluştur
+                    let shortName = renderer;
+                    if (shortName.length > 30) {
+                        shortName = shortName.substring(0, 30) + '...';
+                    }
+                    
+                    hwGpuInfo.textContent = `${gpuIcon} GPU: ${gpuBrand} (${shortName})`;
+                    console.log(`[HW] GPU: ${vendor} | ${renderer}`);
+                } else {
+                    hwGpuInfo.textContent = '💻 GPU: Algılanamadı (WebGL debug yok)';
+                }
+            } else {
+                hwGpuInfo.textContent = '💻 GPU: WebGL desteklenmiyor';
+            }
+        } catch (e) {
+            hwGpuInfo.textContent = '💻 GPU: Algılama hatası';
+        }
+        
+        // Codec algılama
+        try {
+            const codecs = RTCRtpSender.getCapabilities('video')?.codecs;
+            if (!codecs) {
+                hwCodecInfo.textContent = '🎬 Codec: Algılanamadı';
+                encoderInfoSpan.textContent = 'Codec bilgisi alınamadı';
+                return;
+            }
+            
+            // Benzersiz codec isimlerini çıkar
+            const uniqueCodecs = [...new Set(codecs.map(c => c.mimeType.split('/')[1]))];
+            
+            const hasH264 = uniqueCodecs.includes('H264');
+            const hasVP8 = uniqueCodecs.includes('VP8');
+            const hasVP9 = uniqueCodecs.includes('VP9');
+            const hasAV1 = uniqueCodecs.includes('AV1');
+            
+            // Desteklenen codec'leri göster
+            const supported = [];
+            if (hasH264) supported.push('✅ H.264');
+            if (hasVP8) supported.push('✅ VP8');
+            if (hasVP9) supported.push('✅ VP9');
+            if (hasAV1) supported.push('✅ AV1');
+            
+            hwCodecInfo.textContent = `🎬 ${supported.join(' | ')}`;
+            
+            // Encoder dropdown'daki seçenekleri güncelle (desteklenmeyen codec'leri işaretle)
+            const options = encoderSelect.options;
+            for (let i = 0; i < options.length; i++) {
+                const opt = options[i];
+                const val = opt.value;
+                let isSupported = true;
+                
+                if (val === 'h264-hw' || val === 'h264-baseline') isSupported = hasH264;
+                else if (val === 'vp8') isSupported = hasVP8;
+                else if (val === 'vp9') isSupported = hasVP9;
+                else if (val === 'av1') isSupported = hasAV1;
+                
+                if (!isSupported) {
+                    opt.textContent = opt.textContent.replace(/^/, '⚠️ ') + ' (desteklenmiyor)';
+                    opt.style.color = '#6b7280';
+                }
+            }
+            
+            // H.264 profil detaylarını logla
+            if (hasH264) {
+                const h264Profiles = codecs
+                    .filter(c => c.mimeType === 'video/H264' && c.sdpFmtpLine)
+                    .map(c => {
+                        const match = c.sdpFmtpLine.match(/profile-level-id=([0-9a-fA-F]{6})/);
+                        return match ? match[1] : 'bilinmiyor';
+                    });
+                console.log(`[HW] H.264 Profiller: ${h264Profiles.join(', ')}`);
+            }
+            
+            // Tavsiye mesajı
+            let recommendation = '';
+            if (hasH264) {
+                recommendation = '✅ H.264 donanım encoding destekleniyor — düşük gecikme için önerilir';
+            } else if (hasVP8) {
+                recommendation = 'ℹ️ H.264 yok — VP8 yazılım encoding kullanılacak (CPU)';
+            }
+            encoderInfoSpan.textContent = recommendation;
+            
+            console.log(`[HW] Desteklenen codec'ler: ${uniqueCodecs.join(', ')}`);
+        } catch (e) {
+            hwCodecInfo.textContent = '🎬 Codec algılama hatası';
+            encoderInfoSpan.textContent = 'Codec bilgisi alınamadı';
+        }
+    }
+    // Encoder modu değiştiğinde bilgi güncelle
+    encoderSelect.addEventListener('change', () => {
+        const mode = encoderSelect.value;
+        const descriptions = {
+            'auto': 'En iyi codec otomatik seçilir (GPU varsa H.264, yoksa VP8)',
+            'h264-hw': 'GPU donanım encoding — Intel QSV / AMD AMF / NVIDIA NVENC',
+            'h264-baseline': 'H.264 Constrained Baseline — en düşük gecikme, tüm GPU\'larda çalışır',
+            'vp8': 'VP8 yazılım encoding — GPU gerektirmez, evrensel uyumluluk',
+            'vp9': 'VP9 yazılım encoding — daha iyi sıkıştırma, daha fazla CPU kullanır',
+            'av1': 'AV1 encoding — en iyi sıkıştırma, yeni nesil GPU\'larda donanım desteği'
+        };
+        encoderInfoSpan.textContent = descriptions[mode] || '';
+    });
+    // Sayfa yüklenince donanım algılama başlat
+    detectHardwareCapabilities();
 </script>
 </body>
 </html>
