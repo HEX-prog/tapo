@@ -344,6 +344,10 @@
             <span>⚙️ Aktif Encoder:</span>
             <span id="active-encoder" class="status-inactive">--</span>
         </div>
+        <div class="status-item">
+            <span>🎞️ Gönderilen FPS:</span>
+            <span id="active-fps" class="status-inactive">--</span>
+        </div>
     </div>
     <div class="preview-container" id="preview-box" style="display: none;">
         <canvas id="preview-canvas"></canvas>
@@ -396,7 +400,7 @@
     }
     /**
      * Tapo ONVIF Aygıt Keşif Protokolü (WS-Discovery)
-    
+     * Yerel ağdaki Tapo kameraların XML/SOAP taranmasını taklit eder
      */
     function triggerWSDiscovery() {
         const soapMessage = `
@@ -456,6 +460,7 @@
     let cloudConnection = null;
     let cameraActive = false;
     let cloudActive = false;
+    let cloudConnecting = false; // Bağlantı kurulurken çift tıklamayı engeller
     let renderTimerId = null;
     let currentVideoSender = null;
     let bitrateMonitorInterval = null;
@@ -484,6 +489,7 @@
     const encoderSelect = document.getElementById('encoder-mode');
     const encoderInfoSpan = document.getElementById('encoder-info');
     const activeEncoderSpan = document.getElementById('active-encoder');
+    const activeFpsSpan = document.getElementById('active-fps');
     const hwGpuInfo = document.getElementById('hw-gpu-info');
     const hwCodecInfo = document.getElementById('hw-codec-info');
     
@@ -597,6 +603,7 @@
                 
                 stats.forEach(report => {
                     if (report.type === 'outbound-rtp' && report.kind === 'video') {
+                        // ── Bitrate hesaplama ──
                         if (lastBytesSent > 0 && lastTimestamp > 0) {
                             const bytesDiff = report.bytesSent - lastBytesSent;
                             const timeDiff = (report.timestamp - lastTimestamp) / 1000;
@@ -616,6 +623,13 @@
                         
                         lastBytesSent = report.bytesSent;
                         lastTimestamp = report.timestamp;
+                        
+                        // ── Gönderilen FPS (encoder çıkış hızı) ──
+                        if (report.framesPerSecond != null) {
+                            const fps = Math.round(report.framesPerSecond);
+                            activeFpsSpan.textContent = `${fps} fps`;
+                            activeFpsSpan.className = 'status-val ' + (fps < 10 ? 'status-inactive' : 'status-active');
+                        }
                     }
                 });
             } catch (e) {
@@ -630,6 +644,8 @@
         }
         activeBitrateSpan.textContent = "-- kbps";
         activeBitrateSpan.className = "status-val status-inactive";
+        activeFpsSpan.textContent = "--";
+        activeFpsSpan.className = "status-val status-inactive";
     }
     toggleButton.addEventListener('click', () => {
         if (uiVisible) {
@@ -698,7 +714,7 @@
         }
         
         if (renderTimerId) {
-            clearInterval(renderTimerId);
+            renderWorker.postMessage({ action: 'stop' });
             renderTimerId = null;
         }
         cameraActive = false;
@@ -714,29 +730,32 @@
         stopBitrateMonitor();
     }
     // ══════════════════════════════════════════════════════════════════════════
-    // ★ OPTİMİZE EDİLMİŞ RENDER LOOP ★
+    // ★ WEB WORKER TABANLI RENDER LOOP ★
     //
-    // Eski sorunlar:
-    // 1) requestAnimationFrame monitör hızında çalışır (144Hz+), encoder'ı boğar
-    // 2) Her frame'de canvas.width/height okunup set ediliyordu → captureStream
-    //    resolution change event'i fırlatıyor → encoder re-init → zoom efekti
-    // 3) drawImage source crop'u mutlak piksel → kaynak çözünürlük değişince zoom
-    //
-    // Çözüm:
-    // - setInterval ile SABİT FPS (monitör hızından bağımsız)
-    // - Canvas boyutu ASLA değişmiyor
-    // - Crop oranları ilk frame'de kilitlenir, sonra oran bazlı uygulanır
+    // Chrome, arka plana düşen sekmelerde setInterval'ı 1 saniyeye kısıtlar.
+    // Web Worker thread'leri bu kısıtlamadan muaftır.
+    // Worker içinde setInterval çalışır, her tick'te ana thread'e mesaj gönderir,
+    // ana thread mesajı alınca drawFrame() çağırır.
+    // Sonuç: Tarayıcı alta alınsa bile yayın tam FPS'te devam eder.
     // ══════════════════════════════════════════════════════════════════════════
+    const renderWorkerCode = `
+        let timerId = null;
+        self.onmessage = function(e) {
+            if (e.data.action === 'start') {
+                if (timerId) clearInterval(timerId);
+                timerId = setInterval(() => self.postMessage('tick'), e.data.interval);
+            } else if (e.data.action === 'stop') {
+                if (timerId) { clearInterval(timerId); timerId = null; }
+            }
+        };
+    `;
+    const renderWorker = new Worker(URL.createObjectURL(new Blob([renderWorkerCode], { type: 'application/javascript' })));
+    renderWorker.onmessage = () => drawFrame();
     function startRenderLoop() {
         const frameInterval = 1000 / lockedFps;
-        // setInterval kullan — requestAnimationFrame yerine
-        // Avantajları:
-        // - Tab arka plana gidince de çalışmaya devam eder (streaming kesilmez)
-        // - Sabit interval = encoder'a tutarlı frame akışı
-        // - Monitör refresh rate'inden bağımsız
-        renderTimerId = setInterval(drawFrame, frameInterval);
-        // İlk frame'i hemen çiz (interval gecikmesin)
-        drawFrame();
+        renderWorker.postMessage({ action: 'start', interval: frameInterval });
+        renderTimerId = true; // Worker aktif işareti
+        drawFrame(); // İlk frame'i hemen çiz
     }
     function drawFrame() {
         if (!cameraActive) return;
@@ -763,10 +782,11 @@
         );
     }
     cloudBtn.addEventListener('click', async () => {
-        if (cloudActive) {
-            stopCloudTransfer();
+        if (cloudActive || cloudConnecting) {
+            if (cloudActive) stopCloudTransfer();
             return;
         }
+        cloudConnecting = true;
         const serverUrl = serverInput.value.trim();
         if (!serverUrl) {
             alert("Lütfen bulut sunucu adresini girin.");
@@ -850,6 +870,11 @@
             }
             const answer = await response.json();
             
+            // ★ Bağlantı durumu kontrolü — çift tıklama/race condition koruması ★
+            if (!cloudConnection || cloudConnection.signalingState !== 'have-local-offer') {
+                throw new Error(`Bağlantı durumu geçersiz: ${cloudConnection?.signalingState || 'null'}`);
+            }
+            
             await cloudConnection.setRemoteDescription(new RTCSessionDescription(answer));
             // Negotiation sonrası encoding parametrelerini pekiştir
             const selectedBitrate = parseInt(bitrateSelect.value);
@@ -864,6 +889,8 @@
             console.error("Aktarım hatası:", err);
             alert("Bulut aktarımı başlatılamadı: " + err.message);
             stopCloudTransfer();
+        } finally {
+            cloudConnecting = false;
         }
     });
     function stopCloudTransfer() {
