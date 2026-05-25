@@ -3,529 +3,856 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TP-Link Tapo ULL Sender (WebCodecs)</title>
+    <title>TP-Link Tapo C210 — Canlı İzleme (WebCodecs)</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=DM+Sans:wght@300;400;600&display=swap');
         :root {
-            --bg-color: #0b0b0e;
-            --surface-color: #121217;
-            --border-color: #1f1f28;
-            --accent-color: #4CAF50;
-            --accent-hover: #66bb6a;
-            --text-color: #e2e8f0;
-            --text-muted: #6b7280;
-            --danger-color: #ef4444;
+            --bg:         #080a0c;
+            --surface:    #0d1014;
+            --raised:     #111519;
+            --border:     #1c2128;
+            --border2:    #252d36;
+            --green:      #00e676;
+            --green-dim:  #00c853;
+            --cyan:       #00e5ff;
+            --amber:      #ffab00;
+            --red:        #ff1744;
+            --text:       #cdd6e0;
+            --muted:      #4a5568;
+            --mono:       'IBM Plex Mono', monospace;
+            --sans:       'DM Sans', sans-serif;
         }
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--sans);
             min-height: 100vh;
-            padding: 20px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 24px 16px 40px;
+            background-image:
+                radial-gradient(ellipse 60% 40% at 50% -10%, rgba(0,230,118,0.06) 0%, transparent 60%),
+                repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 39px, rgba(255,255,255,0.015) 40px),
+                repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 39px, rgba(255,255,255,0.015) 40px);
         }
-        .container {
-            background-color: var(--surface-color);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
+        .layout {
             width: 100%;
-            max-width: 650px;
-            padding: 24px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            max-width: 700px;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
         }
-        h2 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 4px;
-            color: var(--accent-color);
-        }
-        .brand {
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            margin-bottom: 16px;
-        }
-        .section {
+        /* ── Header ── */
+        .header {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+            padding: 0 0 18px 0;
+            border-bottom: 1px solid var(--border);
             margin-bottom: 20px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--border-color);
         }
-        .section:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-        label {
-            display: block;
-            font-size: 0.75rem;
+        .header-title {
+            font-family: var(--mono);
+            font-size: 1.05rem;
             font-weight: 700;
+            color: var(--green);
+            letter-spacing: 0.04em;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-muted);
-            margin-bottom: 6px;
         }
-        input, select {
-            width: 100%;
-            background-color: #1a1a23;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 10px 12px;
-            color: var(--text-color);
-            font-family: inherit;
-            font-size: 0.9rem;
+        .header-badge {
+            font-family: var(--mono);
+            font-size: 0.6rem;
+            padding: 2px 7px;
+            border: 1px solid var(--green-dim);
+            border-radius: 3px;
+            color: var(--green-dim);
+            letter-spacing: 0.1em;
+        }
+        .header-sub {
+            margin-left: auto;
+            font-family: var(--mono);
+            font-size: 0.65rem;
+            color: var(--muted);
+        }
+        /* ── Cards ── */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px 18px;
             margin-bottom: 12px;
-            transition: border-color 0.15s;
+            position: relative;
+        }
+        .card-label {
+            font-family: var(--mono);
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--muted);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+        /* ── Form controls ── */
+        .field { margin-bottom: 10px; }
+        .field label {
+            display: block;
+            font-family: var(--mono);
+            font-size: 0.62rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 5px;
+        }
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            background: var(--raised);
+            border: 1px solid var(--border2);
+            border-radius: 5px;
+            padding: 9px 11px;
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 0.82rem;
+            transition: border-color 0.15s, box-shadow 0.15s;
+            appearance: none;
         }
         input:focus, select:focus {
             outline: none;
-            border-color: var(--accent-color);
+            border-color: var(--green);
+            box-shadow: 0 0 0 2px rgba(0,230,118,0.12);
         }
-        .row {
-            display: flex;
-            gap: 12px;
-        }
-        .row > div {
-            flex: 1;
-        }
-        button {
-            width: 100%;
-            background-color: var(--accent-color);
-            color: #000;
-            border: none;
-            border-radius: 6px;
-            padding: 12px;
-            font-weight: 700;
-            font-size: 0.875rem;
+        select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a5568'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 28px;
             cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            transition: background-color 0.15s, transform 0.1s;
+        }
+        .row { display: flex; gap: 10px; }
+        .row .field { flex: 1; }
+        /* ── Transport mode toggle ── */
+        .toggle-row {
+            display: flex;
+            gap: 0;
+            border: 1px solid var(--border2);
+            border-radius: 5px;
+            overflow: hidden;
             margin-bottom: 10px;
         }
-        button:hover { background-color: var(--accent-hover); }
-        button:active { transform: scale(0.98); }
-        button:disabled { background-color: #2a2a35; color: #555; cursor: not-allowed; }
-        button.stop { background-color: var(--danger-color); color: #fff; }
-        button.stop:hover { background-color: #ff6b6b; }
-        .preview-container {
-            border: 1px solid var(--border-color);
+        .toggle-btn {
+            flex: 1;
+            padding: 8px;
+            background: transparent;
+            color: var(--muted);
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            border: none;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+            text-align: center;
+        }
+        .toggle-btn.active {
+            background: rgba(0,230,118,0.12);
+            color: var(--green);
+        }
+        .toggle-btn:first-child { border-right: 1px solid var(--border2); }
+        /* ── Action buttons ── */
+        .btn-primary, .btn-stop, .btn-secondary {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            font-family: var(--mono);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: all 0.15s;
+            margin-bottom: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-primary {
+            background: var(--green);
+            color: #000;
+        }
+        .btn-primary:hover { background: var(--green-dim); }
+        .btn-primary:disabled { background: #1c2128; color: #3a4454; cursor: not-allowed; }
+        .btn-stop { background: var(--red); color: #fff; }
+        .btn-stop:hover { background: #ff4569; }
+        .btn-secondary {
+            background: transparent;
+            color: var(--cyan);
+            border: 1px solid rgba(0,229,255,0.25);
+        }
+        .btn-secondary:hover { background: rgba(0,229,255,0.07); }
+        .btn-secondary:disabled { color: var(--muted); border-color: var(--border2); cursor: not-allowed; }
+        /* ── Preview ── */
+        .preview-wrap {
+            background: #000;
+            border: 1px solid var(--border);
             border-radius: 6px;
             overflow: hidden;
-            display: flex;
-            justify-content: center;
-            background-color: #000;
             position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px;
         }
         #preview-canvas {
             display: block;
             max-width: 100%;
             height: auto;
         }
-        .stats-panel {
-            background-color: #0d0d12;
-            border: 1px solid #1a1a23;
+        .preview-overlay {
+            position: absolute;
+            top: 8px; left: 8px;
+            font-family: var(--mono);
+            font-size: 0.6rem;
+            color: rgba(0,230,118,0.7);
+            background: rgba(0,0,0,0.6);
+            padding: 3px 6px;
+            border-radius: 3px;
+            letter-spacing: 0.05em;
+        }
+        .preview-placeholder {
+            position: absolute;
+            color: var(--muted);
+            font-family: var(--mono);
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            text-align: center;
+        }
+        /* ── Stats terminal ── */
+        .stats {
+            margin-top: 12px;
+            background: #050709;
+            border: 1px solid var(--border);
             border-radius: 6px;
-            padding: 12px;
-            font-size: 0.85rem;
-            font-family: monospace;
-            color: var(--accent-color);
-            margin-top: 15px;
+            padding: 12px 14px;
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            line-height: 1.7;
+            position: relative;
+        }
+        .stats::before {
+            content: '● ● ●';
+            font-size: 0.5rem;
+            letter-spacing: 3px;
+            color: var(--border2);
+            position: absolute;
+            top: 6px;
+            left: 12px;
+        }
+        .stats-inner { margin-top: 12px; }
+        .stat-row { display: flex; justify-content: space-between; align-items: baseline; }
+        .stat-key { color: var(--muted); }
+        .stat-val { color: var(--green); }
+        .stat-val.warn { color: var(--amber); }
+        .stat-val.ok { color: var(--cyan); }
+        .stat-val.bad { color: var(--red); }
+        /* ── Notice ── */
+        .notice {
+            background: rgba(255,171,0,0.07);
+            border-left: 2px solid var(--amber);
+            border-radius: 0 4px 4px 0;
+            padding: 9px 12px;
+            font-size: 0.72rem;
+            color: #c9a440;
+            margin-bottom: 12px;
+            font-family: var(--mono);
             line-height: 1.5;
         }
-        .notice {
-            font-size: 0.75rem;
-            color: #f59e0b;
-            background: rgba(245, 158, 11, 0.1);
-            padding: 8px;
-            border-radius: 4px;
-            margin-bottom: 15px;
-            border-left: 3px solid #f59e0b;
+        /* ── Status dot ── */
+        .status-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--muted);
+            display: inline-block;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+        .status-dot.live {
+            background: var(--green);
+            box-shadow: 0 0 6px var(--green);
+            animation: pulse 1.2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <h2>📹 TP-Link Tapo ULL (WebCodecs)</h2>
-    <div class="brand">Ultra Düşük Gecikmeli WebTransport Sender</div>
-    
-    <div class="notice">
-        <b>Not:</b> Bu sistem, WebRTC MediaStream yerine <strong>WebCodecs API</strong> ve <strong>WebTransport</strong> kullanılarak donanım seviyesinde sıfırdan yazılmıştır.
+<div class="layout">
+    <!-- Header -->
+    <div class="header">
+        <span class="header-title">Tapo C210 Live View</span>
+        <span class="header-badge">ZERO LATENCY</span>
+        <span class="header-sub">WebCodecs + QUIC | TP‑Link Ev Kamerası Emülatörü</span>
     </div>
-    <div class="section">
-        <label>🌐 WebTransport Sunucu URL</label>
-        <input type="text" id="wt-url" value="https://127.0.0.1:4433/stream">
-        
-        <label>🔐 Sertifika Hash (Başka bilgisayardan bağlanıyorsanız ZORUNLU)</label>
-        <input type="text" id="wt-hash" placeholder="CVM arayüzünden kopyaladığınız hash'i buraya yapıştırın" style="font-family: monospace; font-size: 0.8rem;">
-        
+    <!-- Connection Card -->
+    <div class="card">
+        <div class="card-label">01 — Bağlantı & NVR</div>
+        <!-- Transport mode selector -->
+        <div class="field">
+            <label>İletim Modu (Tapo Cloud / NVR)</label>
+            <div class="toggle-row">
+                <button class="toggle-btn active" id="mode-stream">Stream (Güvenilir)</button>
+                <button class="toggle-btn" id="mode-datagram">Datagram (En Düşük Gecikme)</button>
+            </div>
+        </div>
+        <div class="field">
+            <label>NVR / Cloud Sunucu URL</label>
+            <input type="text" id="wt-url" value="https://127.0.0.1:4433/stream">
+        </div>
+        <div class="field">
+            <label>Güvenlik Anahtarı (SHA-256 hex — uzaktan erişim için)</label>
+            <input type="text" id="wt-hash" placeholder="64 hex karakter — yerel ağda boş bırakabilirsiniz" style="font-size:0.72rem;">
+        </div>
+    </div>
+    <!-- Encode Card -->
+    <div class="card">
+        <div class="card-label">02 — Video Ayarları (Tapo Kamera Profili)</div>
         <div class="row">
-            <div>
-                <label>Kırpma Genişliği</label>
-                <input type="number" id="v-width" value="320">
+            <div class="field">
+                <label>Codec (Tapo C210: H.264 Baseline)</label>
+                <select id="v-codec">
+                    <option value="avc1.42001f">H.264 Baseline 3.1 (En Hızlı)</option>
+                    <option value="avc1.42002a" selected>H.264 Baseline 4.2 (Önerilen)</option>
+                    <option value="avc1.640028">H.264 High 4.0</option>
+                    <option value="vp8" disabled>VP8 (Alıcı desteklemez)</option>
+                    <option value="vp09.00.10.08" disabled>VP9 (Alıcı desteklemez)</option>
+                    <option value="av01.0.04M.08" disabled>AV1 (Alıcı desteklemez)</option>
+                </select>
             </div>
-            <div>
-                <label>Kırpma Yüksekliği</label>
-                <input type="number" id="v-height" value="320">
+            <div class="field">
+                <label>Bitrate (kbps) — Tapo önerilen</label>
+                <input type="number" id="v-bitrate" value="3000">
             </div>
-            <div>
+        </div>
+        <div class="row">
+            <div class="field">
+                <label>Kırpma Genişliği (px)</label>
+                <input type="number" id="v-width" value="640">
+            </div>
+            <div class="field">
+                <label>Kırpma Yüksekliği (px)</label>
+                <input type="number" id="v-height" value="360">
+            </div>
+            <div class="field">
                 <label>Hedef FPS</label>
                 <input type="number" id="v-fps" value="60">
             </div>
-        </div>
-        
-        <div class="row">
-            <div>
-                <label>🎬 Encoder Codec</label>
-                <select id="v-codec">
-                    <!-- Donanım hızlandırmalı en yaygın low-latency codecler -->
-                    <option value="avc1.42002A">H.264 (Constrained Baseline)</option>
-                    <option value="vp8">VP8</option>
-                    <option value="av01.0.04M.08">AV1 (Eğer destekleniyorsa)</option>
-                </select>
-            </div>
-            <div>
-                <label>⚡ Bitrate (kbps)</label>
-                <input type="number" id="v-bitrate" value="2000"> <!-- 2000 kbps = 2 Mbps -->
+            <div class="field">
+                <label>Kodlayıcı Kuyruğu</label>
+                <input type="number" id="v-queue" value="2" min="1" max="8">
             </div>
         </div>
-        
-        <button id="btn-camera">1. Ekranı Seç ve Yakala</button>
-        <button id="btn-stream" disabled>2. Buluta Aktar (WebTransport)</button>
     </div>
-    <div class="section">
-        <label>Önizleme (Merkez Kırpma)</label>
-        <div class="preview-container">
-            <canvas id="preview-canvas" width="320" height="320"></canvas>
+    <!-- Control Card -->
+    <div class="card">
+        <div class="card-label">03 — Kamera Kontrolü</div>
+        <button class="btn-primary" id="btn-capture">▶ Kamera Kaynağını Seç ve Başlat</button>
+        <button class="btn-secondary" id="btn-stream" disabled>⚡ Canlı Yayını NVR’a Aktar</button>
+    </div>
+    <!-- Preview Card -->
+    <div class="card">
+        <div class="card-label">04 — Canlı Görüntü (Önizleme)</div>
+        <div class="preview-wrap">
+            <canvas id="preview-canvas" width="640" height="360"></canvas>
+            <div class="preview-overlay" id="res-label" style="display:none"></div>
+            <div class="preview-placeholder" id="preview-placeholder">Kamera kaynağı bekleniyor… (Ekran paylaşımı ile simüle edilecek)</div>
         </div>
-        
-        <div class="stats-panel" id="stats-panel">
-            [DURUM] Bekliyor...<br>
-            [AĞ] 0 kbps | 0 FPS
+        <!-- Stats terminal -->
+        <div class="stats">
+            <div class="stats-inner" id="stats-inner">
+                <div class="stat-row">
+                    <span class="stat-key"><span class="status-dot" id="status-dot"></span>KAMERA DURUMU</span>
+                    <span class="stat-val" id="s-status">Bekliyor</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-key">AKTARIM MODU</span>
+                    <span class="stat-val ok" id="s-mode">Stream</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-key">FPS</span>
+                    <span class="stat-val" id="s-fps">—</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-key">BANT GENİŞLİĞİ</span>
+                    <span class="stat-val" id="s-kbps">— kbps</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-key">KODLAMA KUYRUĞU</span>
+                    <span class="stat-val" id="s-queue">—</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-key">DÜŞEN KARELER</span>
+                    <span class="stat-val" id="s-dropped">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-key">TOPLAM GÖNDERİLEN</span>
+                    <span class="stat-val" id="s-total">0 B</span>
+                </div>
+            </div>
         </div>
     </div>
-</div>
+</div><!-- /.layout -->
 <script>
-    // ══════════════════════════════════════════════════════════════════════════
-    // ★ MERKEZİ STATE (DURUM) YÖNETİMİ ★
-    // ══════════════════════════════════════════════════════════════════════════
-    const state = {
-        videoElement: document.createElement('video'),
-        canvas: document.getElementById('preview-canvas'),
-        ctx: document.getElementById('preview-canvas').getContext('2d', { 
-            alpha: false, 
-            desynchronized: true // GPU hızlandırması ve düşük gecikme için kritik
-        }),
-        transport: null,
-        wtWriter: null, // WebTransport Unidirectional Stream Writer
-        encoder: null,
-        isStreaming: false,
-        cameraActive: false,
-        frameCount: 0,
-        bytesSent: 0,
-        statsInterval: null
-    };
-    // UI Bileşenleri
-    const btnCamera = document.getElementById('btn-camera');
-    const btnStream = document.getElementById('btn-stream');
-    const statsPanel = document.getElementById('stats-panel');
-    const inputW = document.getElementById('v-width');
-    const inputH = document.getElementById('v-height');
-    const inputFPS = document.getElementById('v-fps');
-    const inputCodec = document.getElementById('v-codec');
-    const inputBitrate = document.getElementById('v-bitrate');
-    // ══════════════════════════════════════════════════════════════════════════
-    // 1. KAMERA BAŞLATMA VE RENDER DÖNGÜSÜ
-    // ══════════════════════════════════════════════════════════════════════════
-    btnCamera.addEventListener('click', async () => {
-        if (state.cameraActive) return;
-        try {
-            // Ekran paylaşımı (native çözünürlük)
-            const stream = await navigator.mediaDevices.getDisplayMedia({
-                video: { 
-                    frameRate: { ideal: parseInt(inputFPS.value) },
-                    cursor: "never"
-                },
-                audio: false
-            });
-            
-            state.videoElement.srcObject = stream;
-            state.videoElement.playsInline = true;
-            state.videoElement.muted = true;
-            await state.videoElement.play();
-            
-            // Hedef kırpma (crop) çözünürlüğünü Canvas'a uyarla
-            state.canvas.width = parseInt(inputW.value);
-            state.canvas.height = parseInt(inputH.value);
-            
-            state.cameraActive = true;
-            btnCamera.textContent = "✓ Ekran Yakalama Aktif";
-            btnCamera.disabled = true;
-            btnStream.disabled = false;
-            
-            // Render loop'u başlat (Mümkünse en düşük gecikmeli yöntem olan rVFC ile)
-            if ('requestVideoFrameCallback' in state.videoElement) {
-                state.videoElement.requestVideoFrameCallback(renderLoopRVFC);
-            } else {
-                requestAnimationFrame(renderLoopRAF);
-            }
-        } catch (e) {
-            alert("Ekran yakalama hatası: " + e.message);
-        }
-    });
-    // Donanım destekli, ekrana gelmeden önceki en saf anı yakalayan döngü (requestVideoFrameCallback)
-    function renderLoopRVFC(now, metadata) {
-        if (!state.cameraActive) return;
-        
-        // 1. Görüntünün merkezini Canvas boyutuna göre kırp (Crop Center)
-        const srcW = state.videoElement.videoWidth;
-        const srcH = state.videoElement.videoHeight;
-        const cropW = state.canvas.width;
-        const cropH = state.canvas.height;
-        
-        const startX = Math.max(0, Math.floor((srcW - cropW) / 2));
-        const startY = Math.max(0, Math.floor((srcH - cropH) / 2));
-        const drawW = Math.min(srcW, cropW);
-        const drawH = Math.min(srcH, cropH);
-        
-        state.ctx.drawImage(
-            state.videoElement, 
-            startX, startY, drawW, drawH, // Kaynak x, y, w, h
-            0, 0, drawW, drawH            // Hedef x, y, w, h
-        );
-        
-        // 2. Eğer aktarım başladıysa Frame'i Encoder'a yolla
-        encodeCurrentFrame(metadata.mediaTime * 1000000); // mediaTime saniye cinsindendir, mikrosaniyeye çevir
-        
-        state.videoElement.requestVideoFrameCallback(renderLoopRVFC);
-    }
-    // Fallback: Standart requestAnimationFrame
-    function renderLoopRAF() {
-        if (!state.cameraActive) return;
-        
-        const srcW = state.videoElement.videoWidth;
-        const srcH = state.videoElement.videoHeight;
-        const cropW = state.canvas.width;
-        const cropH = state.canvas.height;
-        
-        const startX = Math.max(0, Math.floor((srcW - cropW) / 2));
-        const startY = Math.max(0, Math.floor((srcH - cropH) / 2));
-        const drawW = Math.min(srcW, cropW);
-        const drawH = Math.min(srcH, cropH);
-        
-        state.ctx.drawImage(
-            state.videoElement, 
-            startX, startY, drawW, drawH,
-            0, 0, drawW, drawH
-        );
-        
-        encodeCurrentFrame(performance.now() * 1000);
-        requestAnimationFrame(renderLoopRAF);
-    }
-    function encodeCurrentFrame(timestampMicroseconds) {
-        if (state.isStreaming && state.encoder && state.encoder.state === "configured") {
-            const fps = parseInt(inputFPS.value);
-            // Her X saniyede bir Keyframe zorla (örneğin her 2 saniyede bir)
-            const insertKeyframe = (state.frameCount % (fps * 2) === 0);
-            
-            // Canvas'tan GPU'daki VideoFrame nesnesini kopar
-            const vf = new VideoFrame(state.canvas, { timestamp: timestampMicroseconds });
-            
-            try {
-                state.encoder.encode(vf, { keyFrame: insertKeyframe });
-            } catch (e) {
-                console.error("Encoding error:", e);
-            }
-            
-            // Frame hafızasını hemen boşalt (memory leak engellemek için KRİTİK)
-            vf.close();
-            state.frameCount++;
-        }
-    }
-    // ══════════════════════════════════════════════════════════════════════════
-    // 2. WEBTRANSPORT & WEBCODECS BAŞLATMA
-    // ══════════════════════════════════════════════════════════════════════════
-    btnStream.addEventListener('click', async () => {
-        if (state.isStreaming) {
-            stopStream();
-            return;
-        }
-        
-        try {
-            updateStats("[BAĞLANTI] WebTransport sunucusuna bağlanılıyor...");
-            const url = document.getElementById('wt-url').value;
-            const hashHex = document.getElementById('wt-hash').value.trim();
-            
-            let wtOptions = {};
-            if (hashHex && hashHex.length === 64) {
-                // Hex string'i Uint8Array'e çevir
-                const hashBytes = new Uint8Array(hashHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-                wtOptions = {
-                    serverCertificateHashes: [{ algorithm: "sha-256", value: hashBytes }]
-                };
-                console.log("Using certificate hash:", hashHex);
-            }
-            
-            // WebTransport (QUIC tabanlı UDP bağlantısı)
-            state.transport = new WebTransport(url, wtOptions);
-            await state.transport.ready;
-            
-            updateStats("[BAĞLANTI] Başarılı! Video kanalı açılıyor...");
-            
-            // Unidirectional Stream oluştur (Reliable, ama QUIC sayesinde TCP gibi tüm yayını bloke etmez)
-            // İsterseniz Datagram (transport.datagrams) da kullanılabilir ancak MTU sınırlaması nedeniyle parçalama (fragmentation) gerekir.
-            const wtStream = await state.transport.createUnidirectionalStream();
-            state.wtWriter = wtStream.getWriter();
-            
-            updateStats("[ENCODER] WebCodecs VideoEncoder başlatılıyor...");
-            initEncoder();
-            
-            state.isStreaming = true;
-            btnStream.textContent = "2. Aktarımı Durdur (WebTransport)";
-            btnStream.classList.add('stop');
-            
-            startStatsMonitor();
-            
-        } catch (e) {
-            console.error("Bağlantı Hatası:", e);
-            alert("WebTransport Hatası:\nSunucu çalışmıyor olabilir veya SSL sertifika hatası (localhost harici).");
-            stopStream();
-        }
-    });
-    function initEncoder() {
-        const codec = inputCodec.value;
-        const bitrateBps = parseInt(inputBitrate.value) * 1000;
-        const fps = parseInt(inputFPS.value);
-        
-        state.encoder = new VideoEncoder({
-            output: handleEncodedChunk,
-            error: (e) => {
-                console.error("[WebCodecs] Encoder çöktü:", e);
-                stopStream();
-            }
+// ═══════════════════════════════════════════════════════════════
+// TP‑LINK TAPO EV KAMERA SIMÜLASYONU — WebCodecs + WebTransport
+// Gerçek bir Tapo C210/C200 kamerasının düşük gecikmeli canlı
+// yayın pipeline'ını taklit eder.
+// Kaynak olarak ekran paylaşımı (DisplayMedia) kullanılır;
+// bu sayede herhangi bir uygulama / masaüstü kamera görüntüsü
+// gibi NVR'a aktarılabilir.
+//
+// Kritik optimizasyonlar (Tapo donanımından ilhamla):
+//  1. Canvas tabanlı kırpma/ölçekleme → WebCodecs ile uyumlu
+//  2. Encoder backpressure       → encodeQueueSize ile kare atlama
+//  3. Datagram modu (QUIC)       → UDP seviyesinde gecikme
+//  4. CBR + realtime + L1T1      → sabit bit hızı, anlık kodlama
+//  5. Auto-reconnect             → bağlantı kopsa da yayına devam
+// ═══════════════════════════════════════════════════════════════
+// ── Sabitler (Tapo profili) ────────────────────────────────────
+const MAX_DATAGRAM_PAYLOAD = 1100;  // QUIC MTU sınırı
+const KEY_INTERVAL_SEC     = 2;     // her 2 saniyede bir anahtar kare (Tapo varsayılan)
+const RECONNECT_DELAY_MS   = 1500;  // kopuk bağlantıda yeniden bağlanma
+// ── Durum (Kamera emülatörü state) ─────────────────────────────
+const S = {
+    stream:        null,  // Ekran yakalama akışı (sanal kamera)
+    track:         null,  // Video track
+    processor:     null,  // MediaStreamTrackProcessor
+    frameReader:   null,  // ReadableStreamDefaultReader<VideoFrame>
+    transport:     null,  // WebTransport bağlantısı
+    encoder:       null,  // VideoEncoder (Tapo H.264)
+    // Stream modu
+    wtStream:      null,
+    wtWriter:      null,
+    // Datagram modu
+    dtWriter:      null,
+    // Bayraklar
+    capturing:     false,
+    streaming:     false,
+    useDatagrams:  false,
+    // Metrikler (Tapo panosu)
+    frameCount:    0,
+    droppedFrames: 0,
+    bytesSent:     0,
+    statsTimer:    null,
+    frameSeq:      0,
+    sessionId:     (Math.random() * 0xFFFF) | 0,
+    // Canvas
+    canvas:        document.getElementById('preview-canvas'),
+    ctx:           null,
+};
+S.ctx = S.canvas.getContext('2d', { alpha: false, desynchronized: true, willReadFrequently: false });
+// ── UI referansları ────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const btnCapture  = $('btn-capture');
+const btnStream   = $('btn-stream');
+const modeStream  = $('mode-stream');
+const modeDgram   = $('mode-datagram');
+// ── Aktarım modu seçimi (Tapo Cloud / NVR Direct) ─────────────
+modeStream.addEventListener('click', () => {
+    S.useDatagrams = false;
+    modeStream.classList.add('active');
+    modeDgram.classList.remove('active');
+    $('s-mode').textContent = 'Stream (Güvenilir)';
+});
+modeDgram.addEventListener('click', () => {
+    S.useDatagrams = true;
+    modeDgram.classList.add('active');
+    modeStream.classList.remove('active');
+    $('s-mode').textContent = 'Datagram (Düşük Gecikme)';
+});
+// ═══════════════════════════════════════════════════════════════
+// 1. KAMERA KAYNAĞI BAŞLATMA (Gerçek kamera yerine DisplayMedia)
+// ═══════════════════════════════════════════════════════════════
+btnCapture.addEventListener('click', async () => {
+    if (S.capturing) return;
+    try {
+        const fps = parseInt($('v-fps').value) || 60;
+        // Tapo kamera simülasyonu: ekran paylaşımı izni iste
+        S.stream = await navigator.mediaDevices.getDisplayMedia({
+            video: {
+                frameRate: { ideal: fps, max: fps },
+                width:     { ideal: 3840 },
+                height:    { ideal: 2160 },
+                cursor:    'never',
+                displaySurface: 'window',
+            },
+            audio: false,
+            selfBrowserSurface: 'exclude',
+            surfaceSwitching:   'exclude',
         });
-        
-        state.encoder.configure({
-            codec: codec,
-            width: state.canvas.width,
-            height: state.canvas.height,
-            bitrate: bitrateBps,
-            framerate: fps,
-            // Gerçek zamanlı, sıfır gecikmeli (zero-latency) encoding ayarı
-            latencyMode: 'realtime', 
-            // H.264 için standart format (decoder tarafında description olmadan çalışabilmesi için annexb avantajlıdır)
-            avc: { format: 'annexb' } 
-        });
-    }
-    // ══════════════════════════════════════════════════════════════════════════
-    // 3. PAKETLEME VE GÖNDERME (CHUNKING)
-    // ══════════════════════════════════════════════════════════════════════════
-    async function handleEncodedChunk(chunk, metadata) {
-        if (!state.isStreaming || !state.wtWriter) return;
-        
-        const chunkData = new Uint8Array(chunk.byteLength);
-        chunk.copyTo(chunkData);
-        
-        // ── Kendi Özel Frame Protokolümüz ──
-        // [1 Byte] Frame Tipi (0=Delta, 1=KeyFrame, 2=DecoderConfig)
-        // [8 Byte] Timestamp (Float64)
-        // [4 Byte] Payload Length (Uint32)
-        // [N Byte] Gerçek Video Verisi
-        
-        // Decoder'ın (Receiver) yayını açabilmesi için ilk gelen metadata.description bilgisini yollamamız şarttır.
-        if (metadata && metadata.decoderConfig && metadata.decoderConfig.description) {
-            const desc = new Uint8Array(metadata.decoderConfig.description);
-            sendWebTransportPacket(2, 0, desc);
-        }
-        
-        const isKey = chunk.type === 'key' ? 1 : 0;
-        sendWebTransportPacket(isKey, chunk.timestamp, chunkData);
-    }
-    
-    async function sendWebTransportPacket(type, timestamp, data) {
-        if (!state.wtWriter) return;
-        
-        // Header oluşturma (13 byte)
-        const header = new ArrayBuffer(13);
-        const view = new DataView(header);
-        view.setUint8(0, type);
-        view.setFloat64(1, timestamp, true); // Little endian
-        view.setUint32(9, data.byteLength, true); // Little endian
-        
-        // Header ve veriyi birleştir
-        const packet = new Uint8Array(13 + data.byteLength);
-        packet.set(new Uint8Array(header), 0);
-        packet.set(data, 13);
-        
-        try {
-            // WebTransport Stream üzerinden veriyi yolla
-            await state.wtWriter.write(packet);
-            state.bytesSent += packet.byteLength;
-        } catch (e) {
-            console.warn("Paket yazma hatası (Kopmuş olabilir):", e);
-            stopStream();
-        }
-    }
-    // ══════════════════════════════════════════════════════════════════════════
-    // 4. KONTROL VE İSTATİSTİK YARDIMCILARI
-    // ══════════════════════════════════════════════════════════════════════════
-    function stopStream() {
-        state.isStreaming = false;
-        
-        if (state.statsInterval) {
-            clearInterval(state.statsInterval);
-            state.statsInterval = null;
-        }
-        
-        if (state.encoder && state.encoder.state !== "closed") {
-            state.encoder.close();
-        }
-        state.encoder = null;
-        
-        if (state.wtWriter) {
-            state.wtWriter.close().catch(()=>{});
-            state.wtWriter = null;
-        }
-        
-        if (state.transport) {
-            state.transport.close();
-            state.transport = null;
-        }
-        
-        btnStream.textContent = "2. Buluta Aktar (WebTransport)";
-        btnStream.classList.remove('stop');
-        updateStats("[DURUM] Yayın durduruldu.");
-    }
-    function updateStats(msg) {
-        const lines = statsPanel.innerHTML.split('<br>');
-        if (lines.length > 1) {
-            statsPanel.innerHTML = msg + "<br>" + lines[1];
+        S.track = S.stream.getVideoTracks()[0];
+        // Canvas'ı Tapo profiline uygun kırpma boyutuna ayarla
+        const cropW = parseInt($('v-width').value);
+        const cropH = parseInt($('v-height').value);
+        S.canvas.width  = cropW;
+        S.canvas.height = cropH;
+        S.capturing = true;
+        $('preview-placeholder').style.display = 'none';
+        $('res-label').style.display = 'block';
+        btnCapture.textContent = '✓ Kamera Kaynağı Aktif';
+        btnCapture.disabled = true;
+        btnStream.disabled = false;
+        // MediaStreamTrackProcessor ile sıfır kopya pipeline (Tapo donanım hızlandırması)
+        if ('MediaStreamTrackProcessor' in window) {
+            S.processor   = new MediaStreamTrackProcessor({ track: S.track });
+            S.frameReader = S.processor.readable.getReader();
+            runFrameLoop();
         } else {
-            statsPanel.innerHTML = msg;
+            // Eski tarayıcı fallback (canvas tabanlı)
+            console.warn('[Tapo] MediaStreamTrackProcessor yok, canvas fallback aktif');
+            startCanvasFallback();
+        }
+        // Kullanıcı paylaşımı durdurursa kamera durur
+        S.track.addEventListener('ended', () => stopAll());
+    } catch (e) {
+        alert('Kamera başlatılamadı: ' + e.message);
+    }
+});
+// ── Ana kare döngüsü (Tapo düşük gecikme pipeline) ─────────────
+async function runFrameLoop() {
+    while (S.capturing) {
+        let frame;
+        try {
+            const result = await S.frameReader.read();
+            if (result.done) break;
+            frame = result.value;
+        } catch {
+            break;
+        }
+        try {
+            // ── Önizleme tuvaline kırp ve çiz ──
+            drawPreview(frame);
+            // ── Encode: Tapo backpressure koruması ──
+            if (S.streaming && S.encoder && S.encoder.state === 'configured') {
+                const maxQ = parseInt($('v-queue').value) || 2;
+                if (S.encoder.encodeQueueSize < maxQ) {
+                    const fps    = parseInt($('v-fps').value) || 60;
+                    const isKey  = (S.frameCount % (fps * KEY_INTERVAL_SEC) === 0);
+                    // Canvas'tan tam çözünürlükte yeni VideoFrame oluştur
+                    const codedFrame = new VideoFrame(S.canvas, { timestamp: frame.timestamp });
+                    S.encoder.encode(codedFrame, { keyFrame: isKey });
+                    codedFrame.close();
+                    S.frameCount++;
+                } else {
+                    // Encoder kuyruğu dolu → kare atla (gecikme birikmesin)
+                    S.droppedFrames++;
+                }
+            }
+        } finally {
+            frame.close(); // Bellek sızıntısı yok
         }
     }
-    function startStatsMonitor() {
-        let lastBytes = 0;
-        let lastFrames = 0;
-        
-        state.statsInterval = setInterval(() => {
-            const currentBytes = state.bytesSent;
-            const currentFrames = state.frameCount;
-            
-            const bps = (currentBytes - lastBytes) * 8; // saniyedeki bit
-            const kbps = (bps / 1000).toFixed(1);
-            const fps = (currentFrames - lastFrames);
-            
-            statsPanel.innerHTML = `[DURUM] YAYINDA (WebCodecs + QUIC/WebTransport)<br>[AĞ] Gönderilen: <span style="color:#fff">${fps} FPS</span> | <span style="color:#fff">${kbps} kbps</span>`;
-            
-            lastBytes = currentBytes;
-            lastFrames = currentFrames;
-        }, 1000);
+}
+// ── Önizleme: merkezden kırp (Tapo görüntü işleme) ────────────
+let lastSrcW = 0, lastSrcH = 0;
+function drawPreview(source) {
+    const srcW  = source.displayWidth || source.videoWidth || 0;
+    const srcH  = source.displayHeight || source.videoHeight || 0;
+    const cropW = S.canvas.width;
+    const cropH = S.canvas.height;
+    const sx = Math.max(0, Math.floor((srcW - cropW) / 2));
+    const sy = Math.max(0, Math.floor((srcH - cropH) / 2));
+    const sw = Math.min(srcW, cropW);
+    const sh = Math.min(srcH, cropH);
+    S.ctx.drawImage(source, sx, sy, sw, sh, 0, 0, sw, sh);
+    if (srcW > 0 && srcH > 0 && (srcW !== lastSrcW || srcH !== lastSrcH)) {
+        $('res-label').textContent = `${srcW}×${srcH} → ${cropW}×${cropH}`;
+        lastSrcW = srcW;
+        lastSrcH = srcH;
     }
+}
+// ── Canvas fallback (MediaStreamTrackProcessor yoksa) ──────────
+function startCanvasFallback() {
+    const vid = document.createElement('video');
+    vid.srcObject = S.stream;
+    vid.muted     = true;
+    vid.playsInline = true;
+    vid.play();
+    function rafLoop() {
+        if (!S.capturing) return;
+        if (vid.readyState >= 2) {
+            drawPreview(vid);
+            if (S.streaming && S.encoder && S.encoder.state === 'configured') {
+                const fps   = parseInt($('v-fps').value) || 60;
+                const isKey = (S.frameCount % (fps * KEY_INTERVAL_SEC) === 0);
+                const ts    = performance.now() * 1000;
+                const vf    = new VideoFrame(S.canvas, { timestamp: ts });
+                if (S.encoder.encodeQueueSize < (parseInt($('v-queue').value) || 2)) {
+                    S.encoder.encode(vf, { keyFrame: isKey });
+                    S.frameCount++;
+                } else {
+                    S.droppedFrames++;
+                }
+                vf.close();
+            }
+        }
+        requestAnimationFrame(rafLoop);
+    }
+    requestAnimationFrame(rafLoop);
+}
+// ═══════════════════════════════════════════════════════════════
+// 2. NVR BAĞLANTISI (WebTransport)
+// ═══════════════════════════════════════════════════════════════
+btnStream.addEventListener('click', async () => {
+    if (S.streaming) { stopStream(); return; }
+    await startStream();
+});
+async function startStream() {
+    try {
+        setStatus('NVR’a bağlanılıyor…', '');
+        const url     = $('wt-url').value.trim();
+        const hashHex = $('wt-hash').value.trim();
+        let wtOptions = {};
+        if (hashHex.length === 64) {
+            const hashBytes = new Uint8Array(
+                hashHex.match(/.{1,2}/g).map(b => parseInt(b, 16))
+            );
+            wtOptions = {
+                serverCertificateHashes: [{ algorithm: 'sha-256', value: hashBytes }]
+            };
+        }
+        S.transport = new WebTransport(url, wtOptions);
+        await S.transport.ready;
+        setStatus('NVR’a bağlı', 'ok');
+        if (S.useDatagrams) {
+            // Datagram modu — en düşük gecikme, gerçek zamanlı kamera gibi
+            S.dtWriter = S.transport.datagrams.writable.getWriter();
+            setStatus('Datagram Aktif', 'ok');
+        } else {
+            // Stream modu — güvenilir sıralı iletim
+            S.wtStream = await S.transport.createUnidirectionalStream();
+            S.wtWriter = S.wtStream.getWriter();
+            setStatus('Stream Aktif', 'ok');
+        }
+        // Tapo encoder'ı başlat
+        initEncoder();
+        S.streaming = true;
+        btnStream.textContent = '⏹ Yayını Durdur';
+        btnStream.className   = 'btn-stop';
+        $('status-dot').classList.add('live');
+        startStatsTimer();
+        // Bağlantı kopma izleyicisi (Tapo otomatik yeniden bağlanma)
+        S.transport.closed
+            .then(() => {
+                if (S.streaming) {
+                    console.warn('[Tapo] NVR bağlantısı koptu, yeniden bağlanılıyor…');
+                    setTimeout(startStream, RECONNECT_DELAY_MS);
+                }
+            })
+            .catch(() => {});
+    } catch (e) {
+        console.error('[Tapo] NVR bağlantı hatası:', e);
+        setStatus('Hata: ' + e.message, 'bad');
+        btnStream.textContent  = '⚡ Canlı Yayını NVR’a Aktar';
+        btnStream.className    = 'btn-secondary';
+    }
+}
+function stopStream() {
+    S.streaming = false;
+    clearInterval(S.statsTimer);
+    S.statsTimer = null;
+    try { S.encoder?.close(); } catch {}
+    S.encoder = null;
+    try { S.wtWriter?.close(); } catch {}
+    S.wtWriter = null;
+    try { S.dtWriter?.close(); } catch {}
+    S.dtWriter = null;
+    try { S.transport?.close(); } catch {}
+    S.transport = null;
+    btnStream.textContent = '⚡ Canlı Yayını NVR’a Aktar';
+    btnStream.className   = 'btn-secondary';
+    $('status-dot').classList.remove('live');
+    setStatus('Yayın durduruldu', '');
+}
+function stopAll() {
+    stopStream();
+    S.capturing = false;
+    try { S.frameReader?.cancel(); } catch {}
+    try { S.track?.stop(); } catch {}
+    S.stream = null;
+    S.track  = null;
+    btnCapture.textContent = '▶ Kamera Kaynağını Seç ve Başlat';
+    btnCapture.disabled = false;
+    btnStream.disabled  = true;
+    $('preview-placeholder').style.display = 'block';
+    $('res-label').style.display = 'none';
+}
+// ═══════════════════════════════════════════════════════════════
+// 3. TAPO VIDEO ENCODER (WebCodecs, düşük gecikme profili)
+// ═══════════════════════════════════════════════════════════════
+function initEncoder() {
+    const codec      = $('v-codec').value;
+    const bitrateBps = (parseInt($('v-bitrate').value) || 3000) * 1000;
+    const fps        = parseInt($('v-fps').value) || 60;
+    const cropW      = S.canvas.width;
+    const cropH      = S.canvas.height;
+    S.encoder = new VideoEncoder({
+        output: handleEncodedChunk,
+        error:  e => {
+            console.error('[Tapo Encoder] Çöktü:', e);
+            stopStream();
+        },
+    });
+    const config = {
+        codec,
+        width:     cropW,
+        height:    cropH,
+        bitrate:   bitrateBps,
+        framerate: fps,
+        // ─── Tapo gerçek zamanlı profili ──────────────────────
+        latencyMode:     'realtime',  // tampon yok
+        bitrateMode:     'constant',  // CBR, bant genişliği tahmin edilebilir
+        avc: { format: 'annexb' },    // SPS/PPS her anahtar karede
+    };
+    // L1T1: tek katman, tek geçici seviye — donanım kodlayıcıya uygun
+    if (codec.startsWith('avc') || codec.startsWith('vp') || codec.startsWith('av01')) {
+        config.scalabilityMode = 'L1T1';
+    }
+    // Destek kontrolü (arka planda)
+    VideoEncoder.isConfigSupported(config).then(result => {
+        if (!result.supported) {
+            console.warn('[Tapo] Encoder yapılandırması desteklenmiyor, deneniyor…');
+        }
+    }).catch(() => {});
+    S.encoder.configure(config);
+    S.frameCount = 0;
+}
+// ═══════════════════════════════════════════════════════════════
+// 4. KODLANMIŞ KARE GÖNDERME (Tapo özel hafif protokol)
+// ═══════════════════════════════════════════════════════════════
+// Header (13 byte):
+// [0]    : tip (0=delta, 1=keyframe, 2=decoderConfig)
+// [1..8] : timestamp μs (Float64 LE)
+// [9..12]: payload uzunluğu (Uint32 LE)
+// [13..N]: payload
+function buildPacket(type, timestamp, data) {
+    const pkt  = new Uint8Array(13 + data.byteLength);
+    const view = new DataView(pkt.buffer);
+    view.setUint8(0, type);
+    view.setFloat64(1, timestamp, true);
+    view.setUint32(9, data.byteLength, true);
+    pkt.set(data, 13);
+    return pkt;
+}
+async function handleEncodedChunk(chunk, metadata) {
+    if (!S.streaming) return;
+    // Alıcının kod çözücüyü başlatabilmesi için yapılandırma bilgisi
+    if (metadata?.decoderConfig?.description) {
+        const desc = new Uint8Array(metadata.decoderConfig.description);
+        await sendPacket(2, 0, desc);
+    }
+    const data  = new Uint8Array(chunk.byteLength);
+    chunk.copyTo(data);
+    const type  = chunk.type === 'key' ? 1 : 0;
+    await sendPacket(type, chunk.timestamp, data);
+}
+async function sendPacket(type, timestamp, data) {
+    if (S.useDatagrams) {
+        await sendViaDatagrams(type, timestamp, data);
+    } else {
+        await sendViaStream(type, timestamp, data);
+    }
+}
+// ── Stream modu (güvenilir) ────────────────────────────────────
+async function sendViaStream(type, timestamp, data) {
+    if (!S.wtWriter) return;
+    const pkt = buildPacket(type, timestamp, data);
+    try {
+        await S.wtWriter.write(pkt);
+        S.bytesSent += pkt.byteLength;
+    } catch (e) {
+        console.warn('[Tapo Stream] Yazma hatası:', e);
+        if (S.streaming) stopStream();
+    }
+}
+// ── Datagram modu (parçalı, en düşük gecikme) ─────────────────
+// Datagram header (20 byte):
+// [0..1]  : session ID (Uint16 LE)
+// [2..5]  : frame seq  (Uint32 LE)
+// [6..7]  : frag index (Uint16 LE)
+// [8..9]  : total frags(Uint16 LE)
+// [10]    : frame type
+// [11]    : flags (bit0 = hasTimestamp)
+// [12..19]: timestamp (Float64 LE, yalnızca ilk fragment)
+async function sendViaDatagrams(type, timestamp, data) {
+    if (!S.dtWriter) return;
+    const fid       = S.frameSeq++ & 0xFFFFFFFF;
+    const totalFrags = Math.ceil(data.byteLength / MAX_DATAGRAM_PAYLOAD) || 1;
+    for (let i = 0; i < totalFrags; i++) {
+        const slice     = data.slice(i * MAX_DATAGRAM_PAYLOAD, (i + 1) * MAX_DATAGRAM_PAYLOAD);
+        const hasTs     = i === 0 ? 1 : 0;
+        const hdrSize   = hasTs ? 20 : 12;
+        const dgram     = new Uint8Array(hdrSize + slice.byteLength);
+        const view      = new DataView(dgram.buffer);
+        view.setUint16(0, S.sessionId, true);
+        view.setUint32(2, fid,         true);
+        view.setUint16(6, i,           true);
+        view.setUint16(8, totalFrags,  true);
+        view.setUint8(10, type);
+        view.setUint8(11, hasTs);
+        if (hasTs) view.setFloat64(12, timestamp, true);
+        dgram.set(slice, hdrSize);
+        try {
+            await S.dtWriter.write(dgram);
+            S.bytesSent += dgram.byteLength;
+        } catch (e) {
+            // Datagramlarda kayıp normaldir, sessizce devam et
+            console.debug('[Tapo DG] Gönderim hatası (normal):', e.message);
+        }
+    }
+}
+// ═══════════════════════════════════════════════════════════════
+// 5. İSTATİSTİK PANOSU (Tapo kamera bilgileri)
+// ═══════════════════════════════════════════════════════════════
+function startStatsTimer() {
+    let prevBytes  = 0;
+    let prevFrames = 0;
+    S.statsTimer = setInterval(() => {
+        const fps    = S.frameCount - prevFrames;
+        const bps    = (S.bytesSent - prevBytes) * 8;
+        const kbps   = (bps / 1000).toFixed(0);
+        const qsize  = S.encoder?.encodeQueueSize ?? 0;
+        prevBytes  = S.bytesSent;
+        prevFrames = S.frameCount;
+        $('s-fps').textContent    = fps + ' fps';
+        $('s-fps').className      = 'stat-val' + (fps < 20 ? ' warn' : '');
+        $('s-kbps').textContent   = kbps + ' kbps';
+        $('s-queue').textContent  = qsize;
+        $('s-queue').className    = 'stat-val' + (qsize >= 2 ? ' warn' : '');
+        $('s-dropped').textContent = S.droppedFrames;
+        $('s-dropped').className  = 'stat-val' + (S.droppedFrames > 5 ? ' bad' : '');
+        $('s-total').textContent  = formatBytes(S.bytesSent);
+    }, 1000);
+}
+function setStatus(msg, cls) {
+    const el = $('s-status');
+    el.textContent = msg;
+    el.className = 'stat-val' + (cls ? ' ' + cls : '');
+}
+function formatBytes(b) {
+    if (b < 1024)     return b + ' B';
+    if (b < 1048576)  return (b / 1024).toFixed(1) + ' KB';
+    return (b / 1048576).toFixed(2) + ' MB';
+}
 </script>
 </body>
 </html>
