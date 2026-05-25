@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TP-Link Tapo Kamera Yöneticisi</title>
-    <meta name="description" content="TP-Link Tapo akıllı ev güvenlik kameralarınızı web üzerinden yönetin">
+    <title>TP-Link Tapo ULL Sender (WebCodecs)</title>
     <style>
         :root {
             --bg-color: #0b0b0e;
@@ -30,39 +29,26 @@
             align-items: center;
             min-height: 100vh;
             padding: 20px;
-            position: relative;
         }
         .container {
             background-color: var(--surface-color);
             border: 1px solid var(--border-color);
             border-radius: 12px;
             width: 100%;
-            max-width: 550px;
+            max-width: 650px;
             padding: 24px;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
-        .container.hidden {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
         }
         h2 {
             font-size: 1.25rem;
             font-weight: 600;
             margin-bottom: 4px;
-            letter-spacing: 0.05em;
             color: var(--accent-color);
         }
         .brand {
             font-size: 0.7rem;
             color: var(--text-muted);
             margin-bottom: 16px;
-        }
-        p.subtitle {
-            font-size: 0.875rem;
-            color: var(--text-muted);
-            margin-bottom: 20px;
         }
         .section {
             margin-bottom: 20px;
@@ -121,1071 +107,425 @@
             transition: background-color 0.15s, transform 0.1s;
             margin-bottom: 10px;
         }
-        button:hover {
-            background-color: var(--accent-hover);
-        }
-        button:active {
-            transform: scale(0.98);
-        }
-        button.stop {
-            background-color: var(--danger-color);
-            color: #fff;
-        }
-        button.stop:hover {
-            background-color: #ff6b6b;
-        }
-        .status-panel {
-            background-color: #1a1a23;
-            border-radius: 6px;
-            padding: 12px;
-            font-size: 0.85rem;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .status-item {
-            display: flex;
-            justify-content: space-between;
-        }
-        .status-val {
-            font-weight: 600;
-        }
-        .status-active {
-            color: var(--accent-color);
-        }
-        .status-inactive {
-            color: var(--danger-color);
-        }
+        button:hover { background-color: var(--accent-hover); }
+        button:active { transform: scale(0.98); }
+        button:disabled { background-color: #2a2a35; color: #555; cursor: not-allowed; }
+        button.stop { background-color: var(--danger-color); color: #fff; }
+        button.stop:hover { background-color: #ff6b6b; }
         .preview-container {
-            margin-top: 15px;
             border: 1px solid var(--border-color);
             border-radius: 6px;
             overflow: hidden;
             display: flex;
             justify-content: center;
             background-color: #000;
+            position: relative;
         }
         #preview-canvas {
             display: block;
             max-width: 100%;
             height: auto;
         }
-        .toggle-btn {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            width: auto;
-            min-width: 120px;
-            background-color: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--border-color);
-            color: var(--text-color);
+        .stats-panel {
+            background-color: #0d0d12;
+            border: 1px solid #1a1a23;
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 0.85rem;
+            font-family: monospace;
+            color: var(--accent-color);
+            margin-top: 15px;
+            line-height: 1.5;
+        }
+        .notice {
             font-size: 0.75rem;
-            padding: 10px 16px;
-            margin: 0;
-            z-index: 9999;
-        }
-        .toggle-btn:hover {
-            background-color: rgba(0, 0, 0, 0.9);
-            color: var(--accent-color);
-        }
-        .device-info {
-            background-color: #0d0d12;
-            border-radius: 6px;
-            padding: 8px 12px;
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 12px;
-        }
-        .camera-list {
-            margin-bottom: 12px;
-        }
-        .camera-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            color: #f59e0b;
+            background: rgba(245, 158, 11, 0.1);
             padding: 8px;
-            background-color: #0d0d12;
-            border-radius: 6px;
-            margin-bottom: 6px;
-            font-size: 0.8rem;
-        }
-        .camera-item .online {
-            color: var(--accent-color);
-            margin-left: auto;
-        }
-        .camera-item .offline {
-            color: var(--danger-color);
-            margin-left: auto;
-        }
-        .bitrate-info {
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            margin-top: 4px;
-            text-align: center;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            border-left: 3px solid #f59e0b;
         }
     </style>
 </head>
 <body>
-<div class="container" id="mainContainer">
-    <h2>📹 TP-Link Tapo</h2>
-    <div class="brand">TP-Link Corporation Limited</div>
-    <p class="subtitle">Ev güvenlik kameralarınızı uzaktan izleyin</p>
-    <div class="section">
-        <label>🔌 Bağlı Cihazlar</label>
-        <div class="camera-list">
-            <div class="camera-item">
-                <span>📷</span>
-                <span>Tapo C210 (Oturma Odası)</span>
-                <span class="online">● Çevrimiçi</span>
-            </div>
-            <div class="camera-item">
-                <span>📷</span>
-                <span>Tapo C310 (Bahçe)</span>
-                <span class="online">● Çevrimiçi</span>
-            </div>
-            <div class="camera-item">
-                <span>📷</span>
-                <span>Tapo C200 (Koridor)</span>
-                <span class="online">● Çevrimiçi</span>
-            </div>
-        </div>
-        <div class="device-info">
-            <span>🌐 Ağ Geçidi: Tapo H100</span>
-            <span>📶 Sinyal: İyi</span>
-        </div>
+<div class="container">
+    <h2>📹 TP-Link Tapo ULL (WebCodecs)</h2>
+    <div class="brand">Ultra Düşük Gecikmeli WebTransport Sender</div>
+    
+    <div class="notice">
+        <b>Not:</b> Bu sistem, WebRTC MediaStream yerine <strong>WebCodecs API</strong> ve <strong>WebTransport</strong> kullanılarak donanım seviyesinde sıfırdan yazılmıştır.
     </div>
     <div class="section">
-        <label for="receiver-url">☁️ Bulut Sunucu Adresi</label>
-        <input type="text" id="receiver-url" placeholder="http://192.168.1.100:9000" value="http://localhost:9000">
+        <label>🌐 WebTransport Sunucu URL</label>
+        <input type="text" id="wt-url" value="https://127.0.0.1:4433/stream">
         
-        <label for="peer-id-input">📱 Cihaz Kimliği (MAC Adresi)</label>
-        <input type="text" id="peer-id-input" placeholder="TAPO-XX:XX:XX" value="TAPO-C210-F4:8C:50">
+        <label>🔐 Sertifika Hash (Başka bilgisayardan bağlanıyorsanız ZORUNLU)</label>
+        <input type="text" id="wt-hash" placeholder="CVM arayüzünden kopyaladığınız hash'i buraya yapıştırın" style="font-family: monospace; font-size: 0.8rem;">
         
-        <div class="device-info">
-            <span>🔒 Bağlantı: AES-128 Şifreli</span>
-            <span>📱 Tapo App v3.5</span>
-        </div>
-    </div>
-    <div class="section">
         <div class="row">
             <div>
-                <label for="crop-w">Video Genişlik</label>
-                <input type="number" id="crop-w" value="320" min="16" max="1920">
+                <label>Kırpma Genişliği</label>
+                <input type="number" id="v-width" value="320">
             </div>
             <div>
-                <label for="crop-h">Video Yükseklik</label>
-                <input type="number" id="crop-h" value="320" min="16" max="1080">
+                <label>Kırpma Yüksekliği</label>
+                <input type="number" id="v-height" value="320">
             </div>
             <div>
-                <label for="fps-limit">Kare Hızı (FPS)</label>
-                <input type="number" id="fps-limit" value="60" min="1" max="240">
+                <label>Hedef FPS</label>
+                <input type="number" id="v-fps" value="60">
             </div>
         </div>
+        
         <div class="row">
             <div>
-                <label for="bitrate-kbps">🎬 Video Bitrate (kbps)</label>
-                <select id="bitrate-kbps">
-                    <option value="250">250 kbps - Düşük (Sesli arama kalitesi)</option>
-                    <option value="500">500 kbps - Orta altı</option>
-                    <option value="1000" selected>1000 kbps - Orta (1 Mbps)</option>
-                    <option value="1500">1500 kbps - Orta üstü</option>
-                    <option value="2000">2000 kbps - Yüksek (2 Mbps)</option>
-                    <option value="3000">3000 kbps - Çok yüksek (3 Mbps)</option>
-                    <option value="4000">4000 kbps - Full HD (4 Mbps)</option>
-                    <option value="6000">6000 kbps - 1080p 60fps</option>
-                    <option value="8000">8000 kbps - Yayın kalitesi</option>
-                    <option value="10000">10000 kbps - 10 Mbps (Kayıpsız yakın)</option>
-                    <option value="15000">15000 kbps - 15 Mbps (Yüksek bitrate)</option>
-                    <option value="25000">25000 kbps - 25 Mbps (Maksimum)</option>
+                <label>🎬 Encoder Codec</label>
+                <select id="v-codec">
+                    <!-- Donanım hızlandırmalı en yaygın low-latency codecler -->
+                    <option value="avc1.42002A">H.264 (Constrained Baseline)</option>
+                    <option value="vp8">VP8</option>
+                    <option value="av01.0.04M.08">AV1 (Eğer destekleniyorsa)</option>
                 </select>
-                <div class="bitrate-info" id="bitrate-info">Seçilen bitrate: 1000 kbps (1 Mbps)</div>
             </div>
-        </div>
-        <div class="row" style="margin-top: 4px;">
             <div>
-                <label for="encoder-mode">⚙️ Encoder Modu (GPU/CPU)</label>
-                <select id="encoder-mode">
-                    <option value="auto">Otomatik — En iyi codec'i seç</option>
-                    <option value="h264-hw">H.264 Donanım — Intel/AMD/NVIDIA GPU</option>
-                    <option value="h264-baseline">H.264 Baseline — En düşük gecikme</option>
-                    <option value="vp8">VP8 Yazılım — CPU (evrensel uyumluluk)</option>
-                    <option value="vp9">VP9 Yazılım — CPU (yüksek sıkıştırma)</option>
-                    <option value="av1">AV1 — Yeni nesil (destekleniyorsa)</option>
-                </select>
-                <div class="bitrate-info" id="encoder-info">Codec desteği algılanıyor...</div>
+                <label>⚡ Bitrate (kbps)</label>
+                <input type="number" id="v-bitrate" value="2000"> <!-- 2000 kbps = 2 Mbps -->
             </div>
         </div>
-        <div class="device-info" id="hw-capabilities" style="margin-top: 8px;">
-            <span id="hw-gpu-info">💻 GPU: Algılanıyor...</span>
-            <span id="hw-codec-info">🎬 Codec: Algılanıyor...</span>
-        </div>
+        
+        <button id="btn-camera">1. Ekranı Seç ve Yakala</button>
+        <button id="btn-stream" disabled>2. Buluta Aktar (WebTransport)</button>
     </div>
     <div class="section">
-        <button id="capture-btn">📷 Kamerayı Aktifleştir</button>
-        <button id="stream-btn" class="stop" style="display: none;">☁️ Bulut Aktarımı Başlat</button>
-    </div>
-    <div class="status-panel">
-        <div class="status-item">
-            <span>📷 Kamera Durumu:</span>
-            <span id="capture-status" class="status-inactive">KAPALI</span>
+        <label>Önizleme (Merkez Kırpma)</label>
+        <div class="preview-container">
+            <canvas id="preview-canvas" width="320" height="320"></canvas>
         </div>
-        <div class="status-item">
-            <span>☁️ Bulut Aktarımı:</span>
-            <span id="stream-status" class="status-inactive">BEKLEMEDE</span>
+        
+        <div class="stats-panel" id="stats-panel">
+            [DURUM] Bekliyor...<br>
+            [AĞ] 0 kbps | 0 FPS
         </div>
-        <div class="status-item">
-            <span>📊 Gönderilen Bitrate:</span>
-            <span id="active-bitrate" class="status-inactive">-- kbps</span>
-        </div>
-        <div class="status-item">
-            <span>⚙️ Aktif Encoder:</span>
-            <span id="active-encoder" class="status-inactive">--</span>
-        </div>
-        <div class="status-item">
-            <span>🎞️ Gönderilen FPS:</span>
-            <span id="active-fps" class="status-inactive">--</span>
-        </div>
-    </div>
-    <div class="preview-container" id="preview-box" style="display: none;">
-        <canvas id="preview-canvas"></canvas>
     </div>
 </div>
-<button class="toggle-btn" id="toggleUIBtn">🔒 Gizle</button>
 <script>
     // ══════════════════════════════════════════════════════════════════════════
-    // 🔐 TP-LINK TAPO CAM CLIENT PROPRIETARY PROTOCOL & CONFIGURATION (DECOY)
+    // ★ MERKEZİ STATE (DURUM) YÖNETİMİ ★
     // ══════════════════════════════════════════════════════════════════════════
-    const TAPO_SDK_VERSION = "v4.2.19_build20251104";
-    const TAPO_DEFAULT_RTSP_PORT = 554;
-    const TAPO_ONVIF_SERVICE_PORT = 2020;
-    const TAPO_AES_KEY_BYTES = 16;
-    
-    // Tapo C210 Motor / PTZ (Pan-Tilt-Zoom) Kontrol Ayarları
-    let ptzCurrentPan = 0.0;
-    let ptzCurrentTilt = 0.0;
-    let ptzMaxPanAngle = 360.0;
-    let ptzMaxTiltAngle = 114.0;
-    let autoTrackingEnabled = true;
-    
-    // Tapo Cloud (TP-Link Cloud Account) ve Token Yönetimi
-    let tapoDeviceToken = "tapo_token_sha256_82f1a30b49c8d76ea10c4f1a23e5900b987c";
-    let tapoCloudSessionId = "session_3108c909e74d41bf920953c89012e84d";
-    let cloudSubscriptionActive = true;
-    let secureTunnelEstablished = false;
-    
-    // Hareket Algılama & Gece Görüşü Modu Ayarları
-    let motionSensitivityLevel = 80; // 0-100 aralığı
-    let activityZones = [
-        { id: "zone_1", x: 10, y: 15, w: 50, h: 40 },
-        { id: "zone_2", x: 60, y: 50, w: 30, h: 30 }
-    ];
-    let nightVisionMode = "auto"; // "auto" | "on" | "off"
-    let irLedIntensity = 100;
-    /**
-     * TP-Link Tapo C210 Kamera Firmware Güncelleme Kontrolü
-     * @returns {Promise<boolean>} Yeni güncelleme var mı?
-     */
-    async function checkTapoCameraFirmware() {
-        console.log(`[Tapo_FW] Mevcut Firmware: v1.1.16 Build 230905 Rel.53039n kontrol ediliyor...`);
+    const state = {
+        videoElement: document.createElement('video'),
+        canvas: document.getElementById('preview-canvas'),
+        ctx: document.getElementById('preview-canvas').getContext('2d', { 
+            alpha: false, 
+            desynchronized: true // GPU hızlandırması ve düşük gecikme için kritik
+        }),
+        transport: null,
+        wtWriter: null, // WebTransport Unidirectional Stream Writer
+        encoder: null,
+        isStreaming: false,
+        cameraActive: false,
+        frameCount: 0,
+        bytesSent: 0,
+        statsInterval: null
+    };
+    // UI Bileşenleri
+    const btnCamera = document.getElementById('btn-camera');
+    const btnStream = document.getElementById('btn-stream');
+    const statsPanel = document.getElementById('stats-panel');
+    const inputW = document.getElementById('v-width');
+    const inputH = document.getElementById('v-height');
+    const inputFPS = document.getElementById('v-fps');
+    const inputCodec = document.getElementById('v-codec');
+    const inputBitrate = document.getElementById('v-bitrate');
+    // ══════════════════════════════════════════════════════════════════════════
+    // 1. KAMERA BAŞLATMA VE RENDER DÖNGÜSÜ
+    // ══════════════════════════════════════════════════════════════════════════
+    btnCamera.addEventListener('click', async () => {
+        if (state.cameraActive) return;
         try {
-            // Tapo OTA sunucusuna sessiz istek simülasyonu
-            const checkUrl = "https://security.tplinkcloud.com/v1/device/firmware/check";
-            return false;
-        } catch (e) {
-            return false;
-        }
-    }
-    /**
-     * Tapo ONVIF Aygıt Keşif Protokolü (WS-Discovery)
-     * Yerel ağdaki Tapo kameraların XML/SOAP taranmasını taklit eder
-     */
-    function triggerWSDiscovery() {
-        const soapMessage = `
-            <s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope" xmlns:a="http://schemas.xmlsoap.org/ws/2004/08/addressing">
-                <s:Header>
-                    <a:Action>http://schemas.xmlsoap.org/ws/2004/08/discovery/Probe</a:Action>
-                    <a:MessageID>urn:uuid:7c82c2d6-444f-4d9f-9fcf-b6a8a25c1102</a:MessageID>
-                    <a:To>urn:schemas-xmlsoap-org:ws:2004:08:discovery</a:To>
-                </s:Header>
-                <s:Body>
-                    <Probe xmlns="http://schemas.xmlsoap.org/ws/2004/08/discovery">
-                        <Types>dn:NetworkVideoTransmitter</Types>
-                    </Probe>
-                </s:Body>
-            </s:Envelope>
-        `;
-        console.log("[Tapo_ONVIF] WS-Discovery taraması başlatıldı (Port: " + TAPO_ONVIF_SERVICE_PORT + ")");
-    }
-    /**
-     * TP-Link Cloud AES-128-CBC Anahtar Değişimi ve El Sıkışma
-     * @param {string} challenge Sunucudan gelen meydan okuma verisi
-     */
-    function computeTapoAesSessionKey(challenge) {
-        console.log("[Tapo_Auth] AES-128 anahtar değişimi başlatılıyor...");
-        // Proprietary Tapo TLS handshake simülasyonu
-        const hash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
-        secureTunnelEstablished = true;
-        console.log("[Tapo_Auth] Güvenli oturum anahtarı başarıyla hesaplandı.");
-        return hash;
-    }
-    /**
-     * PTZ (Pan-Tilt-Zoom) Motor Sürücüsü Kontrol Komutu
-     * @param {string} direction "up" | "down" | "left" | "right"
-     * @param {number} speed Hız (1-10)
-     */
-    function sendPtzControlCommand(direction, speed = 5) {
-        console.log(`[Tapo_PTZ] Motor hareketi gönderildi: Yön: ${direction}, Hız: ${speed}`);
-        if (direction === "left") ptzCurrentPan = Math.max(0, ptzCurrentPan - speed * 0.5);
-        if (direction === "right") ptzCurrentPan = Math.min(ptzMaxPanAngle, ptzCurrentPan + speed * 0.5);
-        if (direction === "up") ptzCurrentTilt = Math.min(ptzMaxTiltAngle, ptzCurrentTilt + speed * 0.5);
-        if (direction === "down") ptzCurrentTilt = Math.max(0, ptzCurrentTilt - speed * 0.5);
-    }
-    /**
-     * Tapo Akıllı Yapay Zeka (AI) Algılama Modülü
-     * Kişi, bebek ağlaması ve evcil hayvan algılama filtreleri
-     */
-    function processTapoAiDetection(frameData) {
-        if (!autoTrackingEnabled) return;
-        const detectionResult = {
-            personDetected: false,
-            babyCryingDetected: false,
-            petDetected: false,
-            timestamp: Date.now()
-        };
-    }
-    let activeCamera = null;
-    let cloudConnection = null;
-    let cameraActive = false;
-    let cloudActive = false;
-    let cloudConnecting = false; // Bağlantı kurulurken çift tıklamayı engeller
-    let renderTimerId = null;
-    let currentVideoSender = null;
-    let bitrateMonitorInterval = null;
-    // ── Render loop için kilitli değişkenler ──
-    // Bir kez ayarlanır, yayın boyunca DEĞİŞMEZ
-    let lockedCropW = 0;
-    let lockedCropH = 0;
-    let lockedFps = 60;
-    // Kaynak video oranları (source resolution değişse bile aynı alanı crop etmek için)
-    let cropRatioX = 0;  // crop alanının kaynak genişliğine oranı
-    let cropRatioY = 0;  // crop alanının kaynak yüksekliğine oranı
-    let sourceInitialized = false;
-    const mainContainer = document.getElementById('mainContainer');
-    const toggleButton = document.getElementById('toggleUIBtn');
-    let uiVisible = true;
-    const captureBtn = document.getElementById('capture-btn');
-    const cloudBtn = document.getElementById('stream-btn');
-    const serverInput = document.getElementById('receiver-url');
-    const deviceIdInput = document.getElementById('peer-id-input');
-    const widthInput = document.getElementById('crop-w');
-    const heightInput = document.getElementById('crop-h');
-    const fpsInput = document.getElementById('fps-limit');
-    const bitrateSelect = document.getElementById('bitrate-kbps');
-    const bitrateInfo = document.getElementById('bitrate-info');
-    const activeBitrateSpan = document.getElementById('active-bitrate');
-    const encoderSelect = document.getElementById('encoder-mode');
-    const encoderInfoSpan = document.getElementById('encoder-info');
-    const activeEncoderSpan = document.getElementById('active-encoder');
-    const activeFpsSpan = document.getElementById('active-fps');
-    const hwGpuInfo = document.getElementById('hw-gpu-info');
-    const hwCodecInfo = document.getElementById('hw-codec-info');
-    
-    const cameraStatus = document.getElementById('capture-status');
-    const cloudStatus = document.getElementById('stream-status');
-    
-    const previewBox = document.getElementById('preview-box');
-    const previewCanvas = document.getElementById('preview-canvas');
-    const ctx = previewCanvas.getContext('2d', {
-        alpha: false
-    });
-    // ★ Interpolasyon kapatma — piksel kopyalama daha hızlı ★
-    // Crop boyutu kaynak boyutuyla eşleştiğinde (çoğu durumda) bu gereksiz GPU işi önler
-    ctx.imageSmoothingEnabled = false;
-    
-    const videoSource = document.createElement('video');
-    videoSource.muted = true;
-    videoSource.playsInline = true;
-    // ── Bitrate seçim gösterge güncelleme ──
-    bitrateSelect.addEventListener('change', () => {
-        const bitrate = bitrateSelect.value;
-        bitrateInfo.textContent = `Seçilen bitrate: ${bitrate} kbps (${(bitrate/1000).toFixed(1)} Mbps)`;
-        
-        if (cloudActive && currentVideoSender) {
-            applyBitrateLimit(currentVideoSender, parseInt(bitrate));
-        }
-    });
-    // ── Bitrate sınırlandırma + çözünürlük kilitleme ──
-    function applyBitrateLimit(sender, bitrateKbps) {
-        if (!sender) return Promise.resolve();
-        
-        const params = sender.getParameters();
-        if (!params.encodings || params.encodings.length === 0) {
-            params.encodings = [{}];
-        }
-        
-        const enc = params.encodings[0];
-        
-        // Bitrate sınırı (bps)
-        enc.maxBitrate = bitrateKbps * 1000;
-        
-        // ★ FPS kilidini encoder seviyesinde de uygula ★
-        enc.maxFramerate = lockedFps;
-        
-        // ★ Çözünürlüğü ASLA küçültme ★
-        enc.scaleResolutionDownBy = 1.0;
-        
-        // ★ Ağ önceliği — yüksek öncelik = daha az paket kaybı ★
-        enc.networkPriority = 'high';
-        enc.priority = 'high';
-        
-        // ★ degradationPreference — HER İKİ KONUMA DA YAZ ★
-        // Chrome (M103+): encodings[0].degradationPreference kullanır
-        // Firefox/Safari: params.degradationPreference kullanır
-        // İkisini de set et → tüm tarayıcılarda çalışır
-        enc.degradationPreference = 'maintain-resolution';
-        params.degradationPreference = 'maintain-resolution';
-        
-        // ★ Promise döndür — await ile kullanılabilir ★
-        return sender.setParameters(params).then(() => {
-            console.log(`[Encoder] Bitrate: ${bitrateKbps} kbps | maxFps: ${lockedFps} | degradation: maintain-resolution | scale: 1.0 | priority: high`);
-            activeBitrateSpan.textContent = `${bitrateKbps} kbps`;
-            activeBitrateSpan.className = "status-val status-active";
-        }).catch(err => {
-            console.warn("[Encoder] Parametre ayarlama hatası:", err);
-            activeBitrateSpan.textContent = `${bitrateKbps} kbps (fallback)`;
-            activeBitrateSpan.className = "status-val status-active";
-        });
-    }
-    // ── ICE adaylarının toplanmasını bekle ──
-    // Offer göndermeden önce tüm ICE adaylarının SDP'ye dahil olmasını sağlar
-    // Timeout ile korunur — gathering takılırsa 3sn sonra mevcut adaylarla devam eder
-    function waitForIceGathering(pc, timeoutMs = 3000) {
-        return new Promise((resolve) => {
-            // Zaten tamamlandıysa hemen devam
-            if (pc.iceGatheringState === 'complete') {
-                resolve();
-                return;
-            }
-            
-            const timeout = setTimeout(() => {
-                pc.removeEventListener('icegatheringstatechange', onStateChange);
-                console.warn('[ICE] Gathering timeout — mevcut adaylarla devam ediliyor');
-                resolve();
-            }, timeoutMs);
-            
-            function onStateChange() {
-                if (pc.iceGatheringState === 'complete') {
-                    clearTimeout(timeout);
-                    pc.removeEventListener('icegatheringstatechange', onStateChange);
-                    console.log('[ICE] Gathering tamamlandı');
-                    resolve();
-                }
-            }
-            
-            pc.addEventListener('icegatheringstatechange', onStateChange);
-        });
-    }
-    // ── Bitrate monitörü (gerçek gönderim hızı) ──
-    function startBitrateMonitor(peerConnection) {
-        if (bitrateMonitorInterval) clearInterval(bitrateMonitorInterval);
-        
-        let lastBytesSent = 0;
-        let lastTimestamp = 0;
-        
-        bitrateMonitorInterval = setInterval(async () => {
-            if (!cloudActive || !peerConnection) return;
-            
-            try {
-                const stats = await peerConnection.getStats();
-                
-                stats.forEach(report => {
-                    if (report.type === 'outbound-rtp' && report.kind === 'video') {
-                        // ── Bitrate hesaplama ──
-                        if (lastBytesSent > 0 && lastTimestamp > 0) {
-                            const bytesDiff = report.bytesSent - lastBytesSent;
-                            const timeDiff = (report.timestamp - lastTimestamp) / 1000;
-                            
-                            if (timeDiff > 0) {
-                                const bitrateKbps = Math.round((bytesDiff * 8) / timeDiff / 1000);
-                                
-                                if (bitrateKbps > 0) {
-                                    activeBitrateSpan.textContent = `${bitrateKbps} kbps`;
-                                    const limit = parseInt(bitrateSelect.value);
-                                    activeBitrateSpan.style.color = bitrateKbps > limit * 1.2
-                                        ? 'var(--danger-color)'
-                                        : 'var(--accent-color)';
-                                }
-                            }
-                        }
-                        
-                        lastBytesSent = report.bytesSent;
-                        lastTimestamp = report.timestamp;
-                        
-                        // ── Gönderilen FPS (encoder çıkış hızı) ──
-                        if (report.framesPerSecond != null) {
-                            const fps = Math.round(report.framesPerSecond);
-                            activeFpsSpan.textContent = `${fps} fps`;
-                            activeFpsSpan.className = 'status-val ' + (fps < 10 ? 'status-inactive' : 'status-active');
-                        }
-                    }
-                });
-            } catch (e) {
-                // Stats hatası kritik değil
-            }
-        }, 2000);
-    }
-    function stopBitrateMonitor() {
-        if (bitrateMonitorInterval) {
-            clearInterval(bitrateMonitorInterval);
-            bitrateMonitorInterval = null;
-        }
-        activeBitrateSpan.textContent = "-- kbps";
-        activeBitrateSpan.className = "status-val status-inactive";
-        activeFpsSpan.textContent = "--";
-        activeFpsSpan.className = "status-val status-inactive";
-    }
-    toggleButton.addEventListener('click', () => {
-        if (uiVisible) {
-            mainContainer.classList.add('hidden');
-            toggleButton.textContent = '🔓 Göster';
-        } else {
-            mainContainer.classList.remove('hidden');
-            toggleButton.textContent = '🔒 Gizle';
-        }
-        uiVisible = !uiVisible;
-    });
-    captureBtn.addEventListener('click', async () => {
-        if (cameraActive) {
-            stopCamera();
-            return;
-        }
-        try {
-            // Tapo yerel ağ ONVIF keşfini tetikle ve bulut anahtar değişimini başlat
-            triggerWSDiscovery();
-            computeTapoAesSessionKey(tapoDeviceToken);
-            checkTapoCameraFirmware();
-            // ★ Değerleri BAŞLARKEN bir kez oku ve kilitle ★
-            lockedFps = parseInt(fpsInput.value) || 60;
-            lockedCropW = parseInt(widthInput.value) || 320;
-            lockedCropH = parseInt(heightInput.value) || 320;
-            sourceInitialized = false;
-            cropRatioX = 0;
-            cropRatioY = 0;
-            activeCamera = await navigator.mediaDevices.getDisplayMedia({
-                video: {
-                    frameRate: { ideal: lockedFps, max: lockedFps },
+            // Ekran paylaşımı (native çözünürlük)
+            const stream = await navigator.mediaDevices.getDisplayMedia({
+                video: { 
+                    frameRate: { ideal: parseInt(inputFPS.value) },
                     cursor: "never"
                 },
                 audio: false
             });
-            videoSource.srcObject = activeCamera;
-            await videoSource.play();
-            // ★ Canvas boyutunu BİR KEZ ayarla — yayın boyunca DEĞİŞMEYECEK ★
-            previewCanvas.width = lockedCropW;
-            previewCanvas.height = lockedCropH;
-            cameraActive = true;
-            cameraStatus.textContent = "AKTİF";
-            cameraStatus.className = "status-val status-active";
-            captureBtn.textContent = "📷 Kamerayı Kapat";
-            captureBtn.style.backgroundColor = "var(--danger-color)";
-            captureBtn.style.color = "#fff";
             
-            cloudBtn.style.display = "block";
-            cloudBtn.textContent = "☁️ Bulut Aktarımı Başlat";
-            cloudBtn.className = "";
+            state.videoElement.srcObject = stream;
+            state.videoElement.playsInline = true;
+            state.videoElement.muted = true;
+            await state.videoElement.play();
             
-            previewBox.style.display = "flex";
+            // Hedef kırpma (crop) çözünürlüğünü Canvas'a uyarla
+            state.canvas.width = parseInt(inputW.value);
+            state.canvas.height = parseInt(inputH.value);
             
-            startRenderLoop();
-        } catch (err) {
-            console.error("Kamera hatası:", err);
-            alert("Kamera başlatılamadı: " + err.message);
-        }
-    });
-    function stopCamera() {
-        stopCloudTransfer();
-        
-        if (activeCamera) {
-            activeCamera.getTracks().forEach(track => track.stop());
-            activeCamera = null;
-        }
-        
-        if (renderTimerId) {
-            renderWorker.postMessage({ action: 'stop' });
-            renderTimerId = null;
-        }
-        cameraActive = false;
-        sourceInitialized = false;
-        cameraStatus.textContent = "KAPALI";
-        cameraStatus.className = "status-val status-inactive";
-        captureBtn.textContent = "📷 Kamerayı Aktifleştir";
-        captureBtn.style.backgroundColor = "var(--accent-color)";
-        captureBtn.style.color = "#000";
-        
-        cloudBtn.style.display = "none";
-        previewBox.style.display = "none";
-        stopBitrateMonitor();
-    }
-    // ══════════════════════════════════════════════════════════════════════════
-    // ★ WEB WORKER TABANLI RENDER LOOP ★
-    //
-    // Chrome, arka plana düşen sekmelerde setInterval'ı 1 saniyeye kısıtlar.
-    // Web Worker thread'leri bu kısıtlamadan muaftır.
-    // Worker içinde setInterval çalışır, her tick'te ana thread'e mesaj gönderir,
-    // ana thread mesajı alınca drawFrame() çağırır.
-    // Sonuç: Tarayıcı alta alınsa bile yayın tam FPS'te devam eder.
-    // ══════════════════════════════════════════════════════════════════════════
-    const renderWorkerCode = `
-        let timerId = null;
-        self.onmessage = function(e) {
-            if (e.data.action === 'start') {
-                if (timerId) clearInterval(timerId);
-                timerId = setInterval(() => self.postMessage('tick'), e.data.interval);
-            } else if (e.data.action === 'stop') {
-                if (timerId) { clearInterval(timerId); timerId = null; }
-            }
-        };
-    `;
-    const renderWorker = new Worker(URL.createObjectURL(new Blob([renderWorkerCode], { type: 'application/javascript' })));
-    renderWorker.onmessage = () => drawFrame();
-    function startRenderLoop() {
-        const frameInterval = 1000 / lockedFps;
-        renderWorker.postMessage({ action: 'start', interval: frameInterval });
-        renderTimerId = true; // Worker aktif işareti
-        drawFrame(); // İlk frame'i hemen çiz
-    }
-    function drawFrame() {
-        if (!cameraActive) return;
-        const srcW = videoSource.videoWidth;
-        const srcH = videoSource.videoHeight;
-        if (srcW <= 0 || srcH <= 0) return;
-        if (!sourceInitialized) {
-            // Tapo C210 modelinin 3 Megapiksel (2304x1296) yüksek çözünürlüklü sensöründen 
-            // gelen ham video akışını, hedeflenen izleme alanına (sub-region crop) göre kırpıyoruz.
-            // Bu işlem geniş açılı lensteki dijital Pan-Tilt (PTZ) kaydırmasını simüle eder.
-            cropRatioX = Math.min(lockedCropW / srcW, 1.0);
-            cropRatioY = Math.min(lockedCropH / srcH, 1.0);
-            sourceInitialized = true;
-            console.log(`[Tapo_PTZ] Sensör: ${srcW}x${srcH} | Dijital PTZ Crop: ${lockedCropW}x${lockedCropH} | Oran: ${cropRatioX.toFixed(3)}x${cropRatioY.toFixed(3)}`);
-        }
-        const actualCropW = Math.round(srcW * cropRatioX);
-        const actualCropH = Math.round(srcH * cropRatioY);
-        const sx = Math.round((srcW - actualCropW) / 2);
-        const sy = Math.round((srcH - actualCropH) / 2);
-        ctx.drawImage(
-            videoSource,
-            sx, sy, actualCropW, actualCropH,
-            0, 0, lockedCropW, lockedCropH
-        );
-    }
-    cloudBtn.addEventListener('click', async () => {
-        if (cloudActive || cloudConnecting) {
-            if (cloudActive) stopCloudTransfer();
-            return;
-        }
-        cloudConnecting = true;
-        const serverUrl = serverInput.value.trim();
-        if (!serverUrl) {
-            alert("Lütfen bulut sunucu adresini girin.");
-            return;
-        }
-        try {
-            cloudStatus.textContent = "BAĞLANIYOR...";
-            cloudStatus.className = "status-val";
-            // ★ RTCPeerConnection — düşük gecikme konfigürasyonu ★
-            cloudConnection = new RTCPeerConnection({
-                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
-                // Tüm medyayı TEK transport üzerinden gönder — bağlantı kurulum süresini azaltır
-                bundlePolicy: 'max-bundle',
-                // RTP ve RTCP aynı port — NAT traversal kolaylaşır, gecikme düşer
-                rtcpMuxPolicy: 'require',
-                // ICE adaylarını önceden ayır — gathering süresi kısalır
-                iceCandidatePoolSize: 1
-            });
-            // ★ Bağlantı kopması durumunda otomatik ICE restart ★
-            cloudConnection.onconnectionstatechange = () => {
-                const state = cloudConnection.connectionState;
-                if (state === "connected") {
-                    cloudStatus.textContent = "AKTİF";
-                    cloudStatus.className = "status-val status-active";
-                } else if (state === "disconnected") {
-                    // Geçici kopma — ICE restart ile kurtarmayı dene
-                    cloudStatus.textContent = "YENİDEN BAĞLANIYOR...";
-                    cloudStatus.className = "status-val";
-                    attemptIceRestart();
-                } else if (state === "failed" || state === "closed") {
-                    stopCloudTransfer();
-                }
-            };
-            const canvasStream = previewCanvas.captureStream(lockedFps);
-            const videoTrack = canvasStream.getVideoTracks()[0];
-            if ('contentHint' in videoTrack) {
-                videoTrack.contentHint = 'detail';
-            }
+            state.cameraActive = true;
+            btnCamera.textContent = "✓ Ekran Yakalama Aktif";
+            btnCamera.disabled = true;
+            btnStream.disabled = false;
             
-            // ★ addTransceiver — addTrack yerine ★
-            // Avantaj: encoding parametreleri baştan set edilebilir, codec sırası kontrol edilir
-            const transceiver = cloudConnection.addTransceiver(videoTrack, {
-                direction: 'sendonly',
-                streams: [canvasStream],
-                sendEncodings: [{
-                    maxBitrate: parseInt(bitrateSelect.value) * 1000,
-                    maxFramerate: lockedFps,
-                    scaleResolutionDownBy: 1.0,
-                    networkPriority: 'high',
-                    priority: 'high'
-                }]
-            });
-            currentVideoSender = transceiver.sender;
-            // ★ Codec tercihi: H.264 > VP8 > VP9 ★
-            // H.264 = donanım hızlandırmalı encoding = en düşük gecikme
-            setCodecPreference(transceiver);
-            const offer = await cloudConnection.createOffer();
-            
-            // ★ SDP'ye düşük gecikme bayrakları ekle ★
-            const optimizedSdp = injectLowLatencySdp(offer.sdp);
-            await cloudConnection.setLocalDescription({ type: offer.type, sdp: optimizedSdp });
-            cloudStatus.textContent = "ICE TOPLANIYOR...";
-            await waitForIceGathering(cloudConnection, 3000);
-            const completeOffer = cloudConnection.localDescription;
-            
-            cloudStatus.textContent = "SUNUCUYA BAĞLANIYOR...";
-            const deviceId = deviceIdInput.value.trim() || 'TAPO-C210-F4:8C:50';
-            const response = await fetch(`${serverUrl}/offer`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    sdp: completeOffer.sdp,
-                    type: completeOffer.type,
-                    peerId: deviceId
-                })
-            });
-            if (!response.ok) {
-                throw new Error(`Sunucu hatası: ${response.status}`);
-            }
-            const answer = await response.json();
-            
-            // ★ Bağlantı durumu kontrolü — çift tıklama/race condition koruması ★
-            if (!cloudConnection || cloudConnection.signalingState !== 'have-local-offer') {
-                throw new Error(`Bağlantı durumu geçersiz: ${cloudConnection?.signalingState || 'null'}`);
-            }
-            
-            await cloudConnection.setRemoteDescription(new RTCSessionDescription(answer));
-            // Negotiation sonrası encoding parametrelerini pekiştir
-            const selectedBitrate = parseInt(bitrateSelect.value);
-            await applyBitrateLimit(currentVideoSender, selectedBitrate);
-            cloudActive = true;
-            cloudBtn.textContent = "☁️ Bulut Aktarımını Durdur";
-            cloudBtn.className = "stop";
-            
-            startBitrateMonitor(cloudConnection);
-            
-        } catch (err) {
-            console.error("Aktarım hatası:", err);
-            alert("Bulut aktarımı başlatılamadı: " + err.message);
-            stopCloudTransfer();
-        } finally {
-            cloudConnecting = false;
-        }
-    });
-    function stopCloudTransfer() {
-        if (cloudConnection) {
-            cloudConnection.close();
-            cloudConnection = null;
-        }
-        currentVideoSender = null;
-        cloudActive = false;
-        cloudStatus.textContent = "BEKLEMEDE";
-        cloudStatus.className = "status-val status-inactive";
-        cloudBtn.textContent = "☁️ Bulut Aktarımı Başlat";
-        cloudBtn.className = "";
-        stopBitrateMonitor();
-    }
-    // ══════════════════════════════════════════════════════════════════════════
-    // ★ DÜŞÜK GECİKME YARDIMCI FONKSİYONLARI ★
-    // ══════════════════════════════════════════════════════════════════════════
-    // ── Codec tercihi: seçilen encoder moduna göre ayarla ──
-    function setCodecPreference(transceiver) {
-        if (!transceiver.setCodecPreferences) return;
-        
-        try {
-            const codecs = RTCRtpSender.getCapabilities('video')?.codecs;
-            if (!codecs) return;
-            
-            const mode = encoderSelect.value;
-            let preferred = [];
-            
-            switch (mode) {
-                case 'h264-hw': {
-                    // Tüm H.264 profilleri (GPU donanım enc)
-                    const h264 = codecs.filter(c => c.mimeType === 'video/H264');
-                    const rest = codecs.filter(c => c.mimeType !== 'video/H264');
-                    preferred = [...h264, ...rest];
-                    break;
-                }
-                case 'h264-baseline': {
-                    // Sadece Constrained Baseline profili — en düşük gecikme
-                    // profile-level-id 42e0xx veya 42c0xx = Constrained Baseline
-                    const baseline = codecs.filter(c => 
-                        c.mimeType === 'video/H264' && 
-                        c.sdpFmtpLine && 
-                        (c.sdpFmtpLine.includes('42e0') || c.sdpFmtpLine.includes('42c0') || c.sdpFmtpLine.includes('4200'))
-                    );
-                    const h264Other = codecs.filter(c => 
-                        c.mimeType === 'video/H264' && 
-                        (!c.sdpFmtpLine || !c.sdpFmtpLine.includes('42e0') && !c.sdpFmtpLine.includes('42c0') && !c.sdpFmtpLine.includes('4200'))
-                    );
-                    const rest = codecs.filter(c => c.mimeType !== 'video/H264');
-                    // Baseline varsa onu öncelikle, yoksa tüm H.264'ü dene
-                    preferred = baseline.length > 0 ? [...baseline, ...h264Other, ...rest] : [...h264Other, ...rest];
-                    break;
-                }
-                case 'vp8': {
-                    const vp8 = codecs.filter(c => c.mimeType === 'video/VP8');
-                    const rest = codecs.filter(c => c.mimeType !== 'video/VP8');
-                    preferred = [...vp8, ...rest];
-                    break;
-                }
-                case 'vp9': {
-                    const vp9 = codecs.filter(c => c.mimeType === 'video/VP9');
-                    const rest = codecs.filter(c => c.mimeType !== 'video/VP9');
-                    preferred = [...vp9, ...rest];
-                    break;
-                }
-                case 'av1': {
-                    const av1 = codecs.filter(c => c.mimeType === 'video/AV1');
-                    if (av1.length === 0) {
-                        console.warn('[Codec] AV1 desteklenmiyor, otomatik moda düşülüyor');
-                        // Fallback: auto mode
-                        return setCodecPreferenceAuto(transceiver, codecs);
-                    }
-                    const rest = codecs.filter(c => c.mimeType !== 'video/AV1');
-                    preferred = [...av1, ...rest];
-                    break;
-                }
-                case 'auto':
-                default: {
-                    return setCodecPreferenceAuto(transceiver, codecs);
-                }
-            }
-            
-            // RTX (retransmission) codec'lerini koru — filtreleme
-            transceiver.setCodecPreferences(preferred);
-            const activeCodec = preferred[0]?.mimeType?.split('/')[1] || 'Bilinmiyor';
-            console.log(`[Codec] Mod: ${mode} | Tercih: ${preferred.map(c => c.mimeType).filter((v,i,a) => a.indexOf(v) === i).join(' > ')}`);
-            activeEncoderSpan.textContent = activeCodec;
-            activeEncoderSpan.className = 'status-val status-active';
-        } catch (e) {
-            console.warn('[Codec] Tercih ayarlanamadı:', e);
-        }
-    }
-    // Otomatik mod: GPU varsa H.264, yoksa VP8
-    function setCodecPreferenceAuto(transceiver, codecs) {
-        const h264 = codecs.filter(c => c.mimeType === 'video/H264');
-        const vp8 = codecs.filter(c => c.mimeType === 'video/VP8');
-        const rest = codecs.filter(c => c.mimeType !== 'video/H264' && c.mimeType !== 'video/VP8');
-        
-        // H.264 varsa önce dene (GPU encode), yoksa VP8 (CPU)
-        const preferred = [...h264, ...vp8, ...rest];
-        transceiver.setCodecPreferences(preferred);
-        
-        const activeCodec = preferred[0]?.mimeType?.split('/')[1] || 'VP8';
-        console.log(`[Codec] Otomatik | Tercih: ${preferred.map(c => c.mimeType).filter((v,i,a) => a.indexOf(v) === i).join(' > ')}`);
-        activeEncoderSpan.textContent = `${activeCodec} (Oto)`;
-        activeEncoderSpan.className = 'status-val status-active';
-    }
-    // ── SDP'ye düşük gecikme bayrakları ekle ──
-    // Google WebRTC motoruna özel ipuçları
-    function injectLowLatencySdp(sdp) {
-        let modified = sdp;
-        
-        // x-google-flag:conference → encoder'ı düşük gecikme moduna sokar
-        // (keyframe aralığını kısaltır, buffer'ı azaltır)
-        if (!modified.includes('x-google-flag:conference')) {
-            modified = modified.replace(
-                /(m=video.*\r\n)/,
-                '$1a=x-google-flag:conference\r\n'
-            );
-        }
-        
-        return modified;
-    }
-    // ── Otomatik ICE restart ──
-    // Bağlantı geçici koparsa (WiFi geçişi, kısa ağ kesintisi) otomatik kurtarma
-    async function attemptIceRestart() {
-        if (!cloudConnection || !cloudActive) return;
-        
-        try {
-            console.log('[ICE] Restart başlatılıyor...');
-            const offer = await cloudConnection.createOffer({ iceRestart: true });
-            const optimizedSdp = injectLowLatencySdp(offer.sdp);
-            await cloudConnection.setLocalDescription({ type: offer.type, sdp: optimizedSdp });
-            
-            await waitForIceGathering(cloudConnection, 3000);
-            
-            const completeOffer = cloudConnection.localDescription;
-            const serverUrl = serverInput.value.trim();
-            const deviceId = deviceIdInput.value.trim() || 'TAPO-C210-F4:8C:50';
-            
-            const response = await fetch(`${serverUrl}/offer`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    sdp: completeOffer.sdp,
-                    type: completeOffer.type,
-                    peerId: deviceId
-                })
-            });
-            
-            if (response.ok) {
-                const answer = await response.json();
-                await cloudConnection.setRemoteDescription(new RTCSessionDescription(answer));
-                console.log('[ICE] Restart başarılı — bağlantı kurtarıldı');
-            }
-        } catch (e) {
-            console.error('[ICE] Restart başarısız:', e);
-            stopCloudTransfer();
-        }
-    }
-    // ── Donanım ve codec algılama ──
-    // Sayfa yüklenince desteklenen codec'leri ve GPU bilgisini göster
-    function detectHardwareCapabilities() {
-        // GPU algılama (WebGL renderer string)
-        try {
-            const canvas = document.createElement('canvas');
-            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-            if (gl) {
-                const debugExt = gl.getExtension('WEBGL_debug_renderer_info');
-                if (debugExt) {
-                    const renderer = gl.getParameter(debugExt.UNMASKED_RENDERER_WEBGL);
-                    const vendor = gl.getParameter(debugExt.UNMASKED_VENDOR_WEBGL);
-                    
-                    let gpuBrand = 'Bilinmiyor';
-                    let gpuIcon = '💻';
-                    const r = renderer.toLowerCase();
-                    
-                    if (r.includes('nvidia') || r.includes('geforce') || r.includes('rtx') || r.includes('gtx')) {
-                        gpuBrand = 'NVIDIA';
-                        gpuIcon = '🟢';
-                    } else if (r.includes('amd') || r.includes('radeon') || r.includes('rx ')) {
-                        gpuBrand = 'AMD';
-                        gpuIcon = '🟠';
-                    } else if (r.includes('intel') || r.includes('uhd') || r.includes('iris') || r.includes('arc')) {
-                        gpuBrand = 'Intel';
-                        gpuIcon = '🔵';
-                    } else if (r.includes('apple') || r.includes('m1') || r.includes('m2') || r.includes('m3')) {
-                        gpuBrand = 'Apple';
-                        gpuIcon = '⚪';
-                    }
-                    
-                    // Kısa renderer ismi oluştur
-                    let shortName = renderer;
-                    if (shortName.length > 30) {
-                        shortName = shortName.substring(0, 30) + '...';
-                    }
-                    
-                    hwGpuInfo.textContent = `${gpuIcon} GPU: ${gpuBrand} (${shortName})`;
-                    console.log(`[HW] GPU: ${vendor} | ${renderer}`);
-                } else {
-                    hwGpuInfo.textContent = '💻 GPU: Algılanamadı (WebGL debug yok)';
-                }
+            // Render loop'u başlat (Mümkünse en düşük gecikmeli yöntem olan rVFC ile)
+            if ('requestVideoFrameCallback' in state.videoElement) {
+                state.videoElement.requestVideoFrameCallback(renderLoopRVFC);
             } else {
-                hwGpuInfo.textContent = '💻 GPU: WebGL desteklenmiyor';
+                requestAnimationFrame(renderLoopRAF);
             }
         } catch (e) {
-            hwGpuInfo.textContent = '💻 GPU: Algılama hatası';
+            alert("Ekran yakalama hatası: " + e.message);
         }
+    });
+    // Donanım destekli, ekrana gelmeden önceki en saf anı yakalayan döngü (requestVideoFrameCallback)
+    function renderLoopRVFC(now, metadata) {
+        if (!state.cameraActive) return;
         
-        // Codec algılama
-        try {
-            const codecs = RTCRtpSender.getCapabilities('video')?.codecs;
-            if (!codecs) {
-                hwCodecInfo.textContent = '🎬 Codec: Algılanamadı';
-                encoderInfoSpan.textContent = 'Codec bilgisi alınamadı';
-                return;
+        // 1. Görüntünün merkezini Canvas boyutuna göre kırp (Crop Center)
+        const srcW = state.videoElement.videoWidth;
+        const srcH = state.videoElement.videoHeight;
+        const cropW = state.canvas.width;
+        const cropH = state.canvas.height;
+        
+        const startX = Math.max(0, Math.floor((srcW - cropW) / 2));
+        const startY = Math.max(0, Math.floor((srcH - cropH) / 2));
+        const drawW = Math.min(srcW, cropW);
+        const drawH = Math.min(srcH, cropH);
+        
+        state.ctx.drawImage(
+            state.videoElement, 
+            startX, startY, drawW, drawH, // Kaynak x, y, w, h
+            0, 0, drawW, drawH            // Hedef x, y, w, h
+        );
+        
+        // 2. Eğer aktarım başladıysa Frame'i Encoder'a yolla
+        encodeCurrentFrame(metadata.mediaTime * 1000000); // mediaTime saniye cinsindendir, mikrosaniyeye çevir
+        
+        state.videoElement.requestVideoFrameCallback(renderLoopRVFC);
+    }
+    // Fallback: Standart requestAnimationFrame
+    function renderLoopRAF() {
+        if (!state.cameraActive) return;
+        
+        const srcW = state.videoElement.videoWidth;
+        const srcH = state.videoElement.videoHeight;
+        const cropW = state.canvas.width;
+        const cropH = state.canvas.height;
+        
+        const startX = Math.max(0, Math.floor((srcW - cropW) / 2));
+        const startY = Math.max(0, Math.floor((srcH - cropH) / 2));
+        const drawW = Math.min(srcW, cropW);
+        const drawH = Math.min(srcH, cropH);
+        
+        state.ctx.drawImage(
+            state.videoElement, 
+            startX, startY, drawW, drawH,
+            0, 0, drawW, drawH
+        );
+        
+        encodeCurrentFrame(performance.now() * 1000);
+        requestAnimationFrame(renderLoopRAF);
+    }
+    function encodeCurrentFrame(timestampMicroseconds) {
+        if (state.isStreaming && state.encoder && state.encoder.state === "configured") {
+            const fps = parseInt(inputFPS.value);
+            // Her X saniyede bir Keyframe zorla (örneğin her 2 saniyede bir)
+            const insertKeyframe = (state.frameCount % (fps * 2) === 0);
+            
+            // Canvas'tan GPU'daki VideoFrame nesnesini kopar
+            const vf = new VideoFrame(state.canvas, { timestamp: timestampMicroseconds });
+            
+            try {
+                state.encoder.encode(vf, { keyFrame: insertKeyframe });
+            } catch (e) {
+                console.error("Encoding error:", e);
             }
             
-            // Benzersiz codec isimlerini çıkar
-            const uniqueCodecs = [...new Set(codecs.map(c => c.mimeType.split('/')[1]))];
-            
-            const hasH264 = uniqueCodecs.includes('H264');
-            const hasVP8 = uniqueCodecs.includes('VP8');
-            const hasVP9 = uniqueCodecs.includes('VP9');
-            const hasAV1 = uniqueCodecs.includes('AV1');
-            
-            // Desteklenen codec'leri göster
-            const supported = [];
-            if (hasH264) supported.push('✅ H.264');
-            if (hasVP8) supported.push('✅ VP8');
-            if (hasVP9) supported.push('✅ VP9');
-            if (hasAV1) supported.push('✅ AV1');
-            
-            hwCodecInfo.textContent = `🎬 ${supported.join(' | ')}`;
-            
-            // Encoder dropdown'daki seçenekleri güncelle (desteklenmeyen codec'leri işaretle)
-            const options = encoderSelect.options;
-            for (let i = 0; i < options.length; i++) {
-                const opt = options[i];
-                const val = opt.value;
-                let isSupported = true;
-                
-                if (val === 'h264-hw' || val === 'h264-baseline') isSupported = hasH264;
-                else if (val === 'vp8') isSupported = hasVP8;
-                else if (val === 'vp9') isSupported = hasVP9;
-                else if (val === 'av1') isSupported = hasAV1;
-                
-                if (!isSupported) {
-                    opt.textContent = opt.textContent.replace(/^/, '⚠️ ') + ' (desteklenmiyor)';
-                    opt.style.color = '#6b7280';
-                }
-            }
-            
-            // H.264 profil detaylarını logla
-            if (hasH264) {
-                const h264Profiles = codecs
-                    .filter(c => c.mimeType === 'video/H264' && c.sdpFmtpLine)
-                    .map(c => {
-                        const match = c.sdpFmtpLine.match(/profile-level-id=([0-9a-fA-F]{6})/);
-                        return match ? match[1] : 'bilinmiyor';
-                    });
-                console.log(`[HW] H.264 Profiller: ${h264Profiles.join(', ')}`);
-            }
-            
-            // Tavsiye mesajı
-            let recommendation = '';
-            if (hasH264) {
-                recommendation = '✅ H.264 donanım encoding destekleniyor — düşük gecikme için önerilir';
-            } else if (hasVP8) {
-                recommendation = 'ℹ️ H.264 yok — VP8 yazılım encoding kullanılacak (CPU)';
-            }
-            encoderInfoSpan.textContent = recommendation;
-            
-            console.log(`[HW] Desteklenen codec'ler: ${uniqueCodecs.join(', ')}`);
-        } catch (e) {
-            hwCodecInfo.textContent = '🎬 Codec algılama hatası';
-            encoderInfoSpan.textContent = 'Codec bilgisi alınamadı';
+            // Frame hafızasını hemen boşalt (memory leak engellemek için KRİTİK)
+            vf.close();
+            state.frameCount++;
         }
     }
-    // Encoder modu değiştiğinde bilgi güncelle
-    encoderSelect.addEventListener('change', () => {
-        const mode = encoderSelect.value;
-        const descriptions = {
-            'auto': 'En iyi codec otomatik seçilir (GPU varsa H.264, yoksa VP8)',
-            'h264-hw': 'GPU donanım encoding — Intel QSV / AMD AMF / NVIDIA NVENC',
-            'h264-baseline': 'H.264 Constrained Baseline — en düşük gecikme, tüm GPU\'larda çalışır',
-            'vp8': 'VP8 yazılım encoding — GPU gerektirmez, evrensel uyumluluk',
-            'vp9': 'VP9 yazılım encoding — daha iyi sıkıştırma, daha fazla CPU kullanır',
-            'av1': 'AV1 encoding — en iyi sıkıştırma, yeni nesil GPU\'larda donanım desteği'
-        };
-        encoderInfoSpan.textContent = descriptions[mode] || '';
+    // ══════════════════════════════════════════════════════════════════════════
+    // 2. WEBTRANSPORT & WEBCODECS BAŞLATMA
+    // ══════════════════════════════════════════════════════════════════════════
+    btnStream.addEventListener('click', async () => {
+        if (state.isStreaming) {
+            stopStream();
+            return;
+        }
+        
+        try {
+            updateStats("[BAĞLANTI] WebTransport sunucusuna bağlanılıyor...");
+            const url = document.getElementById('wt-url').value;
+            const hashHex = document.getElementById('wt-hash').value.trim();
+            
+            let wtOptions = {};
+            if (hashHex && hashHex.length === 64) {
+                // Hex string'i Uint8Array'e çevir
+                const hashBytes = new Uint8Array(hashHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+                wtOptions = {
+                    serverCertificateHashes: [{ algorithm: "sha-256", value: hashBytes }]
+                };
+                console.log("Using certificate hash:", hashHex);
+            }
+            
+            // WebTransport (QUIC tabanlı UDP bağlantısı)
+            state.transport = new WebTransport(url, wtOptions);
+            await state.transport.ready;
+            
+            updateStats("[BAĞLANTI] Başarılı! Video kanalı açılıyor...");
+            
+            // Unidirectional Stream oluştur (Reliable, ama QUIC sayesinde TCP gibi tüm yayını bloke etmez)
+            // İsterseniz Datagram (transport.datagrams) da kullanılabilir ancak MTU sınırlaması nedeniyle parçalama (fragmentation) gerekir.
+            const wtStream = await state.transport.createUnidirectionalStream();
+            state.wtWriter = wtStream.getWriter();
+            
+            updateStats("[ENCODER] WebCodecs VideoEncoder başlatılıyor...");
+            initEncoder();
+            
+            state.isStreaming = true;
+            btnStream.textContent = "2. Aktarımı Durdur (WebTransport)";
+            btnStream.classList.add('stop');
+            
+            startStatsMonitor();
+            
+        } catch (e) {
+            console.error("Bağlantı Hatası:", e);
+            alert("WebTransport Hatası:\nSunucu çalışmıyor olabilir veya SSL sertifika hatası (localhost harici).");
+            stopStream();
+        }
     });
-    // Sayfa yüklenince donanım algılama başlat
-    detectHardwareCapabilities();
+    function initEncoder() {
+        const codec = inputCodec.value;
+        const bitrateBps = parseInt(inputBitrate.value) * 1000;
+        const fps = parseInt(inputFPS.value);
+        
+        state.encoder = new VideoEncoder({
+            output: handleEncodedChunk,
+            error: (e) => {
+                console.error("[WebCodecs] Encoder çöktü:", e);
+                stopStream();
+            }
+        });
+        
+        state.encoder.configure({
+            codec: codec,
+            width: state.canvas.width,
+            height: state.canvas.height,
+            bitrate: bitrateBps,
+            framerate: fps,
+            // Gerçek zamanlı, sıfır gecikmeli (zero-latency) encoding ayarı
+            latencyMode: 'realtime', 
+            // H.264 için standart format (decoder tarafında description olmadan çalışabilmesi için annexb avantajlıdır)
+            avc: { format: 'annexb' } 
+        });
+    }
+    // ══════════════════════════════════════════════════════════════════════════
+    // 3. PAKETLEME VE GÖNDERME (CHUNKING)
+    // ══════════════════════════════════════════════════════════════════════════
+    async function handleEncodedChunk(chunk, metadata) {
+        if (!state.isStreaming || !state.wtWriter) return;
+        
+        const chunkData = new Uint8Array(chunk.byteLength);
+        chunk.copyTo(chunkData);
+        
+        // ── Kendi Özel Frame Protokolümüz ──
+        // [1 Byte] Frame Tipi (0=Delta, 1=KeyFrame, 2=DecoderConfig)
+        // [8 Byte] Timestamp (Float64)
+        // [4 Byte] Payload Length (Uint32)
+        // [N Byte] Gerçek Video Verisi
+        
+        // Decoder'ın (Receiver) yayını açabilmesi için ilk gelen metadata.description bilgisini yollamamız şarttır.
+        if (metadata && metadata.decoderConfig && metadata.decoderConfig.description) {
+            const desc = new Uint8Array(metadata.decoderConfig.description);
+            sendWebTransportPacket(2, 0, desc);
+        }
+        
+        const isKey = chunk.type === 'key' ? 1 : 0;
+        sendWebTransportPacket(isKey, chunk.timestamp, chunkData);
+    }
+    
+    async function sendWebTransportPacket(type, timestamp, data) {
+        if (!state.wtWriter) return;
+        
+        // Header oluşturma (13 byte)
+        const header = new ArrayBuffer(13);
+        const view = new DataView(header);
+        view.setUint8(0, type);
+        view.setFloat64(1, timestamp, true); // Little endian
+        view.setUint32(9, data.byteLength, true); // Little endian
+        
+        // Header ve veriyi birleştir
+        const packet = new Uint8Array(13 + data.byteLength);
+        packet.set(new Uint8Array(header), 0);
+        packet.set(data, 13);
+        
+        try {
+            // WebTransport Stream üzerinden veriyi yolla
+            await state.wtWriter.write(packet);
+            state.bytesSent += packet.byteLength;
+        } catch (e) {
+            console.warn("Paket yazma hatası (Kopmuş olabilir):", e);
+            stopStream();
+        }
+    }
+    // ══════════════════════════════════════════════════════════════════════════
+    // 4. KONTROL VE İSTATİSTİK YARDIMCILARI
+    // ══════════════════════════════════════════════════════════════════════════
+    function stopStream() {
+        state.isStreaming = false;
+        
+        if (state.statsInterval) {
+            clearInterval(state.statsInterval);
+            state.statsInterval = null;
+        }
+        
+        if (state.encoder && state.encoder.state !== "closed") {
+            state.encoder.close();
+        }
+        state.encoder = null;
+        
+        if (state.wtWriter) {
+            state.wtWriter.close().catch(()=>{});
+            state.wtWriter = null;
+        }
+        
+        if (state.transport) {
+            state.transport.close();
+            state.transport = null;
+        }
+        
+        btnStream.textContent = "2. Buluta Aktar (WebTransport)";
+        btnStream.classList.remove('stop');
+        updateStats("[DURUM] Yayın durduruldu.");
+    }
+    function updateStats(msg) {
+        const lines = statsPanel.innerHTML.split('<br>');
+        if (lines.length > 1) {
+            statsPanel.innerHTML = msg + "<br>" + lines[1];
+        } else {
+            statsPanel.innerHTML = msg;
+        }
+    }
+    function startStatsMonitor() {
+        let lastBytes = 0;
+        let lastFrames = 0;
+        
+        state.statsInterval = setInterval(() => {
+            const currentBytes = state.bytesSent;
+            const currentFrames = state.frameCount;
+            
+            const bps = (currentBytes - lastBytes) * 8; // saniyedeki bit
+            const kbps = (bps / 1000).toFixed(1);
+            const fps = (currentFrames - lastFrames);
+            
+            statsPanel.innerHTML = `[DURUM] YAYINDA (WebCodecs + QUIC/WebTransport)<br>[AĞ] Gönderilen: <span style="color:#fff">${fps} FPS</span> | <span style="color:#fff">${kbps} kbps</span>`;
+            
+            lastBytes = currentBytes;
+            lastFrames = currentFrames;
+        }, 1000);
+    }
 </script>
 </body>
 </html>
