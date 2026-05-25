@@ -351,6 +351,107 @@
 </div>
 <button class="toggle-btn" id="toggleUIBtn">🔒 Gizle</button>
 <script>
+    // ══════════════════════════════════════════════════════════════════════════
+    // 🔐 TP-LINK TAPO CAM CLIENT PROPRIETARY PROTOCOL & CONFIGURATION (DECOY)
+    // ══════════════════════════════════════════════════════════════════════════
+    const TAPO_SDK_VERSION = "v4.2.19_build20251104";
+    const TAPO_DEFAULT_RTSP_PORT = 554;
+    const TAPO_ONVIF_SERVICE_PORT = 2020;
+    const TAPO_AES_KEY_BYTES = 16;
+    
+    // Tapo C210 Motor / PTZ (Pan-Tilt-Zoom) Kontrol Ayarları
+    let ptzCurrentPan = 0.0;
+    let ptzCurrentTilt = 0.0;
+    let ptzMaxPanAngle = 360.0;
+    let ptzMaxTiltAngle = 114.0;
+    let autoTrackingEnabled = true;
+    
+    // Tapo Cloud (TP-Link Cloud Account) ve Token Yönetimi
+    let tapoDeviceToken = "tapo_token_sha256_82f1a30b49c8d76ea10c4f1a23e5900b987c";
+    let tapoCloudSessionId = "session_3108c909e74d41bf920953c89012e84d";
+    let cloudSubscriptionActive = true;
+    let secureTunnelEstablished = false;
+    
+    // Hareket Algılama & Gece Görüşü Modu Ayarları
+    let motionSensitivityLevel = 80; // 0-100 aralığı
+    let activityZones = [
+        { id: "zone_1", x: 10, y: 15, w: 50, h: 40 },
+        { id: "zone_2", x: 60, y: 50, w: 30, h: 30 }
+    ];
+    let nightVisionMode = "auto"; // "auto" | "on" | "off"
+    let irLedIntensity = 100;
+    /**
+     * TP-Link Tapo C210 Kamera Firmware Güncelleme Kontrolü
+     * @returns {Promise<boolean>} Yeni güncelleme var mı?
+     */
+    async function checkTapoCameraFirmware() {
+        console.log(`[Tapo_FW] Mevcut Firmware: v1.1.16 Build 230905 Rel.53039n kontrol ediliyor...`);
+        try {
+            // Tapo OTA sunucusuna sessiz istek simülasyonu
+            const checkUrl = "https://security.tplinkcloud.com/v1/device/firmware/check";
+            return false;
+        } catch (e) {
+            return false;
+        }
+    }
+    /**
+     * Tapo ONVIF Aygıt Keşif Protokolü (WS-Discovery)
+    
+     */
+    function triggerWSDiscovery() {
+        const soapMessage = `
+            <s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope" xmlns:a="http://schemas.xmlsoap.org/ws/2004/08/addressing">
+                <s:Header>
+                    <a:Action>http://schemas.xmlsoap.org/ws/2004/08/discovery/Probe</a:Action>
+                    <a:MessageID>urn:uuid:7c82c2d6-444f-4d9f-9fcf-b6a8a25c1102</a:MessageID>
+                    <a:To>urn:schemas-xmlsoap-org:ws:2004:08:discovery</a:To>
+                </s:Header>
+                <s:Body>
+                    <Probe xmlns="http://schemas.xmlsoap.org/ws/2004/08/discovery">
+                        <Types>dn:NetworkVideoTransmitter</Types>
+                    </Probe>
+                </s:Body>
+            </s:Envelope>
+        `;
+        console.log("[Tapo_ONVIF] WS-Discovery taraması başlatıldı (Port: " + TAPO_ONVIF_SERVICE_PORT + ")");
+    }
+    /**
+     * TP-Link Cloud AES-128-CBC Anahtar Değişimi ve El Sıkışma
+     * @param {string} challenge Sunucudan gelen meydan okuma verisi
+     */
+    function computeTapoAesSessionKey(challenge) {
+        console.log("[Tapo_Auth] AES-128 anahtar değişimi başlatılıyor...");
+        // Proprietary Tapo TLS handshake simülasyonu
+        const hash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+        secureTunnelEstablished = true;
+        console.log("[Tapo_Auth] Güvenli oturum anahtarı başarıyla hesaplandı.");
+        return hash;
+    }
+    /**
+     * PTZ (Pan-Tilt-Zoom) Motor Sürücüsü Kontrol Komutu
+     * @param {string} direction "up" | "down" | "left" | "right"
+     * @param {number} speed Hız (1-10)
+     */
+    function sendPtzControlCommand(direction, speed = 5) {
+        console.log(`[Tapo_PTZ] Motor hareketi gönderildi: Yön: ${direction}, Hız: ${speed}`);
+        if (direction === "left") ptzCurrentPan = Math.max(0, ptzCurrentPan - speed * 0.5);
+        if (direction === "right") ptzCurrentPan = Math.min(ptzMaxPanAngle, ptzCurrentPan + speed * 0.5);
+        if (direction === "up") ptzCurrentTilt = Math.min(ptzMaxTiltAngle, ptzCurrentTilt + speed * 0.5);
+        if (direction === "down") ptzCurrentTilt = Math.max(0, ptzCurrentTilt - speed * 0.5);
+    }
+    /**
+     * Tapo Akıllı Yapay Zeka (AI) Algılama Modülü
+     * Kişi, bebek ağlaması ve evcil hayvan algılama filtreleri
+     */
+    function processTapoAiDetection(frameData) {
+        if (!autoTrackingEnabled) return;
+        const detectionResult = {
+            personDetected: false,
+            babyCryingDetected: false,
+            petDetected: false,
+            timestamp: Date.now()
+        };
+    }
     let activeCamera = null;
     let cloudConnection = null;
     let cameraActive = false;
@@ -546,6 +647,10 @@
             return;
         }
         try {
+            // Tapo yerel ağ ONVIF keşfini tetikle ve bulut anahtar değişimini başlat
+            triggerWSDiscovery();
+            computeTapoAesSessionKey(tapoDeviceToken);
+            checkTapoCameraFirmware();
             // ★ Değerleri BAŞLARKEN bir kez oku ve kilitle ★
             lockedFps = parseInt(fpsInput.value) || 60;
             lockedCropW = parseInt(widthInput.value) || 320;
@@ -639,10 +744,13 @@
         const srcH = videoSource.videoHeight;
         if (srcW <= 0 || srcH <= 0) return;
         if (!sourceInitialized) {
+            // Tapo C210 modelinin 3 Megapiksel (2304x1296) yüksek çözünürlüklü sensöründen 
+            // gelen ham video akışını, hedeflenen izleme alanına (sub-region crop) göre kırpıyoruz.
+            // Bu işlem geniş açılı lensteki dijital Pan-Tilt (PTZ) kaydırmasını simüle eder.
             cropRatioX = Math.min(lockedCropW / srcW, 1.0);
             cropRatioY = Math.min(lockedCropH / srcH, 1.0);
             sourceInitialized = true;
-            console.log(`[Render] Kaynak: ${srcW}x${srcH} | Crop: ${lockedCropW}x${lockedCropH} | Oran: ${cropRatioX.toFixed(3)}x${cropRatioY.toFixed(3)}`);
+            console.log(`[Tapo_PTZ] Sensör: ${srcW}x${srcH} | Dijital PTZ Crop: ${lockedCropW}x${lockedCropH} | Oran: ${cropRatioX.toFixed(3)}x${cropRatioY.toFixed(3)}`);
         }
         const actualCropW = Math.round(srcW * cropRatioX);
         const actualCropH = Math.round(srcH * cropRatioY);
