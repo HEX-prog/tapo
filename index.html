@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TP-Link Tapo C210 — Canlı İzleme (WebCodecs)</title>
+    <title>Tapo ULL Sender — Zero Latency</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=DM+Sans:wght@300;400;600&display=swap');
+
         :root {
             --bg:         #080a0c;
             --surface:    #0d1014;
@@ -23,6 +24,7 @@
             --sans:       'DM Sans', sans-serif;
         }
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
             background: var(--bg);
             color: var(--text);
@@ -37,6 +39,7 @@
                 repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 39px, rgba(255,255,255,0.015) 40px),
                 repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 39px, rgba(255,255,255,0.015) 40px);
         }
+
         .layout {
             width: 100%;
             max-width: 700px;
@@ -44,6 +47,7 @@
             flex-direction: column;
             gap: 0;
         }
+
         /* ── Header ── */
         .header {
             display: flex;
@@ -76,6 +80,7 @@
             font-size: 0.65rem;
             color: var(--muted);
         }
+
         /* ── Cards ── */
         .card {
             background: var(--surface);
@@ -102,6 +107,7 @@
             height: 1px;
             background: var(--border);
         }
+
         /* ── Form controls ── */
         .field { margin-bottom: 10px; }
         .field label {
@@ -139,6 +145,7 @@
         }
         .row { display: flex; gap: 10px; }
         .row .field { flex: 1; }
+
         /* ── Transport mode toggle ── */
         .toggle-row {
             display: flex;
@@ -167,6 +174,7 @@
             color: var(--green);
         }
         .toggle-btn:first-child { border-right: 1px solid var(--border2); }
+
         /* ── Action buttons ── */
         .btn-primary, .btn-stop, .btn-secondary {
             width: 100%;
@@ -199,6 +207,7 @@
         }
         .btn-secondary:hover { background: rgba(0,229,255,0.07); }
         .btn-secondary:disabled { color: var(--muted); border-color: var(--border2); cursor: not-allowed; }
+
         /* ── Preview ── */
         .preview-wrap {
             background: #000;
@@ -235,6 +244,7 @@
             letter-spacing: 0.05em;
             text-align: center;
         }
+
         /* ── Stats terminal ── */
         .stats {
             margin-top: 12px;
@@ -263,18 +273,7 @@
         .stat-val.warn { color: var(--amber); }
         .stat-val.ok { color: var(--cyan); }
         .stat-val.bad { color: var(--red); }
-        /* ── Notice ── */
-        .notice {
-            background: rgba(255,171,0,0.07);
-            border-left: 2px solid var(--amber);
-            border-radius: 0 4px 4px 0;
-            padding: 9px 12px;
-            font-size: 0.72rem;
-            color: #c9a440;
-            margin-bottom: 12px;
-            font-family: var(--mono);
-            line-height: 1.5;
-        }
+
         /* ── Status dot ── */
         .status-dot {
             width: 6px; height: 6px;
@@ -297,94 +296,102 @@
 </head>
 <body>
 <div class="layout">
+
     <!-- Header -->
     <div class="header">
-        <span class="header-title">Tapo C210 Live View</span>
-        <span class="header-badge">ZERO LATENCY</span>
-        <span class="header-sub">WebCodecs + QUIC | TP‑Link Ev Kamerası Emülatörü</span>
+        <span class="header-title">Tapo ULL Sender</span>
+        <span class="header-badge">LAN ZERO LATENCY</span>
+        <span class="header-sub">WebCodecs + QUIC/WebTransport</span>
     </div>
+
     <!-- Connection Card -->
     <div class="card">
-        <div class="card-label">01 — Bağlantı & NVR</div>
+        <div class="card-label">01 — Transport</div>
+
         <!-- Transport mode selector -->
         <div class="field">
-            <label>İletim Modu (Tapo Cloud / NVR)</label>
+            <label>İletim Modu</label>
             <div class="toggle-row">
                 <button class="toggle-btn active" id="mode-stream">Stream (Güvenilir)</button>
                 <button class="toggle-btn" id="mode-datagram">Datagram (En Düşük Gecikme)</button>
             </div>
         </div>
+
         <div class="field">
-            <label>NVR / Cloud Sunucu URL</label>
-            <input type="text" id="wt-url" value="https://127.0.0.1:4433/stream">
+            <label>WebTransport Sunucu URL</label>
+            <input type="text" id="wt-url" value="https://192.168.1.6:4433/stream">
         </div>
+
         <div class="field">
-            <label>Güvenlik Anahtarı (SHA-256 hex — uzaktan erişim için)</label>
-            <input type="text" id="wt-hash" placeholder="64 hex karakter — yerel ağda boş bırakabilirsiniz" style="font-size:0.72rem;">
+            <label>Sertifika Hash (SHA-256 hex — uzaktan bağlantı için ZORUNLU)</label>
+            <input type="text" id="wt-hash" placeholder="CVM arayüzünden kopyaladığınız 64 hex karakter" style="font-size:0.72rem;">
         </div>
     </div>
+
     <!-- Encode Card -->
     <div class="card">
-        <div class="card-label">02 — Video Ayarları (Tapo Kamera Profili)</div>
+        <div class="card-label">02 — Encoder</div>
+
         <div class="row">
             <div class="field">
-                <label>Codec (Tapo C210: H.264 Baseline)</label>
+                <label>Codec</label>
                 <select id="v-codec">
                     <option value="avc1.42001f">H.264 Baseline 3.1 (En Hızlı)</option>
                     <option value="avc1.42002a" selected>H.264 Baseline 4.2 (Önerilen)</option>
                     <option value="avc1.640028">H.264 High 4.0</option>
-                    <option value="vp8" disabled>VP8 (Alıcı desteklemez)</option>
-                    <option value="vp09.00.10.08" disabled>VP9 (Alıcı desteklemez)</option>
-                    <option value="av01.0.04M.08" disabled>AV1 (Alıcı desteklemez)</option>
                 </select>
             </div>
             <div class="field">
-                <label>Bitrate (kbps) — Tapo önerilen</label>
-                <input type="number" id="v-bitrate" value="3000">
+                <label>Bitrate (kbps)</label>
+                <input type="number" id="v-bitrate" value="4000">
             </div>
         </div>
+
         <div class="row">
             <div class="field">
-                <label>Kırpma Genişliği (px)</label>
+                <label>Kırpma Genişliği</label>
                 <input type="number" id="v-width" value="640">
             </div>
             <div class="field">
-                <label>Kırpma Yüksekliği (px)</label>
-                <input type="number" id="v-height" value="360">
+                <label>Kırpma Yüksekliği</label>
+                <input type="number" id="v-height" value="640">
             </div>
             <div class="field">
                 <label>Hedef FPS</label>
                 <input type="number" id="v-fps" value="60">
             </div>
             <div class="field">
-                <label>Kodlayıcı Kuyruğu</label>
-                <input type="number" id="v-queue" value="2" min="1" max="8">
+                <label>Keyframe Aralığı (sn)</label>
+                <input type="number" id="v-keyint" value="1" min="1" max="10" step="1">
             </div>
         </div>
     </div>
+
     <!-- Control Card -->
     <div class="card">
-        <div class="card-label">03 — Kamera Kontrolü</div>
-        <button class="btn-primary" id="btn-capture">▶ Kamera Kaynağını Seç ve Başlat</button>
-        <button class="btn-secondary" id="btn-stream" disabled>⚡ Canlı Yayını NVR’a Aktar</button>
+        <div class="card-label">03 — Kontrol</div>
+        <button class="btn-primary" id="btn-capture">▶ Ekranı Seç ve Yakala</button>
+        <button class="btn-secondary" id="btn-stream" disabled>⚡ WebTransport Yayınını Başlat</button>
     </div>
+
     <!-- Preview Card -->
     <div class="card">
-        <div class="card-label">04 — Canlı Görüntü (Önizleme)</div>
+        <div class="card-label">04 — Önizleme</div>
         <div class="preview-wrap">
-            <canvas id="preview-canvas" width="640" height="360"></canvas>
+            <canvas id="preview-canvas" width="640" height="640"></canvas>
             <div class="preview-overlay" id="res-label" style="display:none"></div>
-            <div class="preview-placeholder" id="preview-placeholder">Kamera kaynağı bekleniyor… (Ekran paylaşımı ile simüle edilecek)</div>
+            <div class="preview-placeholder" id="preview-placeholder">Ekran yakalanmayı bekliyor…</div>
         </div>
+
         <!-- Stats terminal -->
         <div class="stats">
             <div class="stats-inner" id="stats-inner">
                 <div class="stat-row">
-                    <span class="stat-key"><span class="status-dot" id="status-dot"></span>KAMERA DURUMU</span>
+                    <span class="stat-key"><span class="status-dot" id="status-dot"></span>DURUM</span>
                     <span class="stat-val" id="s-status">Bekliyor</span>
                 </div>
                 <div class="stat-row">
-                    <span class="stat-key">AKTARIM MODU</span>
+                    <span class="stat-key">TRANSPORT</span>
                     <span class="stat-val ok" id="s-mode">Stream</span>
                 </div>
                 <div class="stat-row">
@@ -392,65 +399,68 @@
                     <span class="stat-val" id="s-fps">—</span>
                 </div>
                 <div class="stat-row">
-                    <span class="stat-key">BANT GENİŞLİĞİ</span>
+                    <span class="stat-key">THROUGHPUT</span>
                     <span class="stat-val" id="s-kbps">— kbps</span>
                 </div>
                 <div class="stat-row">
-                    <span class="stat-key">KODLAMA KUYRUĞU</span>
+                    <span class="stat-key">ENCODE QUEUE</span>
                     <span class="stat-val" id="s-queue">—</span>
                 </div>
                 <div class="stat-row">
-                    <span class="stat-key">DÜŞEN KARELER</span>
+                    <span class="stat-key">DROPPED</span>
                     <span class="stat-val" id="s-dropped">0</span>
                 </div>
                 <div class="stat-row">
-                    <span class="stat-key">TOPLAM GÖNDERİLEN</span>
+                    <span class="stat-key">DG SENT ERRORS</span>
+                    <span class="stat-val" id="s-dgerr">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-key">TOTAL SENT</span>
                     <span class="stat-val" id="s-total">0 B</span>
                 </div>
             </div>
         </div>
     </div>
+
 </div><!-- /.layout -->
+
 <script>
 // ═══════════════════════════════════════════════════════════════
-// TP‑LINK TAPO EV KAMERA SIMÜLASYONU — WebCodecs + WebTransport
-// Gerçek bir Tapo C210/C200 kamerasının düşük gecikmeli canlı
-// yayın pipeline'ını taklit eder.
-// Kaynak olarak ekran paylaşımı (DisplayMedia) kullanılır;
-// bu sayede herhangi bir uygulama / masaüstü kamera görüntüsü
-// gibi NVR'a aktarılabilir.
+// TAPO ULL SENDER — LAN Zero Latency Edition
+// Pipeline: Screen → Canvas Crop → VideoEncoder → WebTransport (Stream/Datagram)
 //
-// Kritik optimizasyonlar (Tapo donanımından ilhamla):
-//  1. Canvas tabanlı kırpma/ölçekleme → WebCodecs ile uyumlu
-//  2. Encoder backpressure       → encodeQueueSize ile kare atlama
-//  3. Datagram modu (QUIC)       → UDP seviyesinde gecikme
-//  4. CBR + realtime + L1T1      → sabit bit hızı, anlık kodlama
-//  5. Auto-reconnect             → bağlantı kopsa da yayına devam
+// LAN optimizasyonları:
+//  1. Datagram modu: QUIC datagrams ile gerçek UDP gecikmesi
+//  2. Yüksek bitrate (4 Mbps) — LAN'da bant genişliği bol
+//  3. Sık keyframe (1 sn) — decoder hızlı toparlar
+//  4. Düşük encoder kuyruğu — gecikme birikmesini önle
+//  5. Fire-and-forget datagram gönderimi — await bloklama yok
 // ═══════════════════════════════════════════════════════════════
-// ── Sabitler (Tapo profili) ────────────────────────────────────
-const MAX_DATAGRAM_PAYLOAD = 1100;  // QUIC MTU sınırı
-const KEY_INTERVAL_SEC     = 2;     // her 2 saniyede bir anahtar kare (Tapo varsayılan)
-const RECONNECT_DELAY_MS   = 1500;  // kopuk bağlantıda yeniden bağlanma
-// ── Durum (Kamera emülatörü state) ─────────────────────────────
+
+// ── Sabitler ──────────────────────────────────────────────────
+const MAX_DATAGRAM_PAYLOAD = 1100;  // QUIC MTU güvenli sınır (1200 - headers)
+
+// ── State ─────────────────────────────────────────────────────
 const S = {
-    stream:        null,  // Ekran yakalama akışı (sanal kamera)
-    track:         null,  // Video track
-    processor:     null,  // MediaStreamTrackProcessor
-    frameReader:   null,  // ReadableStreamDefaultReader<VideoFrame>
-    transport:     null,  // WebTransport bağlantısı
-    encoder:       null,  // VideoEncoder (Tapo H.264)
+    stream:        null,
+    track:         null,
+    processor:     null,
+    frameReader:   null,
+    transport:     null,
+    encoder:       null,
     // Stream modu
     wtStream:      null,
     wtWriter:      null,
     // Datagram modu
     dtWriter:      null,
-    // Bayraklar
+    // Flags
     capturing:     false,
     streaming:     false,
     useDatagrams:  false,
-    // Metrikler (Tapo panosu)
+    // Metrics
     frameCount:    0,
     droppedFrames: 0,
+    dgErrors:      0,
     bytesSent:     0,
     statsTimer:    null,
     frameSeq:      0,
@@ -459,14 +469,17 @@ const S = {
     canvas:        document.getElementById('preview-canvas'),
     ctx:           null,
 };
+
 S.ctx = S.canvas.getContext('2d', { alpha: false, desynchronized: true, willReadFrequently: false });
-// ── UI referansları ────────────────────────────────────────────
+
+// ── UI refs ───────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
 const btnCapture  = $('btn-capture');
 const btnStream   = $('btn-stream');
 const modeStream  = $('mode-stream');
 const modeDgram   = $('mode-datagram');
-// ── Aktarım modu seçimi (Tapo Cloud / NVR Direct) ─────────────
+
+// ── Transport mode toggle ─────────────────────────────────────
 modeStream.addEventListener('click', () => {
     S.useDatagrams = false;
     modeStream.classList.add('active');
@@ -477,57 +490,59 @@ modeDgram.addEventListener('click', () => {
     S.useDatagrams = true;
     modeDgram.classList.add('active');
     modeStream.classList.remove('active');
-    $('s-mode').textContent = 'Datagram (Düşük Gecikme)';
+    $('s-mode').textContent = 'Datagram (En Düşük Gecikme)';
 });
+
 // ═══════════════════════════════════════════════════════════════
-// 1. KAMERA KAYNAĞI BAŞLATMA (Gerçek kamera yerine DisplayMedia)
+// 1. EKRAN YAKALAMA + PIPELINE
 // ═══════════════════════════════════════════════════════════════
 btnCapture.addEventListener('click', async () => {
     if (S.capturing) return;
     try {
         const fps = parseInt($('v-fps').value) || 60;
-        // Tapo kamera simülasyonu: ekran paylaşımı izni iste
         S.stream = await navigator.mediaDevices.getDisplayMedia({
             video: {
                 frameRate: { ideal: fps, max: fps },
                 width:     { ideal: 3840 },
                 height:    { ideal: 2160 },
                 cursor:    'never',
-                displaySurface: 'window',
             },
             audio: false,
             selfBrowserSurface: 'exclude',
             surfaceSwitching:   'exclude',
         });
+
         S.track = S.stream.getVideoTracks()[0];
-        // Canvas'ı Tapo profiline uygun kırpma boyutuna ayarla
+
         const cropW = parseInt($('v-width').value);
         const cropH = parseInt($('v-height').value);
         S.canvas.width  = cropW;
         S.canvas.height = cropH;
+
         S.capturing = true;
         $('preview-placeholder').style.display = 'none';
         $('res-label').style.display = 'block';
-        btnCapture.textContent = '✓ Kamera Kaynağı Aktif';
+        btnCapture.textContent = '✓ Ekran Yakalanıyor';
         btnCapture.disabled = true;
         btnStream.disabled = false;
-        // MediaStreamTrackProcessor ile sıfır kopya pipeline (Tapo donanım hızlandırması)
+
         if ('MediaStreamTrackProcessor' in window) {
             S.processor   = new MediaStreamTrackProcessor({ track: S.track });
             S.frameReader = S.processor.readable.getReader();
             runFrameLoop();
         } else {
-            // Eski tarayıcı fallback (canvas tabanlı)
-            console.warn('[Tapo] MediaStreamTrackProcessor yok, canvas fallback aktif');
+            console.warn('[ULL] MediaStreamTrackProcessor yok, canvas fallback aktif');
             startCanvasFallback();
         }
-        // Kullanıcı paylaşımı durdurursa kamera durur
+
         S.track.addEventListener('ended', () => stopAll());
+
     } catch (e) {
-        alert('Kamera başlatılamadı: ' + e.message);
+        alert('Ekran yakalama başarısız: ' + e.message);
     }
 });
-// ── Ana kare döngüsü (Tapo düşük gecikme pipeline) ─────────────
+
+// ── Ana kare döngüsü (MediaStreamTrackProcessor) ───────────────
 async function runFrameLoop() {
     while (S.capturing) {
         let frame;
@@ -538,65 +553,74 @@ async function runFrameLoop() {
         } catch {
             break;
         }
+
         try {
-            // ── Önizleme tuvaline kırp ve çiz ──
             drawPreview(frame);
-            // ── Encode: Tapo backpressure koruması ──
+
             if (S.streaming && S.encoder && S.encoder.state === 'configured') {
-                const maxQ = parseInt($('v-queue').value) || 2;
+                const maxQ = 2; // Düşük kuyruk = düşük gecikme
+
                 if (S.encoder.encodeQueueSize < maxQ) {
-                    const fps    = parseInt($('v-fps').value) || 60;
-                    const isKey  = (S.frameCount % (fps * KEY_INTERVAL_SEC) === 0);
-                    // Canvas'tan tam çözünürlükte yeni VideoFrame oluştur
+                    const fps     = parseInt($('v-fps').value) || 60;
+                    const keyInt  = parseInt($('v-keyint').value) || 1;
+                    const isKey   = (S.frameCount % (fps * keyInt) === 0);
+                    
                     const codedFrame = new VideoFrame(S.canvas, { timestamp: frame.timestamp });
                     S.encoder.encode(codedFrame, { keyFrame: isKey });
                     codedFrame.close();
+                    
                     S.frameCount++;
                 } else {
-                    // Encoder kuyruğu dolu → kare atla (gecikme birikmesin)
                     S.droppedFrames++;
                 }
             }
         } finally {
-            frame.close(); // Bellek sızıntısı yok
+            frame.close();
         }
     }
 }
-// ── Önizleme: merkezden kırp (Tapo görüntü işleme) ────────────
+
+// ── Önizleme: merkezden kırp ve çiz ─────────────────────────
 let lastSrcW = 0, lastSrcH = 0;
 function drawPreview(source) {
-    const srcW  = source.displayWidth || source.videoWidth || 0;
+    const srcW  = source.displayWidth  || source.videoWidth  || 0;
     const srcH  = source.displayHeight || source.videoHeight || 0;
     const cropW = S.canvas.width;
     const cropH = S.canvas.height;
+
     const sx = Math.max(0, Math.floor((srcW - cropW) / 2));
     const sy = Math.max(0, Math.floor((srcH - cropH) / 2));
     const sw = Math.min(srcW, cropW);
     const sh = Math.min(srcH, cropH);
+
     S.ctx.drawImage(source, sx, sy, sw, sh, 0, 0, sw, sh);
+
     if (srcW > 0 && srcH > 0 && (srcW !== lastSrcW || srcH !== lastSrcH)) {
         $('res-label').textContent = `${srcW}×${srcH} → ${cropW}×${cropH}`;
         lastSrcW = srcW;
         lastSrcH = srcH;
     }
 }
-// ── Canvas fallback (MediaStreamTrackProcessor yoksa) ──────────
+
+// ── Canvas fallback ──────────────────────────────────────────
 function startCanvasFallback() {
     const vid = document.createElement('video');
     vid.srcObject = S.stream;
     vid.muted     = true;
     vid.playsInline = true;
     vid.play();
+
     function rafLoop() {
         if (!S.capturing) return;
         if (vid.readyState >= 2) {
             drawPreview(vid);
             if (S.streaming && S.encoder && S.encoder.state === 'configured') {
-                const fps   = parseInt($('v-fps').value) || 60;
-                const isKey = (S.frameCount % (fps * KEY_INTERVAL_SEC) === 0);
-                const ts    = performance.now() * 1000;
-                const vf    = new VideoFrame(S.canvas, { timestamp: ts });
-                if (S.encoder.encodeQueueSize < (parseInt($('v-queue').value) || 2)) {
+                const fps    = parseInt($('v-fps').value) || 60;
+                const keyInt = parseInt($('v-keyint').value) || 1;
+                const isKey  = (S.frameCount % (fps * keyInt) === 0);
+                const ts     = performance.now() * 1000;
+                const vf     = new VideoFrame(S.canvas, { timestamp: ts });
+                if (S.encoder.encodeQueueSize < 2) {
                     S.encoder.encode(vf, { keyFrame: isKey });
                     S.frameCount++;
                 } else {
@@ -609,18 +633,22 @@ function startCanvasFallback() {
     }
     requestAnimationFrame(rafLoop);
 }
+
 // ═══════════════════════════════════════════════════════════════
-// 2. NVR BAĞLANTISI (WebTransport)
+// 2. WEBTRANSPORT BAĞLANTISI
 // ═══════════════════════════════════════════════════════════════
 btnStream.addEventListener('click', async () => {
     if (S.streaming) { stopStream(); return; }
     await startStream();
 });
+
 async function startStream() {
     try {
-        setStatus('NVR’a bağlanılıyor…', '');
+        setStatus('Bağlanıyor…', '');
+
         const url     = $('wt-url').value.trim();
         const hashHex = $('wt-hash').value.trim();
+
         let wtOptions = {};
         if (hashHex.length === 64) {
             const hashBytes = new Uint8Array(
@@ -630,59 +658,75 @@ async function startStream() {
                 serverCertificateHashes: [{ algorithm: 'sha-256', value: hashBytes }]
             };
         }
+
         S.transport = new WebTransport(url, wtOptions);
         await S.transport.ready;
-        setStatus('NVR’a bağlı', 'ok');
+
+        setStatus('Bağlı', 'ok');
+
         if (S.useDatagrams) {
-            // Datagram modu — en düşük gecikme, gerçek zamanlı kamera gibi
+            // Datagram modu — QUIC datagrams (unreliable, lowest latency)
             S.dtWriter = S.transport.datagrams.writable.getWriter();
-            setStatus('Datagram Aktif', 'ok');
+            setStatus('Datagram Aktif ⚡', 'ok');
         } else {
-            // Stream modu — güvenilir sıralı iletim
+            // Stream modu — güvenilir sıralı teslimat
             S.wtStream = await S.transport.createUnidirectionalStream();
             S.wtWriter = S.wtStream.getWriter();
             setStatus('Stream Aktif', 'ok');
         }
-        // Tapo encoder'ı başlat
+
         initEncoder();
         S.streaming = true;
+
         btnStream.textContent = '⏹ Yayını Durdur';
         btnStream.className   = 'btn-stop';
         $('status-dot').classList.add('live');
         startStatsTimer();
-        // Bağlantı kopma izleyicisi (Tapo otomatik yeniden bağlanma)
+
+        // Bağlantı kopma izleyicisi
         S.transport.closed
             .then(() => {
                 if (S.streaming) {
-                    console.warn('[Tapo] NVR bağlantısı koptu, yeniden bağlanılıyor…');
-                    setTimeout(startStream, RECONNECT_DELAY_MS);
+                    console.warn('[WT] Bağlantı kapandı');
+                    stopStream();
+                    setStatus('Bağlantı koptu', 'bad');
                 }
             })
             .catch(() => {});
+
     } catch (e) {
-        console.error('[Tapo] NVR bağlantı hatası:', e);
+        console.error('[WT] Bağlantı hatası:', e);
         setStatus('Hata: ' + e.message, 'bad');
-        btnStream.textContent  = '⚡ Canlı Yayını NVR’a Aktar';
+        btnStream.textContent  = '⚡ WebTransport Yayınını Başlat';
         btnStream.className    = 'btn-secondary';
     }
 }
+
 function stopStream() {
     S.streaming = false;
+
     clearInterval(S.statsTimer);
     S.statsTimer = null;
+
     try { S.encoder?.close(); } catch {}
     S.encoder = null;
+
     try { S.wtWriter?.close(); } catch {}
     S.wtWriter = null;
+    S.wtStream = null;
+
     try { S.dtWriter?.close(); } catch {}
     S.dtWriter = null;
+
     try { S.transport?.close(); } catch {}
     S.transport = null;
-    btnStream.textContent = '⚡ Canlı Yayını NVR’a Aktar';
+
+    btnStream.textContent = '⚡ WebTransport Yayınını Başlat';
     btnStream.className   = 'btn-secondary';
     $('status-dot').classList.remove('live');
-    setStatus('Yayın durduruldu', '');
+    setStatus('Durduruldu', '');
 }
+
 function stopAll() {
     stopStream();
     S.capturing = false;
@@ -690,61 +734,64 @@ function stopAll() {
     try { S.track?.stop(); } catch {}
     S.stream = null;
     S.track  = null;
-    btnCapture.textContent = '▶ Kamera Kaynağını Seç ve Başlat';
+    btnCapture.textContent = '▶ Ekranı Seç ve Yakala';
     btnCapture.disabled = false;
     btnStream.disabled  = true;
     $('preview-placeholder').style.display = 'block';
     $('res-label').style.display = 'none';
 }
+
 // ═══════════════════════════════════════════════════════════════
-// 3. TAPO VIDEO ENCODER (WebCodecs, düşük gecikme profili)
+// 3. WEBCODECS ENCODER — LAN Düşük Gecikme
 // ═══════════════════════════════════════════════════════════════
 function initEncoder() {
     const codec      = $('v-codec').value;
-    const bitrateBps = (parseInt($('v-bitrate').value) || 3000) * 1000;
+    const bitrateBps = (parseInt($('v-bitrate').value) || 4000) * 1000;
     const fps        = parseInt($('v-fps').value) || 60;
     const cropW      = S.canvas.width;
     const cropH      = S.canvas.height;
+
     S.encoder = new VideoEncoder({
         output: handleEncodedChunk,
         error:  e => {
-            console.error('[Tapo Encoder] Çöktü:', e);
+            console.error('[Encoder] Çöktü:', e);
             stopStream();
         },
     });
+
     const config = {
         codec,
-        width:     cropW,
-        height:    cropH,
-        bitrate:   bitrateBps,
-        framerate: fps,
-        // ─── Tapo gerçek zamanlı profili ──────────────────────
-        latencyMode:     'realtime',  // tampon yok
-        bitrateMode:     'constant',  // CBR, bant genişliği tahmin edilebilir
-        avc: { format: 'annexb' },    // SPS/PPS her anahtar karede
+        width:          cropW,
+        height:         cropH,
+        bitrate:        bitrateBps,
+        framerate:      fps,
+        latencyMode:    'realtime',   // Sıfır buffer gecikmesi
+        bitrateMode:    'constant',   // CBR: LAN'da tahmin edilebilir throughput
+        avc:            { format: 'annexb' },  // SPS/PPS inline → decoder bağımsız
     };
-    // L1T1: tek katman, tek geçici seviye — donanım kodlayıcıya uygun
+
+    // L1T1: Tek temporal layer — minimum encoder gecikmesi
     if (codec.startsWith('avc') || codec.startsWith('vp') || codec.startsWith('av01')) {
         config.scalabilityMode = 'L1T1';
     }
-    // Destek kontrolü (arka planda)
-    VideoEncoder.isConfigSupported(config).then(result => {
-        if (!result.supported) {
-            console.warn('[Tapo] Encoder yapılandırması desteklenmiyor, deneniyor…');
-        }
-    }).catch(() => {});
+
     S.encoder.configure(config);
-    S.frameCount = 0;
+    S.frameCount    = 0;
+    S.droppedFrames = 0;
+    S.dgErrors      = 0;
 }
+
 // ═══════════════════════════════════════════════════════════════
-// 4. KODLANMIŞ KARE GÖNDERME (Tapo özel hafif protokol)
+// 4. KODLANMIŞ KARE GÖNDERME
 // ═══════════════════════════════════════════════════════════════
-// Header (13 byte):
+
+// ── Stream modu: 13-byte header protokolü ─────────────────────
 // [0]    : tip (0=delta, 1=keyframe, 2=decoderConfig)
 // [1..8] : timestamp μs (Float64 LE)
 // [9..12]: payload uzunluğu (Uint32 LE)
 // [13..N]: payload
-function buildPacket(type, timestamp, data) {
+
+function buildStreamPacket(type, timestamp, data) {
     const pkt  = new Uint8Array(13 + data.byteLength);
     const view = new DataView(pkt.buffer);
     view.setUint8(0, type);
@@ -753,101 +800,132 @@ function buildPacket(type, timestamp, data) {
     pkt.set(data, 13);
     return pkt;
 }
+
 async function handleEncodedChunk(chunk, metadata) {
     if (!S.streaming) return;
-    // Alıcının kod çözücüyü başlatabilmesi için yapılandırma bilgisi
+
+    // DecoderConfig (SPS/PPS) — keyframe'den önce gönderilmeli
     if (metadata?.decoderConfig?.description) {
         const desc = new Uint8Array(metadata.decoderConfig.description);
-        await sendPacket(2, 0, desc);
+        sendPacket(2, 0, desc);
     }
-    const data  = new Uint8Array(chunk.byteLength);
+
+    const data = new Uint8Array(chunk.byteLength);
     chunk.copyTo(data);
-    const type  = chunk.type === 'key' ? 1 : 0;
-    await sendPacket(type, chunk.timestamp, data);
+    const type = chunk.type === 'key' ? 1 : 0;
+    sendPacket(type, chunk.timestamp, data);
 }
-async function sendPacket(type, timestamp, data) {
+
+function sendPacket(type, timestamp, data) {
     if (S.useDatagrams) {
-        await sendViaDatagrams(type, timestamp, data);
+        sendViaDatagrams(type, timestamp, data);
     } else {
-        await sendViaStream(type, timestamp, data);
+        sendViaStream(type, timestamp, data);
     }
 }
-// ── Stream modu (güvenilir) ────────────────────────────────────
-async function sendViaStream(type, timestamp, data) {
+
+// ── Stream modu gönderimi ──────────────────────────────────────
+function sendViaStream(type, timestamp, data) {
     if (!S.wtWriter) return;
-    const pkt = buildPacket(type, timestamp, data);
-    try {
-        await S.wtWriter.write(pkt);
+    const pkt = buildStreamPacket(type, timestamp, data);
+    // write() returns a promise; we don't await it for lower latency
+    // but chain error handling
+    S.wtWriter.write(pkt).then(() => {
         S.bytesSent += pkt.byteLength;
-    } catch (e) {
-        console.warn('[Tapo Stream] Yazma hatası:', e);
+    }).catch(e => {
+        console.warn('[Stream] Yazma hatası:', e);
         if (S.streaming) stopStream();
-    }
+    });
 }
-// ── Datagram modu (parçalı, en düşük gecikme) ─────────────────
-// Datagram header (20 byte):
-// [0..1]  : session ID (Uint16 LE)
-// [2..5]  : frame seq  (Uint32 LE)
-// [6..7]  : frag index (Uint16 LE)
-// [8..9]  : total frags(Uint16 LE)
-// [10]    : frame type
-// [11]    : flags (bit0 = hasTimestamp)
-// [12..19]: timestamp (Float64 LE, yalnızca ilk fragment)
-async function sendViaDatagrams(type, timestamp, data) {
+
+// ═══════════════════════════════════════════════════════════════
+// DATAGRAM MODU — QUIC Datagrams ile Gerçek UDP Gecikmesi
+// ═══════════════════════════════════════════════════════════════
+// Datagram header layout (MUST match Python DatagramAssembler):
+//
+// Offset  Size  Type       Field
+// 0       2     Uint16 LE  session_id
+// 2       4     Uint32 LE  frame_seq
+// 6       2     Uint16 LE  frag_index
+// 8       2     Uint16 LE  total_frags
+// 10      1     Uint8      frame_type
+// 11      1     Uint8      flags (bit0 = hasTimestamp)
+// --- if flags & 1 ---
+// 12      8     Float64 LE timestamp
+// --- end ---
+// HDR_SIZE = 12 (without ts) or 20 (with ts)
+// Then: payload bytes
+
+function sendViaDatagrams(type, timestamp, data) {
     if (!S.dtWriter) return;
-    const fid       = S.frameSeq++ & 0xFFFFFFFF;
+
+    const fid        = S.frameSeq++ & 0xFFFFFFFF;
     const totalFrags = Math.ceil(data.byteLength / MAX_DATAGRAM_PAYLOAD) || 1;
+
     for (let i = 0; i < totalFrags; i++) {
-        const slice     = data.slice(i * MAX_DATAGRAM_PAYLOAD, (i + 1) * MAX_DATAGRAM_PAYLOAD);
+        const offset    = i * MAX_DATAGRAM_PAYLOAD;
+        const slice     = data.subarray(offset, offset + MAX_DATAGRAM_PAYLOAD);
         const hasTs     = i === 0 ? 1 : 0;
         const hdrSize   = hasTs ? 20 : 12;
         const dgram     = new Uint8Array(hdrSize + slice.byteLength);
         const view      = new DataView(dgram.buffer);
-        view.setUint16(0, S.sessionId, true);
-        view.setUint32(2, fid,         true);
-        view.setUint16(6, i,           true);
-        view.setUint16(8, totalFrags,  true);
-        view.setUint8(10, type);
-        view.setUint8(11, hasTs);
-        if (hasTs) view.setFloat64(12, timestamp, true);
-        dgram.set(slice, hdrSize);
-        try {
-            await S.dtWriter.write(dgram);
-            S.bytesSent += dgram.byteLength;
-        } catch (e) {
-            // Datagramlarda kayıp normaldir, sessizce devam et
-            console.debug('[Tapo DG] Gönderim hatası (normal):', e.message);
+
+        view.setUint16(0,  S.sessionId, true);  // session_id
+        view.setUint32(2,  fid,         true);  // frame_seq
+        view.setUint16(6,  i,           true);  // frag_index  (Uint16!)
+        view.setUint16(8,  totalFrags,  true);  // total_frags (Uint16!)
+        view.setUint8(10,  type);               // frame_type
+        view.setUint8(11,  hasTs);              // flags
+        if (hasTs) {
+            view.setFloat64(12, timestamp, true);  // timestamp
         }
+        dgram.set(slice, hdrSize);
+
+        // Fire-and-forget: don't await, minimize latency
+        S.dtWriter.write(dgram).then(() => {
+            S.bytesSent += dgram.byteLength;
+        }).catch(e => {
+            S.dgErrors++;
+            // Datagram loss is expected/normal, don't disconnect
+        });
     }
 }
+
 // ═══════════════════════════════════════════════════════════════
-// 5. İSTATİSTİK PANOSU (Tapo kamera bilgileri)
+// 5. İSTATİSTİK YÖNETİMİ
 // ═══════════════════════════════════════════════════════════════
 function startStatsTimer() {
     let prevBytes  = 0;
     let prevFrames = 0;
+
     S.statsTimer = setInterval(() => {
         const fps    = S.frameCount - prevFrames;
         const bps    = (S.bytesSent - prevBytes) * 8;
         const kbps   = (bps / 1000).toFixed(0);
         const qsize  = S.encoder?.encodeQueueSize ?? 0;
+
         prevBytes  = S.bytesSent;
         prevFrames = S.frameCount;
-        $('s-fps').textContent    = fps + ' fps';
-        $('s-fps').className      = 'stat-val' + (fps < 20 ? ' warn' : '');
-        $('s-kbps').textContent   = kbps + ' kbps';
-        $('s-queue').textContent  = qsize;
-        $('s-queue').className    = 'stat-val' + (qsize >= 2 ? ' warn' : '');
+
+        $('s-fps').textContent     = fps + ' fps';
+        $('s-fps').className       = 'stat-val' + (fps < 20 ? ' warn' : '');
+        $('s-kbps').textContent    = kbps + ' kbps';
+        $('s-queue').textContent   = qsize;
+        $('s-queue').className     = 'stat-val' + (qsize >= 2 ? ' warn' : '');
         $('s-dropped').textContent = S.droppedFrames;
-        $('s-dropped').className  = 'stat-val' + (S.droppedFrames > 5 ? ' bad' : '');
-        $('s-total').textContent  = formatBytes(S.bytesSent);
+        $('s-dropped').className   = 'stat-val' + (S.droppedFrames > 5 ? ' bad' : '');
+        $('s-dgerr').textContent   = S.dgErrors;
+        $('s-dgerr').className     = 'stat-val' + (S.dgErrors > 10 ? ' warn' : '');
+        $('s-total').textContent   = formatBytes(S.bytesSent);
     }, 1000);
 }
+
 function setStatus(msg, cls) {
     const el = $('s-status');
     el.textContent = msg;
     el.className = 'stat-val' + (cls ? ' ' + cls : '');
 }
+
 function formatBytes(b) {
     if (b < 1024)     return b + ' B';
     if (b < 1048576)  return (b / 1024).toFixed(1) + ' KB';
