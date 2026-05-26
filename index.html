@@ -109,6 +109,14 @@
                 </select>
             </div>
             <div class="field">
+                <label>Encoder Motoru</label>
+                <select id="v-hw">
+                    <option value="prefer-hardware" selected>Donanım (Ekran Kartı - GPU)</option>
+                    <option value="prefer-software">Yazılım (İşlemci - CPU)</option>
+                    <option value="no-preference">Otomatik (Sistem Seçsin)</option>
+                </select>
+            </div>
+            <div class="field">
                 <label>Bitrate (kbps)</label>
                 <input type="number" id="v-bitrate" value="5000">
             </div>
@@ -493,9 +501,11 @@ async function startStream() {
         $('status-dot').classList.add('live');
         startStatsTimer();
 
-        S.transport.closed.then(() => {
-            if (S.streaming) { stopStream(); setStatus('Koptu', 'bad'); }
-        }).catch(() => {});
+        if (S.transport) {
+            S.transport.closed.then(() => {
+                if (S.streaming) { stopStream(); setStatus('Koptu', 'bad'); }
+            }).catch(() => {});
+        }
     } catch (e) {
         console.error('[WT]', e);
         setStatus('Hata: ' + e.message, 'bad');
@@ -531,6 +541,7 @@ function stopAll() {
 // ═══════════════════════════════════════════════════════════════
 function initEncoder() {
     const codec = $('v-codec').value;
+    const hwEngine = $('v-hw').value;
     let bps   = (parseInt($('v-bitrate').value) || 5000) * 1000;
     const fps   = parseInt($('v-fps').value) || 60;
     const cw    = S.canvas.width, ch = S.canvas.height;
@@ -556,7 +567,7 @@ function initEncoder() {
         bitrate: bps, framerate: fps,
         latencyMode: 'realtime',
         bitrateMode: 'constant',
-        hardwareAcceleration: 'prefer-hardware',
+        hardwareAcceleration: hwEngine,
         avc: { format: 'annexb' },
         scalabilityMode: 'L1T1',
     });
