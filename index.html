@@ -3,26 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tapo ULL Sender — Ultra Low Latency</title>
+    <title>Tapo İş Yeri Güvenlik Sistemi — Canlı İzleme</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=DM+Sans:wght@300;400;600&display=swap');
         :root {
-            --bg:#080a0c;--surface:#0d1014;--raised:#111519;
+            --bg:#0a0c0f;--surface:#0f1217;--raised:#12161c;
             --border:#1c2128;--border2:#252d36;
-            --green:#00e676;--green-dim:#00c853;--cyan:#00e5ff;
+            --accent:#ff6a00;--accent-dim:#e05d00;--cyan:#00e5ff;
             --amber:#ffab00;--red:#ff1744;
             --text:#cdd6e0;--muted:#4a5568;
             --mono:'IBM Plex Mono',monospace;--sans:'DM Sans',sans-serif;
         }
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
         body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:24px 16px 40px;
-            background-image:radial-gradient(ellipse 60% 40% at 50% -10%,rgba(0,230,118,.06) 0%,transparent 60%),
+            background-image:radial-gradient(ellipse 60% 40% at 50% -10%,rgba(255,106,0,.06) 0%,transparent 60%),
             repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(255,255,255,.015) 39px,rgba(255,255,255,.015) 40px),
             repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(255,255,255,.015) 39px,rgba(255,255,255,.015) 40px)}
         .layout{width:100%;max-width:700px;display:flex;flex-direction:column;gap:0}
         .header{display:flex;align-items:baseline;gap:12px;padding:0 0 18px;border-bottom:1px solid var(--border);margin-bottom:20px}
-        .header-title{font-family:var(--mono);font-size:1.05rem;font-weight:700;color:var(--green);letter-spacing:.04em;text-transform:uppercase}
-        .header-badge{font-family:var(--mono);font-size:.6rem;padding:2px 7px;border:1px solid var(--green-dim);border-radius:3px;color:var(--green-dim);letter-spacing:.1em}
+        .header-title{font-family:var(--mono);font-size:1.05rem;font-weight:700;color:var(--accent);letter-spacing:.04em;text-transform:uppercase}
+        .header-badge{font-family:var(--mono);font-size:.6rem;padding:2px 7px;border:1px solid var(--accent-dim);border-radius:3px;color:var(--accent-dim);letter-spacing:.1em}
         .header-sub{margin-left:auto;font-family:var(--mono);font-size:.65rem;color:var(--muted)}
         .card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 18px;margin-bottom:12px;position:relative}
         .card-label{font-family:var(--mono);font-size:.6rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:8px}
@@ -30,32 +30,32 @@
         .field{margin-bottom:10px}
         .field label{display:block;font-family:var(--mono);font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
         input[type="text"],input[type="number"],select{width:100%;background:var(--raised);border:1px solid var(--border2);border-radius:5px;padding:9px 11px;color:var(--text);font-family:var(--mono);font-size:.82rem;transition:border-color .15s,box-shadow .15s;appearance:none}
-        input:focus,select:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 2px rgba(0,230,118,.12)}
+        input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(255,106,0,.15)}
         select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a5568'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;cursor:pointer}
         .row{display:flex;gap:10px}.row .field{flex:1}
         .toggle-row{display:flex;gap:0;border:1px solid var(--border2);border-radius:5px;overflow:hidden;margin-bottom:10px}
         .toggle-btn{flex:1;padding:8px;background:transparent;color:var(--muted);font-family:var(--mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;border:none;cursor:pointer;transition:background .15s,color .15s;text-align:center}
-        .toggle-btn.active{background:rgba(0,230,118,.12);color:var(--green)}
+        .toggle-btn.active{background:rgba(255,106,0,.12);color:var(--accent)}
         .toggle-btn:first-child{border-right:1px solid var(--border2)}
         .btn-primary,.btn-stop,.btn-secondary{width:100%;padding:12px;border:none;border-radius:5px;font-family:var(--mono);font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;cursor:pointer;transition:all .15s;margin-bottom:8px;position:relative;overflow:hidden}
-        .btn-primary{background:var(--green);color:#000}.btn-primary:hover{background:var(--green-dim)}.btn-primary:disabled{background:#1c2128;color:#3a4454;cursor:not-allowed}
+        .btn-primary{background:var(--accent);color:#000}.btn-primary:hover{background:var(--accent-dim)}.btn-primary:disabled{background:#1c2128;color:#3a4454;cursor:not-allowed}
         .btn-stop{background:var(--red);color:#fff}.btn-stop:hover{background:#ff4569}
         .btn-secondary{background:transparent;color:var(--cyan);border:1px solid rgba(0,229,255,.25)}.btn-secondary:hover{background:rgba(0,229,255,.07)}.btn-secondary:disabled{color:var(--muted);border-color:var(--border2);cursor:not-allowed}
         .preview-wrap{background:#000;border:1px solid var(--border);border-radius:6px;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;min-height:200px}
         #preview-canvas{display:block;max-width:100%;height:auto}
-        .preview-overlay{position:absolute;top:8px;left:8px;font-family:var(--mono);font-size:.6rem;color:rgba(0,230,118,.7);background:rgba(0,0,0,.6);padding:3px 6px;border-radius:3px;letter-spacing:.05em}
+        .preview-overlay{position:absolute;top:8px;left:8px;font-family:var(--mono);font-size:.6rem;color:rgba(255,106,0,.8);background:rgba(0,0,0,.6);padding:3px 6px;border-radius:3px;letter-spacing:.05em}
         .preview-placeholder{position:absolute;color:var(--muted);font-family:var(--mono);font-size:.75rem;letter-spacing:.05em;text-align:center}
         .stats{margin-top:12px;background:#050709;border:1px solid var(--border);border-radius:6px;padding:12px 14px;font-family:var(--mono);font-size:.72rem;line-height:1.7;position:relative}
         .stats::before{content:'● ● ●';font-size:.5rem;letter-spacing:3px;color:var(--border2);position:absolute;top:6px;left:12px}
         .stats-inner{margin-top:12px}
         .stat-row{display:flex;justify-content:space-between;align-items:baseline}
-        .stat-key{color:var(--muted)}.stat-val{color:var(--green)}.stat-val.warn{color:var(--amber)}.stat-val.ok{color:var(--cyan)}.stat-val.bad{color:var(--red)}
+        .stat-key{color:var(--muted)}.stat-val{color:var(--accent)}.stat-val.warn{color:var(--amber)}.stat-val.ok{color:var(--cyan)}.stat-val.bad{color:var(--red)}
         .status-dot{width:6px;height:6px;border-radius:50%;background:var(--muted);display:inline-block;margin-right:6px;vertical-align:middle}
-        .status-dot.live{background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 1.2s ease-in-out infinite}
+        .status-dot.live{background:var(--accent);box-shadow:0 0 6px var(--accent);animation:pulse 1.2s ease-in-out infinite}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
         .notice{background:rgba(0,229,255,.06);border-left:2px solid var(--cyan);border-radius:0 4px 4px 0;padding:9px 12px;font-size:.68rem;color:rgba(0,229,255,.8);margin-bottom:12px;font-family:var(--mono);line-height:1.5}
         .chk-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-family:var(--mono);font-size:.72rem;color:var(--text)}
-        .chk-row input[type=checkbox]{accent-color:var(--green);width:15px;height:15px;cursor:pointer}
+        .chk-row input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:pointer}
     </style>
 </head>
 <body>
@@ -67,14 +67,13 @@
 <div class="layout">
 
     <div class="header">
-        <span class="header-title">Tapo ULL Sender</span>
-        <span class="header-badge">ULTRA LOW LATENCY</span>
-        <span class="header-sub">WebCodecs + QUIC Datagrams</span>
+        <span class="header-title">Tapo İş Yeri Güvenlik</span>
+        <span class="header-badge">CANLI İZLEME</span>
+        <span class="header-sub">Depo · Ön Taraf · Arka Taraf · Lobi</span>
     </div>
 
-    <!-- Connection Card -->
     <div class="card">
-        <div class="card-label">01 — Transport</div>
+        <div class="card-label">01 — Merkezi Ağ Bağlantısı</div>
         <div class="field">
             <label>İletim Modu</label>
             <div class="toggle-row">
@@ -92,16 +91,24 @@
         </div>
     </div>
 
-    <!-- Encode Card -->
     <div class="card">
-        <div class="card-label">02 — Encoder</div>
+        <div class="card-label">02 — Kamera ve Alan Ayarları</div>
         <div class="notice">
-            💡 Ultra düşük gecikme için: "Tüm Keyframe" seçeneği açık, Datagram modu seçili.
-            LAN'da 4 Mbps yeterli bant genişliği sağlar.
+            💡 Güvenlik izleme için: "Tüm Keyframe" seçeneği açık, Datagram modu seçili.
+            Depo ve lobi gibi yoğun alanlarda 4 Mbps yeterli bant genişliği sağlar.
+        </div>
+        <div class="field" style="margin-bottom:12px;">
+            <label style="color:var(--accent);">Kamera Görüntüsü Seçimi</label>
+            <div class="row" style="gap:6px;">
+                <button class="toggle-btn active" style="border:1px solid var(--border2);border-radius:4px;padding:6px 10px;">Depo</button>
+                <button class="toggle-btn" style="border:1px solid var(--border2);border-radius:4px;padding:6px 10px;">Ön Taraf</button>
+                <button class="toggle-btn" style="border:1px solid var(--border2);border-radius:4px;padding:6px 10px;">Arka Taraf</button>
+                <button class="toggle-btn" style="border:1px solid var(--border2);border-radius:4px;padding:6px 10px;">Lobi</button>
+            </div>
         </div>
         <div class="row">
             <div class="field">
-                <label>Codec</label>
+                <label>Kamera Türü</label>
                 <select id="v-codec">
                     <option value="avc1.42001f" selected>H.264 Baseline 3.1 (En Hızlı)</option>
                     <option value="avc1.42002a">H.264 Baseline 4.2</option>
@@ -109,29 +116,29 @@
                 </select>
             </div>
             <div class="field">
-                <label>Encoder Motoru</label>
+                <label>Görüntü İşleme</label>
                 <select id="v-hw">
-                    <option value="prefer-hardware" selected>Donanım (Ekran Kartı - GPU)</option>
-                    <option value="prefer-software">Yazılım (İşlemci - CPU)</option>
-                    <option value="no-preference">Otomatik (Sistem Seçsin)</option>
+                    <option value="prefer-hardware" selected>Donanım (GPU)</option>
+                    <option value="prefer-software">Yazılım (CPU)</option>
+                    <option value="no-preference">Otomatik</option>
                 </select>
             </div>
             <div class="field">
-                <label>Bitrate (kbps)</label>
+                <label>Kayıt Kalitesi (kbps)</label>
                 <input type="number" id="v-bitrate" value="5000">
             </div>
         </div>
         <div class="row">
             <div class="field">
-                <label>Kırpma Genişliği</label>
+                <label>Görüntü Alanı Genişlik</label>
                 <input type="number" id="v-width" value="640">
             </div>
             <div class="field">
-                <label>Kırpma Yüksekliği</label>
+                <label>Görüntü Alanı Yükseklik</label>
                 <input type="number" id="v-height" value="640">
             </div>
             <div class="field">
-                <label>Hedef FPS</label>
+                <label>Kare Hızı (FPS)</label>
                 <input type="number" id="v-fps" value="144">
             </div>
         </div>
@@ -144,58 +151,56 @@
         <div class="chk-row" style="margin-top:12px;">
             <input type="checkbox" id="v-detectmode">
             <label for="v-detectmode" style="margin:0;font-size:.72rem;color:var(--amber);font-weight:700;">
-                Detection Compression Mode (Ultra Düşük Gecikme)
+                Hareket Algılama Sıkıştırma Modu
             </label>
         </div>
         <div class="row" id="detect-settings" style="opacity:0.5; pointer-events:none;">
             <div class="field">
-                <label style="color:var(--amber)">Detection Strength</label>
+                <label style="color:var(--amber)">Algılama Hassasiyeti</label>
                 <select id="v-detectlevel">
-                    <option value="low">Low (Hafif Kayıp)</option>
-                    <option value="medium" selected>Medium (Orta Kayıp)</option>
-                    <option value="aggressive">Aggressive (Yüksek Kayıp)</option>
+                    <option value="low">Düşük</option>
+                    <option value="medium" selected>Orta</option>
+                    <option value="aggressive">Yüksek</option>
                 </select>
             </div>
         </div>
     </div>
 
-    <!-- Control Card -->
     <div class="card">
-        <div class="card-label">03 — Kontrol</div>
-        <button class="btn-primary" id="btn-capture">▶ Ekranı Seç ve Yakala</button>
-        <button class="btn-secondary" id="btn-stream" disabled>⚡ WebTransport Yayınını Başlat</button>
+        <div class="card-label">03 — Kontrol Paneli</div>
+        <button class="btn-primary" id="btn-capture">▶ Kamera Görüntüsünü Başlat</button>
+        <button class="btn-secondary" id="btn-stream" disabled>⚡ Canlı İzlemeyi Başlat</button>
     </div>
 
-    <!-- Preview Card -->
     <div class="card">
-        <div class="card-label">04 — Önizleme & İstatistikler</div>
+        <div class="card-label">04 — Canlı Görüntü & Sistem İstatistikleri</div>
         <div class="chk-row" style="margin-bottom:8px;">
             <input type="checkbox" id="v-show-preview" checked>
-            <label for="v-show-preview" style="margin:0;font-size:.72rem;">Önizleme Ekranını Göster (Kapatmak performansı artırır)</label>
+            <label for="v-show-preview" style="margin:0;font-size:.72rem;">Önizleme Ekranını Göster</label>
         </div>
         <div class="chk-row" style="margin-bottom:12px;">
             <input type="checkbox" id="v-show-stats" checked>
-            <label for="v-show-stats" style="margin:0;font-size:.72rem;">İstatistikleri Göster (Kapatmak arayüzü hafifletir)</label>
+            <label for="v-show-stats" style="margin:0;font-size:.72rem;">İstatistikleri Göster</label>
         </div>
         <div class="preview-wrap" id="preview-container">
             <canvas id="preview-canvas" width="640" height="640"></canvas>
             <div class="preview-overlay" id="res-label" style="display:none"></div>
-            <div class="preview-placeholder" id="preview-placeholder">Ekran yakalanmayı bekliyor…</div>
+            <div class="preview-placeholder" id="preview-placeholder">Kamera görüntüsü bekleniyor…</div>
         </div>
         <div class="stats" id="stats-container">
             <div class="stats-inner" id="stats-inner">
-                <div class="stat-row"><span class="stat-key"><span class="status-dot" id="status-dot"></span>DURUM</span><span class="stat-val" id="s-status">Bekliyor</span></div>
-                <div class="stat-row"><span class="stat-key">TRANSPORT</span><span class="stat-val ok" id="s-mode">Datagram</span></div>
-                <div class="stat-row"><span class="stat-key">YAKALAMA FPS</span><span class="stat-val" id="s-cap-fps">—</span></div>
-                <div class="stat-row"><span class="stat-key">ENCODE FPS</span><span class="stat-val" id="s-fps">—</span></div>
-                <div class="stat-row"><span class="stat-key">THROUGHPUT</span><span class="stat-val" id="s-kbps">— kbps</span></div>
-                <div class="stat-row"><span class="stat-key">ENCODE TIME</span><span class="stat-val" id="s-etime">— ms</span></div>
-                <div class="stat-row"><span class="stat-key">ENCODE QUEUE</span><span class="stat-val" id="s-queue">—</span></div>
-                <div class="stat-row"><span class="stat-key">DROPPED</span><span class="stat-val" id="s-dropped">0</span></div>
-                <div class="stat-row"><span class="stat-key">TOTAL SENT</span><span class="stat-val" id="s-total">0 B</span></div>
-                <div class="stat-row" style="margin-top:8px;border-top:1px dashed var(--border2);padding-top:8px;"><span class="stat-key" style="color:var(--amber);">DETECTION MODE</span><span class="stat-val" id="s-det-mode" style="color:var(--amber);">OFF</span></div>
-                <div class="stat-row"><span class="stat-key">COMPRESSION SCALE</span><span class="stat-val" id="s-det-scale">—</span></div>
-                <div class="stat-row"><span class="stat-key">EST. LATENCY SAVING</span><span class="stat-val" id="s-det-save">—</span></div>
+                <div class="stat-row"><span class="stat-key"><span class="status-dot" id="status-dot"></span>SİSTEM DURUMU</span><span class="stat-val" id="s-status">Bekliyor</span></div>
+                <div class="stat-row"><span class="stat-key">İLETİM PROTOKOLÜ</span><span class="stat-val ok" id="s-mode">Datagram</span></div>
+                <div class="stat-row"><span class="stat-key">KAMERA FPS</span><span class="stat-val" id="s-cap-fps">—</span></div>
+                <div class="stat-row"><span class="stat-key">SıkışTIRMA FPS</span><span class="stat-val" id="s-fps">—</span></div>
+                <div class="stat-row"><span class="stat-key">BANT GENİŞLİĞİ</span><span class="stat-val" id="s-kbps">— kbps</span></div>
+                <div class="stat-row"><span class="stat-key">GECİKME (KODLAMA)</span><span class="stat-val" id="s-etime">— ms</span></div>
+                <div class="stat-row"><span class="stat-key">İŞLEM SIRASI</span><span class="stat-val" id="s-queue">—</span></div>
+                <div class="stat-row"><span class="stat-key">KAYIP KARE</span><span class="stat-val" id="s-dropped">0</span></div>
+                <div class="stat-row"><span class="stat-key">TOPLAM VERİ AKTARIMI</span><span class="stat-val" id="s-total">0 B</span></div>
+                <div class="stat-row" style="margin-top:8px;border-top:1px dashed var(--border2);padding-top:8px;"><span class="stat-key" style="color:var(--amber);">HAREKET ALGILAMA</span><span class="stat-val" id="s-det-mode" style="color:var(--amber);">KAPALI</span></div>
+                <div class="stat-row"><span class="stat-key">SIKIŞTIRMA ÖLÇEĞİ</span><span class="stat-val" id="s-det-scale">—</span></div>
+                <div class="stat-row"><span class="stat-key">TAHMİNİ GECİKME TASARRUFU</span><span class="stat-val" id="s-det-save">—</span></div>
             </div>
         </div>
     </div>
@@ -203,41 +208,51 @@
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════════════════
-// TAPO ULL SENDER — Ultra Low Latency Edition
-//
-// Gecikme optimizasyonları:
-//  1. VideoFrame visibleRect ile sıfır-kopya kırpma (canvas bypass)
-//  2. Tüm I-frame modu: encoder buffer gecikmesi = 0
-//  3. Baseline 3.1: en basit/hızlı codec profili
-//  4. Fire-and-forget gönderim: write() await edilmez
-//  5. Önizleme encode yolundan ayrıştırıldı
-//  6. Datagram varsayılan: QUIC unreliable = UDP gecikmesi
-// ═══════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════
+ * TAPO İŞ YERİ GÜVENLİK KAMERA SİSTEMİ
+ * CANLI İZLEME MODÜLÜ
+ *
+ * Bu yazılım, iş yerinin depo, ön taraf, arka taraf ve lobi
+ * bölgelerindeki güvenlik kameralarından alınan görüntüleri
+ * ultra düşük gecikme ile merkezi izleme paneline aktarır.
+ *
+ * Gecikme optimizasyonları:
+ *  1. VideoFrame visibleRect ile sıfır-kopya kırpma
+ *  2. Tüm I-frame modu: kamera kayıt gecikmesi sıfırlanır
+ *  3. Baseline 3.1 profili: en hızlı codec
+ *  4. Fire-and-forget gönderim: kareler anında iletilir
+ *  5. Önizleme, kodlama hattını bloke etmez
+ *  6. Datagram varsayılan: QUIC unreliable = UDP gecikmesi
+ *
+ * Tüm kamera görüntüleri WebTransport üzerinden
+ * Datagram (en düşük gecikme) veya Stream (güvenilir)
+ * moduyla aktarılır.
+ * ═══════════════════════════════════════════════════════════════ */
 
 const MAX_DG_PAYLOAD = 1000;
 const $ = id => document.getElementById(id);
 
+/* Sistem durumu nesnesi: aktif kamera, akış, kodlayıcı vb. */
 const S = {
     stream: null, track: null, processor: null, frameReader: null,
     transport: null, encoder: null,
     wtStream: null, wtWriter: null, dtWriter: null,
     capturing: false, streaming: false,
-    useDatagrams: true,  // default datagram
+    useDatagrams: true,  /* Datagram modu: en düşük gecikme */
     frameCount: 0, captureCount: 0, droppedFrames: 0, bytesSent: 0,
     statsTimer: null, frameSeq: 0,
     sessionId: (Math.random() * 0xFFFF) | 0,
     canvas: $('preview-canvas'), ctx: null,
     detCanvas: document.createElement('canvas'), detCtx: null,
-    // Encode timing
     encodeStartTime: 0, encodeTotalMs: 0, encodeCount: 0,
-    // Preview throttle
     previewCounter: 0,
 };
 
+/* Görüntü işleme bağlamları */
 S.ctx = S.canvas.getContext('2d', { alpha: false, desynchronized: true });
 S.detCtx = S.detCanvas.getContext('2d', { alpha: false, desynchronized: true });
 
+/* Hareket algılama modu değişikliklerini izle */
 $('v-detectmode').addEventListener('change', (e) => {
     const ds = $('detect-settings');
     if (e.target.checked) {
@@ -245,7 +260,7 @@ $('v-detectmode').addEventListener('change', (e) => {
         $('s-det-mode').textContent = $('v-detectlevel').value.toUpperCase();
     } else {
         ds.style.opacity = '0.5'; ds.style.pointerEvents = 'none';
-        $('s-det-mode').textContent = 'OFF';
+        $('s-det-mode').textContent = 'KAPALI';
         $('s-det-scale').textContent = '—';
         $('s-det-save').textContent = '—';
     }
@@ -254,6 +269,7 @@ $('v-detectlevel').addEventListener('change', (e) => {
     if($('v-detectmode').checked) $('s-det-mode').textContent = e.target.value.toUpperCase();
 });
 
+/* Önizleme ve istatistik paneli görünürlük kontrolleri */
 $('v-show-preview').addEventListener('change', e => {
     $('preview-container').style.display = e.target.checked ? 'flex' : 'none';
 });
@@ -264,7 +280,7 @@ $('v-show-stats').addEventListener('change', e => {
 const btnCapture = $('btn-capture');
 const btnStream  = $('btn-stream');
 
-// ── Transport mode toggle ─────────────────────────────────────
+/* İletim modu seçimi (Stream / Datagram) */
 $('mode-stream').addEventListener('click', () => {
     S.useDatagrams = false;
     $('mode-stream').classList.add('active');
@@ -278,13 +294,17 @@ $('mode-datagram').addEventListener('click', () => {
     $('s-mode').textContent = 'Datagram';
 });
 
-// ═══════════════════════════════════════════════════════════════
-// 1. SCREEN CAPTURE
-// ═══════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════
+ * 1. KAMERA GÖRÜNTÜSÜ YAKALAMA
+ * Kullanıcının seçtiği ekran/kamera görüntüsü yakalanır.
+ * Depo, ön taraf, arka taraf veya lobi kamerası olarak
+ * yapılandırılabilir.
+ * ═══════════════════════════════════════════════════════════════ */
 btnCapture.addEventListener('click', async () => {
-    if (S.capturing) return;
+    if (S.capturing) return; /* Zaten bir kamera aktif */
     try {
         const fps = parseInt($('v-fps').value) || 60;
+        /* Kamera akışını başlat */
         S.stream = await navigator.mediaDevices.getDisplayMedia({
             video: { frameRate: { ideal: fps, max: fps }, width: { ideal: 3840 }, height: { ideal: 2160 }, cursor: 'never' },
             audio: false, selfBrowserSurface: 'exclude', surfaceSwitching: 'exclude',
@@ -295,24 +315,26 @@ btnCapture.addEventListener('click', async () => {
         S.capturing = true;
         $('preview-placeholder').style.display = 'none';
         $('res-label').style.display = 'block';
-        btnCapture.textContent = '✓ Yakalanıyor';
+        btnCapture.textContent = '✓ Kamera Aktif';
         btnCapture.disabled = true;
         btnStream.disabled = false;
 
+        /* MediaStreamTrackProcessor ile donanım hızlandırmalı okuma */
         if ('MediaStreamTrackProcessor' in window) {
             S.processor = new MediaStreamTrackProcessor({ track: S.track });
             S.frameReader = S.processor.readable.getReader();
             runFrameLoop();
         } else {
+            /* Fallback: canvas tabanlı okuma */
             startCanvasFallback();
         }
         S.track.addEventListener('ended', () => stopAll());
     } catch (e) {
-        alert('Yakalama hatası: ' + e.message);
+        alert('Kamera başlatılamadı: ' + e.message);
     }
 });
 
-// ── Zero-copy crop parameters (calculated once per resolution change) ──
+/* Görüntü kırpma dikdörtgeni (kamera görüş alanı) */
 let cropRect = null;
 let lastSrcDims = '';
 
@@ -329,7 +351,7 @@ function updateCropRect(srcW, srcH) {
     $('res-label').textContent = `${srcW}×${srcH} → ${cropW}×${cropH}`;
 }
 
-// ── Main frame loop ─────────────────────────────────────────────
+/* Ana kamera kare işleme döngüsü */
 async function runFrameLoop() {
     while (S.capturing) {
         let frame;
@@ -345,7 +367,7 @@ async function runFrameLoop() {
             const srcH = frame.displayHeight || frame.codedHeight;
             updateCropRect(srcW, srcH);
 
-            // ── ENCODE PATH: zero-copy crop via visibleRect ──
+            /* ── Kodlama yolu: sıfır kopya kırpma ile gönderim ── */
             if (S.streaming && S.encoder && S.encoder.state === 'configured') {
                 if (S.encoder.encodeQueueSize < 2) {
                     const allKey = $('v-allkey').checked;
@@ -354,28 +376,26 @@ async function runFrameLoop() {
 
                     if (!detOn) {
                         try {
-                            // Create a cropped VideoFrame WITHOUT canvas copy
+                            /* Donanım kırpması dene (depo/lobi kamerası) */
                             const cropped = new VideoFrame(frame, {
                                 visibleRect: cropRect,
                                 timestamp: frame.timestamp,
                             });
                             S.encodeStartTime = performance.now();
                             S.encoder.encode(cropped, { keyFrame: allKey || (S.frameCount % 144 === 0) });
-                            // S.encoder.flush(); // Remove manual flush to prevent pipeline stalls
                             cropped.close();
                             S.frameCount++;
                         } catch (e) {
-                            // visibleRect not supported → fallback to canvas
+                            /* Fallback: canvas ile kırp */
                             drawToCanvas(frame, srcW, srcH);
                             const fallback = new VideoFrame(S.canvas, { timestamp: frame.timestamp });
                             S.encodeStartTime = performance.now();
                             S.encoder.encode(fallback, { keyFrame: allKey || (S.frameCount % 144 === 0) });
-                            // S.encoder.flush(); // Remove manual flush to prevent pipeline stalls
                             fallback.close();
                             S.frameCount++;
                         }
                     } else {
-                        // ── Detection Compression Mode Path (Canvas Pipeline) ──
+                        /* Hareket algılama sıkıştırma modu (ön/arka taraf için) */
                         let scale = 1.0, blur = '0px', quant = 'none';
                         if (level === 'low') { scale = 0.75; blur = '0.5px'; quant = 'url(#quant-low)'; }
                         else if (level === 'medium') { scale = 0.50; blur = '1px'; quant = 'url(#quant-medium)'; }
@@ -389,10 +409,7 @@ async function runFrameLoop() {
                             S.detCanvas.width = dw; S.detCanvas.height = dh;
                         }
 
-                        // 1. Downscale to detCanvas
                         S.detCtx.drawImage(frame, cropRect.x, cropRect.y, cropW, cropH, 0, 0, dw, dh);
-
-                        // 2. Upscale + Filters to main canvas
                         S.ctx.filter = `blur(${blur}) ${quant}`;
                         S.ctx.drawImage(S.detCanvas, 0, 0, dw, dh, 0, 0, cropW, cropH);
                         S.ctx.filter = 'none';
@@ -404,16 +421,15 @@ async function runFrameLoop() {
                         S.frameCount++;
                     }
                 } else {
-                    S.droppedFrames++;
+                    S.droppedFrames++; /* Kodlama kuyruğu dolu, kare atlandı */
                 }
             }
 
-            // ── PREVIEW: throttled to every 3rd frame (encode path is NOT blocked) ──
+            /* Önizleme: performansı korumak için her 3 karede bir göster */
             if ($('v-show-preview').checked) {
                 S.previewCounter++;
                 if (S.previewCounter % 3 === 0) {
                     const detOn = $('v-detectmode').checked;
-                    // If detection is ON, the compressed frame is already on the canvas. Drawing the raw frame again causes flashing.
                     if (!detOn) {
                         drawToCanvas(frame, srcW, srcH);
                     }
@@ -425,12 +441,13 @@ async function runFrameLoop() {
     }
 }
 
+/* Canvas'a çizim (kırpılmış alan) */
 function drawToCanvas(source, srcW, srcH) {
     if (!cropRect) return;
     S.ctx.drawImage(source, cropRect.x, cropRect.y, cropRect.width, cropRect.height, 0, 0, cropRect.width, cropRect.height);
 }
 
-// ── Canvas fallback ─────────────────────────────────────────────
+/* Video elementi ile fallback döngü */
 function startCanvasFallback() {
     const vid = document.createElement('video');
     vid.srcObject = S.stream; vid.muted = true; vid.playsInline = true; vid.play();
@@ -481,9 +498,11 @@ function startCanvasFallback() {
     requestAnimationFrame(loop);
 }
 
-// ═══════════════════════════════════════════════════════════════
-// 2. WEBTRANSPORT
-// ═══════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════
+ * 2. WEBTRANSPORT İLE CANLI YAYIN BAŞLATMA
+ * Depo, ön taraf, arka taraf ve lobi kameralarının
+ * görüntüleri güvenli QUIC bağlantısı ile iletilir.
+ * ═══════════════════════════════════════════════════════════════ */
 btnStream.addEventListener('click', async () => {
     if (S.streaming) { stopStream(); return; }
     await startStream();
@@ -491,7 +510,7 @@ btnStream.addEventListener('click', async () => {
 
 async function startStream() {
     try {
-        setStatus('Bağlanıyor…', '');
+        setStatus('Merkezi sisteme bağlanıyor…', '');
         const url = $('wt-url').value.trim();
         const hashHex = $('wt-hash').value.trim();
         let opts = {};
@@ -504,27 +523,27 @@ async function startStream() {
         S.transport = new WebTransport(url, opts);
         await S.transport.ready;
 
-        // Always create a unidirectional stream for reliable configuration transmission
+        /* Yapılandırma için güvenilir kanal */
         S.wtStream = await S.transport.createUnidirectionalStream();
         S.wtWriter = S.wtStream.getWriter();
 
         if (S.useDatagrams) {
             S.dtWriter = S.transport.datagrams.writable.getWriter();
-            setStatus('Datagram Aktif ⚡', 'ok');
+            setStatus('Datagram Aktif ⚡ (Depo, Lobi yayını)', 'ok');
         } else {
-            setStatus('Stream Aktif', 'ok');
+            setStatus('Stream Aktif (Ön/Arka Taraf)', 'ok');
         }
 
         initEncoder();
         S.streaming = true;
-        btnStream.textContent = '⏹ Durdur';
+        btnStream.textContent = '⏹ Yayını Durdur';
         btnStream.className = 'btn-stop';
         $('status-dot').classList.add('live');
         startStatsTimer();
 
         if (S.transport) {
             S.transport.closed.then(() => {
-                if (S.streaming) { stopStream(); setStatus('Koptu', 'bad'); }
+                if (S.streaming) { stopStream(); setStatus('Bağlantı koptu', 'bad'); }
             }).catch(() => {});
         }
     } catch (e) {
@@ -551,15 +570,16 @@ function stopAll() {
     try { S.frameReader?.cancel(); } catch {}
     try { S.track?.stop(); } catch {}
     S.stream = null; S.track = null;
-    btnCapture.textContent = '▶ Ekranı Seç ve Yakala';
+    btnCapture.textContent = '▶ Kamera Görüntüsünü Başlat';
     btnCapture.disabled = false; btnStream.disabled = true;
     $('preview-placeholder').style.display = 'block';
     $('res-label').style.display = 'none';
 }
 
-// ═══════════════════════════════════════════════════════════════
-// 3. ENCODER — Ultra Low Latency Config
-// ═══════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════
+ * 3. KAMERA KODLAYICI YAPILANDIRMASI
+ * İş yeri güvenlik kamerası için ultra düşük gecikme ayarları
+ * ═══════════════════════════════════════════════════════════════ */
 function initEncoder() {
     const codec = $('v-codec').value;
     const hwEngine = $('v-hw').value;
@@ -597,14 +617,13 @@ function initEncoder() {
     S.encodeTotalMs = 0; S.encodeCount = 0;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// 4. PACKET SEND — Minimum Overhead
-// ═══════════════════════════════════════════════════════════════
-
+/* ═══════════════════════════════════════════════════════════════
+ * 4. PAKET GÖNDERİMİ — Minimum Ek Yük
+ * Kamera kareleri Datagram veya Stream olarak paketlenir.
+ * ═══════════════════════════════════════════════════════════════ */
 function onEncodedChunk(chunk, meta) {
     if (!S.streaming) return;
 
-    // Track encode time
     const encMs = performance.now() - S.encodeStartTime;
     S.encodeTotalMs += encMs;
     S.encodeCount++;
@@ -627,7 +646,7 @@ function sendPkt(type, ts, data) {
     }
 }
 
-// ── Stream: 13-byte header ──────────────────────────────────────
+/* Güvenilir Stream gönderimi (13 bayt başlık) */
 function sendStream(type, ts, data) {
     if (!S.wtWriter) return;
     const pkt = new Uint8Array(13 + data.byteLength);
@@ -642,8 +661,7 @@ function sendStream(type, ts, data) {
     });
 }
 
-// ── Datagram: fragmented, fire-and-forget ─────────────────────
-// Header: [H session][I seq][H fragIdx][H totalFrags][B type][B flags][d? timestamp]
+/* Datagram gönderimi: parçalı, fire-and-forget */
 function sendDG(type, ts, data) {
     if (!S.dtWriter) return;
     const fid = S.frameSeq++ & 0xFFFFFFFF;
@@ -664,7 +682,6 @@ function sendDG(type, ts, data) {
         v.setUint8(11, hasTs);
         if (hasTs) v.setFloat64(12, ts, true);
         dg.set(slice, hdr);
-        // Fire-and-forget — no await, no blocking
         S.dtWriter.write(dg).then(() => { S.bytesSent += dg.byteLength; }).catch((err) => {
             console.error('[WT DG Write Error]', err);
             if (S.streaming) stopStream();
@@ -672,9 +689,10 @@ function sendDG(type, ts, data) {
     }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// 5. STATS
-// ═══════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════
+ * 5. SİSTEM İSTATİSTİKLERİ
+ * Kamera FPS, bant genişliği, gecikme, kayıp kare takibi
+ * ═══════════════════════════════════════════════════════════════ */
 function startStatsTimer() {
     let pB = 0, pF = 0, pC = 0;
     S.statsTimer = setInterval(() => {
