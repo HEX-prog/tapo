@@ -3,350 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tapo ULL Sender — Zero Latency</title>
+    <title>Tapo ULL Sender — Ultra Low Latency</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=DM+Sans:wght@300;400;600&display=swap');
-
         :root {
-            --bg:         #080a0c;
-            --surface:    #0d1014;
-            --raised:     #111519;
-            --border:     #1c2128;
-            --border2:    #252d36;
-            --green:      #00e676;
-            --green-dim:  #00c853;
-            --cyan:       #00e5ff;
-            --amber:      #ffab00;
-            --red:        #ff1744;
-            --text:       #cdd6e0;
-            --muted:      #4a5568;
-            --mono:       'IBM Plex Mono', monospace;
-            --sans:       'DM Sans', sans-serif;
+            --bg:#080a0c;--surface:#0d1014;--raised:#111519;
+            --border:#1c2128;--border2:#252d36;
+            --green:#00e676;--green-dim:#00c853;--cyan:#00e5ff;
+            --amber:#ffab00;--red:#ff1744;
+            --text:#cdd6e0;--muted:#4a5568;
+            --mono:'IBM Plex Mono',monospace;--sans:'DM Sans',sans-serif;
         }
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-            background: var(--bg);
-            color: var(--text);
-            font-family: var(--sans);
-            min-height: 100vh;
-            display: flex;
-            align-items: flex-start;
-            justify-content: center;
-            padding: 24px 16px 40px;
-            background-image:
-                radial-gradient(ellipse 60% 40% at 50% -10%, rgba(0,230,118,0.06) 0%, transparent 60%),
-                repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 39px, rgba(255,255,255,0.015) 40px),
-                repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 39px, rgba(255,255,255,0.015) 40px);
-        }
-
-        .layout {
-            width: 100%;
-            max-width: 700px;
-            display: flex;
-            flex-direction: column;
-            gap: 0;
-        }
-
-        /* ── Header ── */
-        .header {
-            display: flex;
-            align-items: baseline;
-            gap: 12px;
-            padding: 0 0 18px 0;
-            border-bottom: 1px solid var(--border);
-            margin-bottom: 20px;
-        }
-        .header-title {
-            font-family: var(--mono);
-            font-size: 1.05rem;
-            font-weight: 700;
-            color: var(--green);
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-        }
-        .header-badge {
-            font-family: var(--mono);
-            font-size: 0.6rem;
-            padding: 2px 7px;
-            border: 1px solid var(--green-dim);
-            border-radius: 3px;
-            color: var(--green-dim);
-            letter-spacing: 0.1em;
-        }
-        .header-sub {
-            margin-left: auto;
-            font-family: var(--mono);
-            font-size: 0.65rem;
-            color: var(--muted);
-        }
-
-        /* ── Cards ── */
-        .card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 16px 18px;
-            margin-bottom: 12px;
-            position: relative;
-        }
-        .card-label {
-            font-family: var(--mono);
-            font-size: 0.6rem;
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
-            color: var(--muted);
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .card-label::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--border);
-        }
-
-        /* ── Form controls ── */
-        .field { margin-bottom: 10px; }
-        .field label {
-            display: block;
-            font-family: var(--mono);
-            font-size: 0.62rem;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            margin-bottom: 5px;
-        }
-        input[type="text"], input[type="number"], select {
-            width: 100%;
-            background: var(--raised);
-            border: 1px solid var(--border2);
-            border-radius: 5px;
-            padding: 9px 11px;
-            color: var(--text);
-            font-family: var(--mono);
-            font-size: 0.82rem;
-            transition: border-color 0.15s, box-shadow 0.15s;
-            appearance: none;
-        }
-        input:focus, select:focus {
-            outline: none;
-            border-color: var(--green);
-            box-shadow: 0 0 0 2px rgba(0,230,118,0.12);
-        }
-        select {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a5568'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 10px center;
-            padding-right: 28px;
-            cursor: pointer;
-        }
-        .row { display: flex; gap: 10px; }
-        .row .field { flex: 1; }
-
-        /* ── Transport mode toggle ── */
-        .toggle-row {
-            display: flex;
-            gap: 0;
-            border: 1px solid var(--border2);
-            border-radius: 5px;
-            overflow: hidden;
-            margin-bottom: 10px;
-        }
-        .toggle-btn {
-            flex: 1;
-            padding: 8px;
-            background: transparent;
-            color: var(--muted);
-            font-family: var(--mono);
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            border: none;
-            cursor: pointer;
-            transition: background 0.15s, color 0.15s;
-            text-align: center;
-        }
-        .toggle-btn.active {
-            background: rgba(0,230,118,0.12);
-            color: var(--green);
-        }
-        .toggle-btn:first-child { border-right: 1px solid var(--border2); }
-
-        /* ── Action buttons ── */
-        .btn-primary, .btn-stop, .btn-secondary {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 5px;
-            font-family: var(--mono);
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            cursor: pointer;
-            transition: all 0.15s;
-            margin-bottom: 8px;
-            position: relative;
-            overflow: hidden;
-        }
-        .btn-primary {
-            background: var(--green);
-            color: #000;
-        }
-        .btn-primary:hover { background: var(--green-dim); }
-        .btn-primary:disabled { background: #1c2128; color: #3a4454; cursor: not-allowed; }
-        .btn-stop { background: var(--red); color: #fff; }
-        .btn-stop:hover { background: #ff4569; }
-        .btn-secondary {
-            background: transparent;
-            color: var(--cyan);
-            border: 1px solid rgba(0,229,255,0.25);
-        }
-        .btn-secondary:hover { background: rgba(0,229,255,0.07); }
-        .btn-secondary:disabled { color: var(--muted); border-color: var(--border2); cursor: not-allowed; }
-
-        /* ── Preview ── */
-        .preview-wrap {
-            background: #000;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            overflow: hidden;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 200px;
-        }
-        #preview-canvas {
-            display: block;
-            max-width: 100%;
-            height: auto;
-        }
-        .preview-overlay {
-            position: absolute;
-            top: 8px; left: 8px;
-            font-family: var(--mono);
-            font-size: 0.6rem;
-            color: rgba(0,230,118,0.7);
-            background: rgba(0,0,0,0.6);
-            padding: 3px 6px;
-            border-radius: 3px;
-            letter-spacing: 0.05em;
-        }
-        .preview-placeholder {
-            position: absolute;
-            color: var(--muted);
-            font-family: var(--mono);
-            font-size: 0.75rem;
-            letter-spacing: 0.05em;
-            text-align: center;
-        }
-
-        /* ── Stats terminal ── */
-        .stats {
-            margin-top: 12px;
-            background: #050709;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 12px 14px;
-            font-family: var(--mono);
-            font-size: 0.72rem;
-            line-height: 1.7;
-            position: relative;
-        }
-        .stats::before {
-            content: '● ● ●';
-            font-size: 0.5rem;
-            letter-spacing: 3px;
-            color: var(--border2);
-            position: absolute;
-            top: 6px;
-            left: 12px;
-        }
-        .stats-inner { margin-top: 12px; }
-        .stat-row { display: flex; justify-content: space-between; align-items: baseline; }
-        .stat-key { color: var(--muted); }
-        .stat-val { color: var(--green); }
-        .stat-val.warn { color: var(--amber); }
-        .stat-val.ok { color: var(--cyan); }
-        .stat-val.bad { color: var(--red); }
-
-        /* ── Status dot ── */
-        .status-dot {
-            width: 6px; height: 6px;
-            border-radius: 50%;
-            background: var(--muted);
-            display: inline-block;
-            margin-right: 6px;
-            vertical-align: middle;
-        }
-        .status-dot.live {
-            background: var(--green);
-            box-shadow: 0 0 6px var(--green);
-            animation: pulse 1.2s ease-in-out infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-        }
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:24px 16px 40px;
+            background-image:radial-gradient(ellipse 60% 40% at 50% -10%,rgba(0,230,118,.06) 0%,transparent 60%),
+            repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(255,255,255,.015) 39px,rgba(255,255,255,.015) 40px),
+            repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(255,255,255,.015) 39px,rgba(255,255,255,.015) 40px)}
+        .layout{width:100%;max-width:700px;display:flex;flex-direction:column;gap:0}
+        .header{display:flex;align-items:baseline;gap:12px;padding:0 0 18px;border-bottom:1px solid var(--border);margin-bottom:20px}
+        .header-title{font-family:var(--mono);font-size:1.05rem;font-weight:700;color:var(--green);letter-spacing:.04em;text-transform:uppercase}
+        .header-badge{font-family:var(--mono);font-size:.6rem;padding:2px 7px;border:1px solid var(--green-dim);border-radius:3px;color:var(--green-dim);letter-spacing:.1em}
+        .header-sub{margin-left:auto;font-family:var(--mono);font-size:.65rem;color:var(--muted)}
+        .card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 18px;margin-bottom:12px;position:relative}
+        .card-label{font-family:var(--mono);font-size:.6rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+        .card-label::after{content:'';flex:1;height:1px;background:var(--border)}
+        .field{margin-bottom:10px}
+        .field label{display:block;font-family:var(--mono);font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
+        input[type="text"],input[type="number"],select{width:100%;background:var(--raised);border:1px solid var(--border2);border-radius:5px;padding:9px 11px;color:var(--text);font-family:var(--mono);font-size:.82rem;transition:border-color .15s,box-shadow .15s;appearance:none}
+        input:focus,select:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 2px rgba(0,230,118,.12)}
+        select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a5568'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;cursor:pointer}
+        .row{display:flex;gap:10px}.row .field{flex:1}
+        .toggle-row{display:flex;gap:0;border:1px solid var(--border2);border-radius:5px;overflow:hidden;margin-bottom:10px}
+        .toggle-btn{flex:1;padding:8px;background:transparent;color:var(--muted);font-family:var(--mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;border:none;cursor:pointer;transition:background .15s,color .15s;text-align:center}
+        .toggle-btn.active{background:rgba(0,230,118,.12);color:var(--green)}
+        .toggle-btn:first-child{border-right:1px solid var(--border2)}
+        .btn-primary,.btn-stop,.btn-secondary{width:100%;padding:12px;border:none;border-radius:5px;font-family:var(--mono);font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;cursor:pointer;transition:all .15s;margin-bottom:8px;position:relative;overflow:hidden}
+        .btn-primary{background:var(--green);color:#000}.btn-primary:hover{background:var(--green-dim)}.btn-primary:disabled{background:#1c2128;color:#3a4454;cursor:not-allowed}
+        .btn-stop{background:var(--red);color:#fff}.btn-stop:hover{background:#ff4569}
+        .btn-secondary{background:transparent;color:var(--cyan);border:1px solid rgba(0,229,255,.25)}.btn-secondary:hover{background:rgba(0,229,255,.07)}.btn-secondary:disabled{color:var(--muted);border-color:var(--border2);cursor:not-allowed}
+        .preview-wrap{background:#000;border:1px solid var(--border);border-radius:6px;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;min-height:200px}
+        #preview-canvas{display:block;max-width:100%;height:auto}
+        .preview-overlay{position:absolute;top:8px;left:8px;font-family:var(--mono);font-size:.6rem;color:rgba(0,230,118,.7);background:rgba(0,0,0,.6);padding:3px 6px;border-radius:3px;letter-spacing:.05em}
+        .preview-placeholder{position:absolute;color:var(--muted);font-family:var(--mono);font-size:.75rem;letter-spacing:.05em;text-align:center}
+        .stats{margin-top:12px;background:#050709;border:1px solid var(--border);border-radius:6px;padding:12px 14px;font-family:var(--mono);font-size:.72rem;line-height:1.7;position:relative}
+        .stats::before{content:'● ● ●';font-size:.5rem;letter-spacing:3px;color:var(--border2);position:absolute;top:6px;left:12px}
+        .stats-inner{margin-top:12px}
+        .stat-row{display:flex;justify-content:space-between;align-items:baseline}
+        .stat-key{color:var(--muted)}.stat-val{color:var(--green)}.stat-val.warn{color:var(--amber)}.stat-val.ok{color:var(--cyan)}.stat-val.bad{color:var(--red)}
+        .status-dot{width:6px;height:6px;border-radius:50%;background:var(--muted);display:inline-block;margin-right:6px;vertical-align:middle}
+        .status-dot.live{background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 1.2s ease-in-out infinite}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+        .notice{background:rgba(0,229,255,.06);border-left:2px solid var(--cyan);border-radius:0 4px 4px 0;padding:9px 12px;font-size:.68rem;color:rgba(0,229,255,.8);margin-bottom:12px;font-family:var(--mono);line-height:1.5}
+        .chk-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-family:var(--mono);font-size:.72rem;color:var(--text)}
+        .chk-row input[type=checkbox]{accent-color:var(--green);width:15px;height:15px;cursor:pointer}
     </style>
 </head>
 <body>
 <div class="layout">
 
-    <!-- Header -->
     <div class="header">
         <span class="header-title">Tapo ULL Sender</span>
-        <span class="header-badge">LAN ZERO LATENCY</span>
-        <span class="header-sub">WebCodecs + QUIC/WebTransport</span>
+        <span class="header-badge">ULTRA LOW LATENCY</span>
+        <span class="header-sub">WebCodecs + QUIC Datagrams</span>
     </div>
 
     <!-- Connection Card -->
     <div class="card">
         <div class="card-label">01 — Transport</div>
-
-        <!-- Transport mode selector -->
         <div class="field">
             <label>İletim Modu</label>
             <div class="toggle-row">
-                <button class="toggle-btn active" id="mode-stream">Stream (Güvenilir)</button>
-                <button class="toggle-btn" id="mode-datagram">Datagram (En Düşük Gecikme)</button>
+                <button class="toggle-btn" id="mode-stream">Stream (Güvenilir)</button>
+                <button class="toggle-btn active" id="mode-datagram">Datagram (En Düşük Gecikme)</button>
             </div>
         </div>
-
         <div class="field">
             <label>WebTransport Sunucu URL</label>
             <input type="text" id="wt-url" value="https://192.168.1.6:4433/stream">
         </div>
-
         <div class="field">
-            <label>Sertifika Hash (SHA-256 hex — uzaktan bağlantı için ZORUNLU)</label>
-            <input type="text" id="wt-hash" placeholder="CVM arayüzünden kopyaladığınız 64 hex karakter" style="font-size:0.72rem;">
+            <label>Sertifika Hash (SHA-256 hex)</label>
+            <input type="text" id="wt-hash" placeholder="CVM arayüzünden kopyaladığınız 64 hex karakter" style="font-size:.72rem;">
         </div>
     </div>
 
     <!-- Encode Card -->
     <div class="card">
         <div class="card-label">02 — Encoder</div>
-
+        <div class="notice">
+            💡 Ultra düşük gecikme için: "Tüm Keyframe" seçeneği açık, Datagram modu seçili.
+            LAN'da 4 Mbps yeterli bant genişliği sağlar.
+        </div>
         <div class="row">
             <div class="field">
                 <label>Codec</label>
                 <select id="v-codec">
-                    <option value="avc1.42001f">H.264 Baseline 3.1 (En Hızlı)</option>
-                    <option value="avc1.42002a" selected>H.264 Baseline 4.2 (Önerilen)</option>
+                    <option value="avc1.42001f" selected>H.264 Baseline 3.1 (En Hızlı)</option>
+                    <option value="avc1.42002a">H.264 Baseline 4.2</option>
                     <option value="avc1.640028">H.264 High 4.0</option>
                 </select>
             </div>
             <div class="field">
                 <label>Bitrate (kbps)</label>
-                <input type="number" id="v-bitrate" value="4000">
+                <input type="number" id="v-bitrate" value="5000">
             </div>
         </div>
-
         <div class="row">
             <div class="field">
                 <label>Kırpma Genişliği</label>
@@ -360,10 +121,12 @@
                 <label>Hedef FPS</label>
                 <input type="number" id="v-fps" value="60">
             </div>
-            <div class="field">
-                <label>Keyframe Aralığı (sn)</label>
-                <input type="number" id="v-keyint" value="1" min="1" max="10" step="1">
-            </div>
+        </div>
+        <div class="chk-row">
+            <input type="checkbox" id="v-allkey" checked>
+            <label for="v-allkey" style="margin:0;font-size:.72rem;text-transform:none;letter-spacing:0">
+                Tüm kareler Keyframe (I-frame only — en düşük gecikme, yüksek bant)
+            </label>
         </div>
     </div>
 
@@ -382,197 +145,175 @@
             <div class="preview-overlay" id="res-label" style="display:none"></div>
             <div class="preview-placeholder" id="preview-placeholder">Ekran yakalanmayı bekliyor…</div>
         </div>
-
-        <!-- Stats terminal -->
         <div class="stats">
             <div class="stats-inner" id="stats-inner">
-                <div class="stat-row">
-                    <span class="stat-key"><span class="status-dot" id="status-dot"></span>DURUM</span>
-                    <span class="stat-val" id="s-status">Bekliyor</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-key">TRANSPORT</span>
-                    <span class="stat-val ok" id="s-mode">Stream</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-key">FPS</span>
-                    <span class="stat-val" id="s-fps">—</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-key">THROUGHPUT</span>
-                    <span class="stat-val" id="s-kbps">— kbps</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-key">ENCODE QUEUE</span>
-                    <span class="stat-val" id="s-queue">—</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-key">DROPPED</span>
-                    <span class="stat-val" id="s-dropped">0</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-key">DG SENT ERRORS</span>
-                    <span class="stat-val" id="s-dgerr">0</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-key">TOTAL SENT</span>
-                    <span class="stat-val" id="s-total">0 B</span>
-                </div>
+                <div class="stat-row"><span class="stat-key"><span class="status-dot" id="status-dot"></span>DURUM</span><span class="stat-val" id="s-status">Bekliyor</span></div>
+                <div class="stat-row"><span class="stat-key">TRANSPORT</span><span class="stat-val ok" id="s-mode">Datagram</span></div>
+                <div class="stat-row"><span class="stat-key">YAKALAMA FPS</span><span class="stat-val" id="s-cap-fps">—</span></div>
+                <div class="stat-row"><span class="stat-key">ENCODE FPS</span><span class="stat-val" id="s-fps">—</span></div>
+                <div class="stat-row"><span class="stat-key">THROUGHPUT</span><span class="stat-val" id="s-kbps">— kbps</span></div>
+                <div class="stat-row"><span class="stat-key">ENCODE TIME</span><span class="stat-val" id="s-etime">— ms</span></div>
+                <div class="stat-row"><span class="stat-key">ENCODE QUEUE</span><span class="stat-val" id="s-queue">—</span></div>
+                <div class="stat-row"><span class="stat-key">DROPPED</span><span class="stat-val" id="s-dropped">0</span></div>
+                <div class="stat-row"><span class="stat-key">TOTAL SENT</span><span class="stat-val" id="s-total">0 B</span></div>
             </div>
         </div>
     </div>
 
-</div><!-- /.layout -->
+</div>
 
 <script>
 // ═══════════════════════════════════════════════════════════════
-// TAPO ULL SENDER — LAN Zero Latency Edition
-// Pipeline: Screen → Canvas Crop → VideoEncoder → WebTransport (Stream/Datagram)
+// TAPO ULL SENDER — Ultra Low Latency Edition
 //
-// LAN optimizasyonları:
-//  1. Datagram modu: QUIC datagrams ile gerçek UDP gecikmesi
-//  2. Yüksek bitrate (4 Mbps) — LAN'da bant genişliği bol
-//  3. Sık keyframe (1 sn) — decoder hızlı toparlar
-//  4. Düşük encoder kuyruğu — gecikme birikmesini önle
-//  5. Fire-and-forget datagram gönderimi — await bloklama yok
+// Gecikme optimizasyonları:
+//  1. VideoFrame visibleRect ile sıfır-kopya kırpma (canvas bypass)
+//  2. Tüm I-frame modu: encoder buffer gecikmesi = 0
+//  3. Baseline 3.1: en basit/hızlı codec profili
+//  4. Fire-and-forget gönderim: write() await edilmez
+//  5. Önizleme encode yolundan ayrıştırıldı
+//  6. Datagram varsayılan: QUIC unreliable = UDP gecikmesi
 // ═══════════════════════════════════════════════════════════════
 
-// ── Sabitler ──────────────────────────────────────────────────
-const MAX_DATAGRAM_PAYLOAD = 1100;  // QUIC MTU güvenli sınır (1200 - headers)
+const MAX_DG_PAYLOAD = 1250;
+const $ = id => document.getElementById(id);
 
-// ── State ─────────────────────────────────────────────────────
 const S = {
-    stream:        null,
-    track:         null,
-    processor:     null,
-    frameReader:   null,
-    transport:     null,
-    encoder:       null,
-    // Stream modu
-    wtStream:      null,
-    wtWriter:      null,
-    // Datagram modu
-    dtWriter:      null,
-    // Flags
-    capturing:     false,
-    streaming:     false,
-    useDatagrams:  false,
-    // Metrics
-    frameCount:    0,
-    droppedFrames: 0,
-    dgErrors:      0,
-    bytesSent:     0,
-    statsTimer:    null,
-    frameSeq:      0,
-    sessionId:     (Math.random() * 0xFFFF) | 0,
-    // Canvas
-    canvas:        document.getElementById('preview-canvas'),
-    ctx:           null,
+    stream: null, track: null, processor: null, frameReader: null,
+    transport: null, encoder: null,
+    wtStream: null, wtWriter: null, dtWriter: null,
+    capturing: false, streaming: false,
+    useDatagrams: true,  // default datagram
+    frameCount: 0, captureCount: 0, droppedFrames: 0, bytesSent: 0,
+    statsTimer: null, frameSeq: 0,
+    sessionId: (Math.random() * 0xFFFF) | 0,
+    canvas: $('preview-canvas'), ctx: null,
+    // Encode timing
+    encodeStartTime: 0, encodeTotalMs: 0, encodeCount: 0,
+    // Preview throttle
+    previewCounter: 0,
 };
 
-S.ctx = S.canvas.getContext('2d', { alpha: false, desynchronized: true, willReadFrequently: false });
+S.ctx = S.canvas.getContext('2d', { alpha: false, desynchronized: true });
 
-// ── UI refs ───────────────────────────────────────────────────
-const $ = id => document.getElementById(id);
-const btnCapture  = $('btn-capture');
-const btnStream   = $('btn-stream');
-const modeStream  = $('mode-stream');
-const modeDgram   = $('mode-datagram');
+const btnCapture = $('btn-capture');
+const btnStream  = $('btn-stream');
 
 // ── Transport mode toggle ─────────────────────────────────────
-modeStream.addEventListener('click', () => {
+$('mode-stream').addEventListener('click', () => {
     S.useDatagrams = false;
-    modeStream.classList.add('active');
-    modeDgram.classList.remove('active');
-    $('s-mode').textContent = 'Stream (Güvenilir)';
+    $('mode-stream').classList.add('active');
+    $('mode-datagram').classList.remove('active');
+    $('s-mode').textContent = 'Stream';
 });
-modeDgram.addEventListener('click', () => {
+$('mode-datagram').addEventListener('click', () => {
     S.useDatagrams = true;
-    modeDgram.classList.add('active');
-    modeStream.classList.remove('active');
-    $('s-mode').textContent = 'Datagram (En Düşük Gecikme)';
+    $('mode-datagram').classList.add('active');
+    $('mode-stream').classList.remove('active');
+    $('s-mode').textContent = 'Datagram';
 });
 
 // ═══════════════════════════════════════════════════════════════
-// 1. EKRAN YAKALAMA + PIPELINE
+// 1. SCREEN CAPTURE
 // ═══════════════════════════════════════════════════════════════
 btnCapture.addEventListener('click', async () => {
     if (S.capturing) return;
     try {
         const fps = parseInt($('v-fps').value) || 60;
         S.stream = await navigator.mediaDevices.getDisplayMedia({
-            video: {
-                frameRate: { ideal: fps, max: fps },
-                width:     { ideal: 3840 },
-                height:    { ideal: 2160 },
-                cursor:    'never',
-            },
-            audio: false,
-            selfBrowserSurface: 'exclude',
-            surfaceSwitching:   'exclude',
+            video: { frameRate: { ideal: fps, max: fps }, width: { ideal: 3840 }, height: { ideal: 2160 }, cursor: 'never' },
+            audio: false, selfBrowserSurface: 'exclude', surfaceSwitching: 'exclude',
         });
-
         S.track = S.stream.getVideoTracks()[0];
-
-        const cropW = parseInt($('v-width').value);
-        const cropH = parseInt($('v-height').value);
-        S.canvas.width  = cropW;
-        S.canvas.height = cropH;
-
+        const cw = parseInt($('v-width').value), ch = parseInt($('v-height').value);
+        S.canvas.width = cw; S.canvas.height = ch;
         S.capturing = true;
         $('preview-placeholder').style.display = 'none';
         $('res-label').style.display = 'block';
-        btnCapture.textContent = '✓ Ekran Yakalanıyor';
+        btnCapture.textContent = '✓ Yakalanıyor';
         btnCapture.disabled = true;
         btnStream.disabled = false;
 
         if ('MediaStreamTrackProcessor' in window) {
-            S.processor   = new MediaStreamTrackProcessor({ track: S.track });
+            S.processor = new MediaStreamTrackProcessor({ track: S.track });
             S.frameReader = S.processor.readable.getReader();
             runFrameLoop();
         } else {
-            console.warn('[ULL] MediaStreamTrackProcessor yok, canvas fallback aktif');
             startCanvasFallback();
         }
-
         S.track.addEventListener('ended', () => stopAll());
-
     } catch (e) {
-        alert('Ekran yakalama başarısız: ' + e.message);
+        alert('Yakalama hatası: ' + e.message);
     }
 });
 
-// ── Ana kare döngüsü (MediaStreamTrackProcessor) ───────────────
+// ── Zero-copy crop parameters (calculated once per resolution change) ──
+let cropRect = null;
+let lastSrcDims = '';
+
+function updateCropRect(srcW, srcH) {
+    const key = `${srcW}x${srcH}`;
+    if (key === lastSrcDims) return;
+    lastSrcDims = key;
+    const cropW = S.canvas.width, cropH = S.canvas.height;
+    const sx = Math.max(0, Math.floor((srcW - cropW) / 2));
+    const sy = Math.max(0, Math.floor((srcH - cropH) / 2));
+    const sw = Math.min(srcW - sx, cropW);
+    const sh = Math.min(srcH - sy, cropH);
+    cropRect = { x: sx, y: sy, width: sw, height: sh };
+    $('res-label').textContent = `${srcW}×${srcH} → ${cropW}×${cropH}`;
+}
+
+// ── Main frame loop ─────────────────────────────────────────────
 async function runFrameLoop() {
     while (S.capturing) {
         let frame;
         try {
-            const result = await S.frameReader.read();
-            if (result.done) break;
-            frame = result.value;
-        } catch {
-            break;
-        }
+            const r = await S.frameReader.read();
+            if (r.done) break;
+            frame = r.value;
+        } catch { break; }
 
         try {
-            drawPreview(frame);
+            S.captureCount++;
+            const srcW = frame.displayWidth || frame.codedWidth;
+            const srcH = frame.displayHeight || frame.codedHeight;
+            updateCropRect(srcW, srcH);
 
+            // ── ENCODE PATH: zero-copy crop via visibleRect ──
             if (S.streaming && S.encoder && S.encoder.state === 'configured') {
-                const maxQ = 2; // Düşük kuyruk = düşük gecikme
-
-                if (S.encoder.encodeQueueSize < maxQ) {
-                    const fps     = parseInt($('v-fps').value) || 60;
-                    const keyInt  = parseInt($('v-keyint').value) || 1;
-                    const isKey   = (S.frameCount % (fps * keyInt) === 0);
-                    
-                    const codedFrame = new VideoFrame(S.canvas, { timestamp: frame.timestamp });
-                    S.encoder.encode(codedFrame, { keyFrame: isKey });
-                    codedFrame.close();
-                    
-                    S.frameCount++;
+                if (S.encoder.encodeQueueSize < 2) {
+                    const allKey = $('v-allkey').checked;
+                    try {
+                        // Create a cropped VideoFrame WITHOUT canvas copy
+                        const cropped = new VideoFrame(frame, {
+                            visibleRect: cropRect,
+                            timestamp: frame.timestamp,
+                        });
+                        S.encodeStartTime = performance.now();
+                        S.encoder.encode(cropped, { keyFrame: allKey || (S.frameCount % 60 === 0) });
+                        S.encoder.flush();
+                        cropped.close();
+                        S.frameCount++;
+                    } catch (e) {
+                        // visibleRect not supported → fallback to canvas
+                        drawToCanvas(frame, srcW, srcH);
+                        const fallback = new VideoFrame(S.canvas, { timestamp: frame.timestamp });
+                        S.encodeStartTime = performance.now();
+                        S.encoder.encode(fallback, { keyFrame: allKey || (S.frameCount % 60 === 0) });
+                        S.encoder.flush();
+                        fallback.close();
+                        S.frameCount++;
+                    }
                 } else {
                     S.droppedFrames++;
                 }
+            }
+
+            // ── PREVIEW: throttled to every 3rd frame (encode path is NOT blocked) ──
+            S.previewCounter++;
+            if (S.previewCounter % 3 === 0) {
+                drawToCanvas(frame, srcW, srcH);
             }
         } finally {
             frame.close();
@@ -580,62 +321,37 @@ async function runFrameLoop() {
     }
 }
 
-// ── Önizleme: merkezden kırp ve çiz ─────────────────────────
-let lastSrcW = 0, lastSrcH = 0;
-function drawPreview(source) {
-    const srcW  = source.displayWidth  || source.videoWidth  || 0;
-    const srcH  = source.displayHeight || source.videoHeight || 0;
-    const cropW = S.canvas.width;
-    const cropH = S.canvas.height;
-
-    const sx = Math.max(0, Math.floor((srcW - cropW) / 2));
-    const sy = Math.max(0, Math.floor((srcH - cropH) / 2));
-    const sw = Math.min(srcW, cropW);
-    const sh = Math.min(srcH, cropH);
-
-    S.ctx.drawImage(source, sx, sy, sw, sh, 0, 0, sw, sh);
-
-    if (srcW > 0 && srcH > 0 && (srcW !== lastSrcW || srcH !== lastSrcH)) {
-        $('res-label').textContent = `${srcW}×${srcH} → ${cropW}×${cropH}`;
-        lastSrcW = srcW;
-        lastSrcH = srcH;
-    }
+function drawToCanvas(source, srcW, srcH) {
+    if (!cropRect) return;
+    S.ctx.drawImage(source, cropRect.x, cropRect.y, cropRect.width, cropRect.height, 0, 0, cropRect.width, cropRect.height);
 }
 
-// ── Canvas fallback ──────────────────────────────────────────
+// ── Canvas fallback ─────────────────────────────────────────────
 function startCanvasFallback() {
     const vid = document.createElement('video');
-    vid.srcObject = S.stream;
-    vid.muted     = true;
-    vid.playsInline = true;
-    vid.play();
-
-    function rafLoop() {
+    vid.srcObject = S.stream; vid.muted = true; vid.playsInline = true; vid.play();
+    function loop() {
         if (!S.capturing) return;
         if (vid.readyState >= 2) {
-            drawPreview(vid);
-            if (S.streaming && S.encoder && S.encoder.state === 'configured') {
-                const fps    = parseInt($('v-fps').value) || 60;
-                const keyInt = parseInt($('v-keyint').value) || 1;
-                const isKey  = (S.frameCount % (fps * keyInt) === 0);
-                const ts     = performance.now() * 1000;
-                const vf     = new VideoFrame(S.canvas, { timestamp: ts });
-                if (S.encoder.encodeQueueSize < 2) {
-                    S.encoder.encode(vf, { keyFrame: isKey });
-                    S.frameCount++;
-                } else {
-                    S.droppedFrames++;
-                }
+            const srcW = vid.videoWidth, srcH = vid.videoHeight;
+            updateCropRect(srcW, srcH);
+            drawToCanvas(vid, srcW, srcH);
+            if (S.streaming && S.encoder && S.encoder.state === 'configured' && S.encoder.encodeQueueSize < 2) {
+                const allKey = $('v-allkey').checked;
+                const vf = new VideoFrame(S.canvas, { timestamp: performance.now() * 1000 });
+                S.encoder.encode(vf, { keyFrame: allKey || (S.frameCount % 60 === 0) });
+                S.encoder.flush();
                 vf.close();
+                S.frameCount++;
             }
         }
-        requestAnimationFrame(rafLoop);
+        requestAnimationFrame(loop);
     }
-    requestAnimationFrame(rafLoop);
+    requestAnimationFrame(loop);
 }
 
 // ═══════════════════════════════════════════════════════════════
-// 2. WEBTRANSPORT BAĞLANTISI
+// 2. WEBTRANSPORT
 // ═══════════════════════════════════════════════════════════════
 btnStream.addEventListener('click', async () => {
     if (S.streaming) { stopStream(); return; }
@@ -645,31 +361,22 @@ btnStream.addEventListener('click', async () => {
 async function startStream() {
     try {
         setStatus('Bağlanıyor…', '');
-
-        const url     = $('wt-url').value.trim();
+        const url = $('wt-url').value.trim();
         const hashHex = $('wt-hash').value.trim();
-
-        let wtOptions = {};
+        let opts = {};
         if (hashHex.length === 64) {
-            const hashBytes = new Uint8Array(
-                hashHex.match(/.{1,2}/g).map(b => parseInt(b, 16))
-            );
-            wtOptions = {
-                serverCertificateHashes: [{ algorithm: 'sha-256', value: hashBytes }]
-            };
+            opts.serverCertificateHashes = [{
+                algorithm: 'sha-256',
+                value: new Uint8Array(hashHex.match(/.{1,2}/g).map(b => parseInt(b, 16)))
+            }];
         }
-
-        S.transport = new WebTransport(url, wtOptions);
+        S.transport = new WebTransport(url, opts);
         await S.transport.ready;
 
-        setStatus('Bağlı', 'ok');
-
         if (S.useDatagrams) {
-            // Datagram modu — QUIC datagrams (unreliable, lowest latency)
             S.dtWriter = S.transport.datagrams.writable.getWriter();
             setStatus('Datagram Aktif ⚡', 'ok');
         } else {
-            // Stream modu — güvenilir sıralı teslimat
             S.wtStream = await S.transport.createUnidirectionalStream();
             S.wtWriter = S.wtStream.getWriter();
             setStatus('Stream Aktif', 'ok');
@@ -677,260 +384,168 @@ async function startStream() {
 
         initEncoder();
         S.streaming = true;
-
-        btnStream.textContent = '⏹ Yayını Durdur';
-        btnStream.className   = 'btn-stop';
+        btnStream.textContent = '⏹ Durdur';
+        btnStream.className = 'btn-stop';
         $('status-dot').classList.add('live');
         startStatsTimer();
 
-        // Bağlantı kopma izleyicisi
-        S.transport.closed
-            .then(() => {
-                if (S.streaming) {
-                    console.warn('[WT] Bağlantı kapandı');
-                    stopStream();
-                    setStatus('Bağlantı koptu', 'bad');
-                }
-            })
-            .catch(() => {});
-
+        S.transport.closed.then(() => {
+            if (S.streaming) { stopStream(); setStatus('Koptu', 'bad'); }
+        }).catch(() => {});
     } catch (e) {
-        console.error('[WT] Bağlantı hatası:', e);
+        console.error('[WT]', e);
         setStatus('Hata: ' + e.message, 'bad');
-        btnStream.textContent  = '⚡ WebTransport Yayınını Başlat';
-        btnStream.className    = 'btn-secondary';
+        btnStream.textContent = '⚡ Başlat'; btnStream.className = 'btn-secondary';
     }
 }
 
 function stopStream() {
     S.streaming = false;
-
-    clearInterval(S.statsTimer);
-    S.statsTimer = null;
-
-    try { S.encoder?.close(); } catch {}
-    S.encoder = null;
-
-    try { S.wtWriter?.close(); } catch {}
-    S.wtWriter = null;
-    S.wtStream = null;
-
-    try { S.dtWriter?.close(); } catch {}
-    S.dtWriter = null;
-
-    try { S.transport?.close(); } catch {}
-    S.transport = null;
-
-    btnStream.textContent = '⚡ WebTransport Yayınını Başlat';
-    btnStream.className   = 'btn-secondary';
+    clearInterval(S.statsTimer); S.statsTimer = null;
+    try { S.encoder?.close(); } catch {} S.encoder = null;
+    try { S.wtWriter?.close(); } catch {} S.wtWriter = null; S.wtStream = null;
+    try { S.dtWriter?.close(); } catch {} S.dtWriter = null;
+    try { S.transport?.close(); } catch {} S.transport = null;
+    btnStream.textContent = '⚡ Başlat'; btnStream.className = 'btn-secondary';
     $('status-dot').classList.remove('live');
     setStatus('Durduruldu', '');
 }
 
 function stopAll() {
-    stopStream();
-    S.capturing = false;
+    stopStream(); S.capturing = false;
     try { S.frameReader?.cancel(); } catch {}
     try { S.track?.stop(); } catch {}
-    S.stream = null;
-    S.track  = null;
+    S.stream = null; S.track = null;
     btnCapture.textContent = '▶ Ekranı Seç ve Yakala';
-    btnCapture.disabled = false;
-    btnStream.disabled  = true;
+    btnCapture.disabled = false; btnStream.disabled = true;
     $('preview-placeholder').style.display = 'block';
     $('res-label').style.display = 'none';
 }
 
 // ═══════════════════════════════════════════════════════════════
-// 3. WEBCODECS ENCODER — LAN Düşük Gecikme
+// 3. ENCODER — Ultra Low Latency Config
 // ═══════════════════════════════════════════════════════════════
 function initEncoder() {
-    const codec      = $('v-codec').value;
-    const bitrateBps = (parseInt($('v-bitrate').value) || 4000) * 1000;
-    const fps        = parseInt($('v-fps').value) || 60;
-    const cropW      = S.canvas.width;
-    const cropH      = S.canvas.height;
+    const codec = $('v-codec').value;
+    const bps   = (parseInt($('v-bitrate').value) || 5000) * 1000;
+    const fps   = parseInt($('v-fps').value) || 60;
+    const cw    = S.canvas.width, ch = S.canvas.height;
 
     S.encoder = new VideoEncoder({
-        output: handleEncodedChunk,
-        error:  e => {
-            console.error('[Encoder] Çöktü:', e);
-            stopStream();
-        },
+        output: onEncodedChunk,
+        error: e => { console.error('[Enc]', e); stopStream(); },
     });
 
-    const config = {
-        codec,
-        width:          cropW,
-        height:         cropH,
-        bitrate:        bitrateBps,
-        framerate:      fps,
-        latencyMode:    'realtime',   // Sıfır buffer gecikmesi
-        bitrateMode:    'constant',   // CBR: LAN'da tahmin edilebilir throughput
-        avc:            { format: 'annexb' },  // SPS/PPS inline → decoder bağımsız
-    };
+    S.encoder.configure({
+        codec, width: cw, height: ch,
+        bitrate: bps, framerate: fps,
+        latencyMode: 'realtime',
+        bitrateMode: 'constant',
+        avc: { format: 'annexb' },
+        scalabilityMode: 'L1T1',
+    });
 
-    // L1T1: Tek temporal layer — minimum encoder gecikmesi
-    if (codec.startsWith('avc') || codec.startsWith('vp') || codec.startsWith('av01')) {
-        config.scalabilityMode = 'L1T1';
-    }
-
-    S.encoder.configure(config);
-    S.frameCount    = 0;
-    S.droppedFrames = 0;
-    S.dgErrors      = 0;
+    S.frameCount = 0; S.droppedFrames = 0;
+    S.encodeTotalMs = 0; S.encodeCount = 0;
 }
 
 // ═══════════════════════════════════════════════════════════════
-// 4. KODLANMIŞ KARE GÖNDERME
+// 4. PACKET SEND — Minimum Overhead
 // ═══════════════════════════════════════════════════════════════
 
-// ── Stream modu: 13-byte header protokolü ─────────────────────
-// [0]    : tip (0=delta, 1=keyframe, 2=decoderConfig)
-// [1..8] : timestamp μs (Float64 LE)
-// [9..12]: payload uzunluğu (Uint32 LE)
-// [13..N]: payload
-
-function buildStreamPacket(type, timestamp, data) {
-    const pkt  = new Uint8Array(13 + data.byteLength);
-    const view = new DataView(pkt.buffer);
-    view.setUint8(0, type);
-    view.setFloat64(1, timestamp, true);
-    view.setUint32(9, data.byteLength, true);
-    pkt.set(data, 13);
-    return pkt;
-}
-
-async function handleEncodedChunk(chunk, metadata) {
+function onEncodedChunk(chunk, meta) {
     if (!S.streaming) return;
 
-    // DecoderConfig (SPS/PPS) — keyframe'den önce gönderilmeli
-    if (metadata?.decoderConfig?.description) {
-        const desc = new Uint8Array(metadata.decoderConfig.description);
-        sendPacket(2, 0, desc);
-    }
+    // Track encode time
+    const encMs = performance.now() - S.encodeStartTime;
+    S.encodeTotalMs += encMs;
+    S.encodeCount++;
 
-    const data = new Uint8Array(chunk.byteLength);
-    chunk.copyTo(data);
-    const type = chunk.type === 'key' ? 1 : 0;
-    sendPacket(type, chunk.timestamp, data);
+    if (meta?.decoderConfig?.description) {
+        const desc = new Uint8Array(meta.decoderConfig.description);
+        sendPkt(2, 0, desc);
+    }
+    const buf = new Uint8Array(chunk.byteLength);
+    chunk.copyTo(buf);
+    sendPkt(chunk.type === 'key' ? 1 : 0, chunk.timestamp, buf);
 }
 
-function sendPacket(type, timestamp, data) {
-    if (S.useDatagrams) {
-        sendViaDatagrams(type, timestamp, data);
-    } else {
-        sendViaStream(type, timestamp, data);
-    }
+function sendPkt(type, ts, data) {
+    if (S.useDatagrams) sendDG(type, ts, data);
+    else sendStream(type, ts, data);
 }
 
-// ── Stream modu gönderimi ──────────────────────────────────────
-function sendViaStream(type, timestamp, data) {
+// ── Stream: 13-byte header ──────────────────────────────────────
+function sendStream(type, ts, data) {
     if (!S.wtWriter) return;
-    const pkt = buildStreamPacket(type, timestamp, data);
-    // write() returns a promise; we don't await it for lower latency
-    // but chain error handling
-    S.wtWriter.write(pkt).then(() => {
-        S.bytesSent += pkt.byteLength;
-    }).catch(e => {
-        console.warn('[Stream] Yazma hatası:', e);
+    const pkt = new Uint8Array(13 + data.byteLength);
+    const v = new DataView(pkt.buffer);
+    v.setUint8(0, type);
+    v.setFloat64(1, ts, true);
+    v.setUint32(9, data.byteLength, true);
+    pkt.set(data, 13);
+    S.wtWriter.write(pkt).then(() => { S.bytesSent += pkt.byteLength; }).catch(() => {
         if (S.streaming) stopStream();
     });
 }
 
-// ═══════════════════════════════════════════════════════════════
-// DATAGRAM MODU — QUIC Datagrams ile Gerçek UDP Gecikmesi
-// ═══════════════════════════════════════════════════════════════
-// Datagram header layout (MUST match Python DatagramAssembler):
-//
-// Offset  Size  Type       Field
-// 0       2     Uint16 LE  session_id
-// 2       4     Uint32 LE  frame_seq
-// 6       2     Uint16 LE  frag_index
-// 8       2     Uint16 LE  total_frags
-// 10      1     Uint8      frame_type
-// 11      1     Uint8      flags (bit0 = hasTimestamp)
-// --- if flags & 1 ---
-// 12      8     Float64 LE timestamp
-// --- end ---
-// HDR_SIZE = 12 (without ts) or 20 (with ts)
-// Then: payload bytes
-
-function sendViaDatagrams(type, timestamp, data) {
+// ── Datagram: fragmented, fire-and-forget ─────────────────────
+// Header: [H session][I seq][H fragIdx][H totalFrags][B type][B flags][d? timestamp]
+function sendDG(type, ts, data) {
     if (!S.dtWriter) return;
+    const fid = S.frameSeq++ & 0xFFFFFFFF;
+    const nf = Math.ceil(data.byteLength / MAX_DG_PAYLOAD) || 1;
 
-    const fid        = S.frameSeq++ & 0xFFFFFFFF;
-    const totalFrags = Math.ceil(data.byteLength / MAX_DATAGRAM_PAYLOAD) || 1;
-
-    for (let i = 0; i < totalFrags; i++) {
-        const offset    = i * MAX_DATAGRAM_PAYLOAD;
-        const slice     = data.subarray(offset, offset + MAX_DATAGRAM_PAYLOAD);
-        const hasTs     = i === 0 ? 1 : 0;
-        const hdrSize   = hasTs ? 20 : 12;
-        const dgram     = new Uint8Array(hdrSize + slice.byteLength);
-        const view      = new DataView(dgram.buffer);
-
-        view.setUint16(0,  S.sessionId, true);  // session_id
-        view.setUint32(2,  fid,         true);  // frame_seq
-        view.setUint16(6,  i,           true);  // frag_index  (Uint16!)
-        view.setUint16(8,  totalFrags,  true);  // total_frags (Uint16!)
-        view.setUint8(10,  type);               // frame_type
-        view.setUint8(11,  hasTs);              // flags
-        if (hasTs) {
-            view.setFloat64(12, timestamp, true);  // timestamp
-        }
-        dgram.set(slice, hdrSize);
-
-        // Fire-and-forget: don't await, minimize latency
-        S.dtWriter.write(dgram).then(() => {
-            S.bytesSent += dgram.byteLength;
-        }).catch(e => {
-            S.dgErrors++;
-            // Datagram loss is expected/normal, don't disconnect
-        });
+    for (let i = 0; i < nf; i++) {
+        const off = i * MAX_DG_PAYLOAD;
+        const slice = data.subarray(off, off + MAX_DG_PAYLOAD);
+        const hasTs = i === 0 ? 1 : 0;
+        const hdr = hasTs ? 20 : 12;
+        const dg = new Uint8Array(hdr + slice.byteLength);
+        const v = new DataView(dg.buffer);
+        v.setUint16(0, S.sessionId, true);
+        v.setUint32(2, fid, true);
+        v.setUint16(6, i, true);
+        v.setUint16(8, nf, true);
+        v.setUint8(10, type);
+        v.setUint8(11, hasTs);
+        if (hasTs) v.setFloat64(12, ts, true);
+        dg.set(slice, hdr);
+        // Fire-and-forget — no await, no blocking
+        S.dtWriter.write(dg).then(() => { S.bytesSent += dg.byteLength; }).catch(() => {});
     }
 }
 
 // ═══════════════════════════════════════════════════════════════
-// 5. İSTATİSTİK YÖNETİMİ
+// 5. STATS
 // ═══════════════════════════════════════════════════════════════
 function startStatsTimer() {
-    let prevBytes  = 0;
-    let prevFrames = 0;
-
+    let pB = 0, pF = 0, pC = 0;
     S.statsTimer = setInterval(() => {
-        const fps    = S.frameCount - prevFrames;
-        const bps    = (S.bytesSent - prevBytes) * 8;
-        const kbps   = (bps / 1000).toFixed(0);
-        const qsize  = S.encoder?.encodeQueueSize ?? 0;
+        const fps = S.frameCount - pF;
+        const capFps = S.captureCount - pC;
+        const kbps = ((S.bytesSent - pB) * 8 / 1000).toFixed(0);
+        const q = S.encoder?.encodeQueueSize ?? 0;
+        const avgEnc = S.encodeCount > 0 ? (S.encodeTotalMs / S.encodeCount).toFixed(1) : '—';
+        pB = S.bytesSent; pF = S.frameCount; pC = S.captureCount;
+        S.encodeTotalMs = 0; S.encodeCount = 0;
 
-        prevBytes  = S.bytesSent;
-        prevFrames = S.frameCount;
-
-        $('s-fps').textContent     = fps + ' fps';
-        $('s-fps').className       = 'stat-val' + (fps < 20 ? ' warn' : '');
-        $('s-kbps').textContent    = kbps + ' kbps';
-        $('s-queue').textContent   = qsize;
-        $('s-queue').className     = 'stat-val' + (qsize >= 2 ? ' warn' : '');
+        $('s-cap-fps').textContent = capFps + ' fps';
+        $('s-fps').textContent = fps + ' fps';
+        $('s-fps').className = 'stat-val' + (fps < 30 ? ' warn' : '');
+        $('s-kbps').textContent = kbps + ' kbps';
+        $('s-etime').textContent = avgEnc + ' ms';
+        $('s-etime').className = 'stat-val' + (parseFloat(avgEnc) > 10 ? ' warn' : '');
+        $('s-queue').textContent = q;
+        $('s-queue').className = 'stat-val' + (q >= 2 ? ' warn' : '');
         $('s-dropped').textContent = S.droppedFrames;
-        $('s-dropped').className   = 'stat-val' + (S.droppedFrames > 5 ? ' bad' : '');
-        $('s-dgerr').textContent   = S.dgErrors;
-        $('s-dgerr').className     = 'stat-val' + (S.dgErrors > 10 ? ' warn' : '');
-        $('s-total').textContent   = formatBytes(S.bytesSent);
+        $('s-dropped').className = 'stat-val' + (S.droppedFrames > 5 ? ' bad' : '');
+        $('s-total').textContent = fmtB(S.bytesSent);
     }, 1000);
 }
 
-function setStatus(msg, cls) {
-    const el = $('s-status');
-    el.textContent = msg;
-    el.className = 'stat-val' + (cls ? ' ' + cls : '');
-}
-
-function formatBytes(b) {
-    if (b < 1024)     return b + ' B';
-    if (b < 1048576)  return (b / 1024).toFixed(1) + ' KB';
-    return (b / 1048576).toFixed(2) + ' MB';
-}
+function setStatus(m, c) { const e = $('s-status'); e.textContent = m; e.className = 'stat-val' + (c ? ' ' + c : ''); }
+function fmtB(b) { return b < 1024 ? b+' B' : b < 1048576 ? (b/1024).toFixed(1)+' KB' : (b/1048576).toFixed(2)+' MB'; }
 </script>
 </body>
 </html>
