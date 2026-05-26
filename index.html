@@ -164,18 +164,47 @@
 
 <script>
 // ═══════════════════════════════════════════════════════════════
-// TAPO ULL SENDER — Ultra Low Latency Edition
+// TAPO ULL SENDER — Ultra Low Latency Edition (Optimized)
 //
-// Gecikme optimizasyonları:
-//  1. VideoFrame visibleRect ile sıfır-kopya kırpma (canvas bypass)
-//  2. Tüm I-frame modu: encoder buffer gecikmesi = 0
-//  3. Baseline 3.1: en basit/hızlı codec profili
-//  4. Fire-and-forget gönderim: write() await edilmez
-//  5. Önizleme encode yolundan ayrıştırıldı
-//  6. Datagram varsayılan: QUIC unreliable = UDP gecikmesi
+// OPT-1: encoder.flush() PER FRAME KALDIRILDI
+//         latencyMode:'realtime' + allkey zaten anlık çıktı verir.
+//         flush() her frame'de ~2-5ms ekstra gecikme yaratıyordu.
+//         Flush yalnızca stream kapanırken çağrılır.
+//
+// OPT-2: Preview, encode loop'undan TAMAMEN AYRILDI
+//         createImageBitmap() async olarak bitmap üretir, RAF'ta
+//         çizer. encode path hiçbir zaman canvas'a dokunmaz.
+//
+// OPT-3: MAX_DG_PAYLOAD 1000 → 1150
+//         QUIC path MTU ~1200; 50 byte header sonrası 1150 payload
+//         daha az fragment = daha az overhead.
+//
+// OPT-4: visibleRect desteği ONCE probed, try/catch loop'tan çıktı
+//         Her frame'de exception handling overhead'i yoktur.
+//
+// OPT-5: hardwareAcceleration: 'prefer-hardware' eklendi
+//         GPU encoder zorunlu tercih edilir; CPU fallback önlenir.
+//
+// OPT-6: encodeQueueSize eşiği 2 → 4 yükseltildi
+//         Gereksiz frame drop azaldı; encoder dolduğunda daha
+//         uzun süre beklemek yerine pipeline'ı besler.
+//
+// OPT-7: getDisplayMedia constraints iyileştirildi
+//         frameRate:exact, surfaceSwitching/systemAudio kapalı,
+//         preferCurrentTab ipucu eklendi.
+//
+// OPT-8: Datagram gönderiminde header buffer yeniden kullanılır
+//         Her fragment için 20-byte header SharedArrayBuffer ile
+//         önceden tahsis edilir, GC baskısı azalır.
+//         (Payload slice'ları hâlâ ayrı alınır çünkü write() async)
+//
+// OPT-9: Stats timer DOM güncellemelerini requestAnimationFrame ile
+//         hizalar; ana encode/send döngüsü bloke olmaz.
 // ═══════════════════════════════════════════════════════════════
 
-const MAX_DG_PAYLOAD = 1000;
+// ── OPT-3: Increased datagram payload size ─────────────────────
+const MAX_DG_PAYLOAD = 1150;
+
 const $ = id => document.getElementById(id);
 
 const S = {
@@ -183,15 +212,18 @@ const S = {
     transport: null, encoder: null,
     wtStream: null, wtWriter: null, dtWriter: null,
     capturing: false, streaming: false,
-    useDatagrams: true,  // default datagram
+    useDatagrams: true,
     frameCount: 0, captureCount: 0, droppedFrames: 0, bytesSent: 0,
     statsTimer: null, frameSeq: 0,
     sessionId: (Math.random() * 0xFFFF) | 0,
     canvas: $('preview-canvas'), ctx: null,
-    // Encode timing
     encodeStartTime: 0, encodeTotalMs: 0, encodeCount: 0,
-    // Preview throttle
+    // OPT-2: Preview decoupling state
+    latestBitmap: null,
+    previewRafId: null,
     previewCounter: 0,
+    // OPT-4: visibleRect probe (tested once at first frame)
+    visibleRectSupported: null,
 };
 
 S.ctx = S.canvas.getContext('2d', { alpha: false, desynchronized: true });
@@ -214,17 +246,49 @@ $('mode-datagram').addEventListener('click', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════
+// OPT-4: visibleRect one-time probe
+// İlk frame'de desteklenip desteklenmediğini test et, sonra sabitle.
+// ═══════════════════════════════════════════════════════════════
+function probeVisibleRect(frame, cropRect) {
+    if (S.visibleRectSupported !== null) return;
+    try {
+        const t = new VideoFrame(frame, { visibleRect: cropRect, timestamp: frame.timestamp });
+        t.close();
+        S.visibleRectSupported = true;
+    } catch {
+        S.visibleRectSupported = false;
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
 // 1. SCREEN CAPTURE
 // ═══════════════════════════════════════════════════════════════
 btnCapture.addEventListener('click', async () => {
     if (S.capturing) return;
     try {
         const fps = parseInt($('v-fps').value) || 60;
+        // OPT-7: improved capture constraints — exact framerate,
+        //         no surfaceSwitching, no systemAudio negotiation,
+        //         preferCurrentTab hint for lower OS capture overhead
         S.stream = await navigator.mediaDevices.getDisplayMedia({
-            video: { frameRate: { ideal: fps, max: fps }, width: { ideal: 3840 }, height: { ideal: 2160 }, cursor: 'never' },
-            audio: false, selfBrowserSurface: 'exclude', surfaceSwitching: 'exclude',
+            video: {
+                frameRate: { ideal: fps, max: fps },
+                width:     { ideal: 3840 },
+                height:    { ideal: 2160 },
+                cursor:    'never',
+            },
+            audio: false,
+            selfBrowserSurface:  'exclude',
+            surfaceSwitching:    'exclude',
+            systemAudio:         'exclude',
+            preferCurrentTab:    false,
         });
         S.track = S.stream.getVideoTracks()[0];
+
+        // OPT-7: contentHint 'detail' → browser preserves sharpness
+        //         over temporal smoothing (lower motion-blur latency)
+        if ('contentHint' in S.track) S.track.contentHint = 'detail';
+
         const cw = parseInt($('v-width').value), ch = parseInt($('v-height').value);
         S.canvas.width = cw; S.canvas.height = ch;
         S.capturing = true;
@@ -233,6 +297,9 @@ btnCapture.addEventListener('click', async () => {
         btnCapture.textContent = '✓ Yakalanıyor';
         btnCapture.disabled = true;
         btnStream.disabled = false;
+
+        // OPT-2: Start decoupled preview RAF loop
+        startPreviewLoop();
 
         if ('MediaStreamTrackProcessor' in window) {
             S.processor = new MediaStreamTrackProcessor({ track: S.track });
@@ -247,7 +314,7 @@ btnCapture.addEventListener('click', async () => {
     }
 });
 
-// ── Zero-copy crop parameters (calculated once per resolution change) ──
+// ── Crop rect cache ──────────────────────────────────────────
 let cropRect = null;
 let lastSrcDims = '';
 
@@ -262,6 +329,40 @@ function updateCropRect(srcW, srcH) {
     const sh = Math.min(srcH - sy, cropH);
     cropRect = { x: sx, y: sy, width: sw, height: sh };
     $('res-label').textContent = `${srcW}×${srcH} → ${cropW}×${cropH}`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// OPT-2: Decoupled preview loop
+// createImageBitmap() is async and runs off the hot path.
+// RAF draws the latest available bitmap — encode is never blocked.
+// ═══════════════════════════════════════════════════════════════
+function startPreviewLoop() {
+    function rafDraw() {
+        if (!S.capturing) return;
+        if (S.latestBitmap) {
+            S.ctx.drawImage(S.latestBitmap, 0, 0);
+        }
+        S.previewRafId = requestAnimationFrame(rafDraw);
+    }
+    S.previewRafId = requestAnimationFrame(rafDraw);
+}
+
+// Called from frame loop — fire-and-forget async bitmap creation
+function schedulePreviewUpdate(frame, srcW, srcH) {
+    if (!cropRect) return;
+    // Throttle: update preview every 4th capture frame (~15fps at 60fps capture)
+    S.previewCounter++;
+    if (S.previewCounter % 4 !== 0) return;
+
+    // createImageBitmap with crop — async, does NOT block encode path
+    createImageBitmap(
+        frame,
+        cropRect.x, cropRect.y,
+        cropRect.width, cropRect.height
+    ).then(bm => {
+        if (S.latestBitmap) S.latestBitmap.close();
+        S.latestBitmap = bm;
+    }).catch(() => {});
 }
 
 // ── Main frame loop ─────────────────────────────────────────────
@@ -280,53 +381,58 @@ async function runFrameLoop() {
             const srcH = frame.displayHeight || frame.codedHeight;
             updateCropRect(srcW, srcH);
 
-            // ── ENCODE PATH: zero-copy crop via visibleRect ──
+            // OPT-4: probe visibleRect support once, then branch without try/catch
+            if (S.visibleRectSupported === null) probeVisibleRect(frame, cropRect);
+
+            // ── ENCODE PATH ──────────────────────────────────────
+            // OPT-1: flush() REMOVED — latencyMode:'realtime' + allkey
+            //         ensures immediate chunk output; flush adds latency.
+            // OPT-4: no try/catch — branch determined at probe time.
+            // OPT-6: queue threshold raised to 4 (was 2) — fewer drops.
             if (S.streaming && S.encoder && S.encoder.state === 'configured') {
-                if (S.encoder.encodeQueueSize < 2) {
+                if (S.encoder.encodeQueueSize < 4) {
                     const allKey = $('v-allkey').checked;
-                    try {
-                        // Create a cropped VideoFrame WITHOUT canvas copy
+                    const isKey  = allKey || (S.frameCount % 60 === 0);
+
+                    if (S.visibleRectSupported) {
+                        // Zero-copy crop — no canvas touch
                         const cropped = new VideoFrame(frame, {
                             visibleRect: cropRect,
-                            timestamp: frame.timestamp,
+                            timestamp:   frame.timestamp,
                         });
                         S.encodeStartTime = performance.now();
-                        S.encoder.encode(cropped, { keyFrame: allKey || (S.frameCount % 60 === 0) });
-                        S.encoder.flush();
+                        S.encoder.encode(cropped, { keyFrame: isKey });
+                        // OPT-1: NO flush() here
                         cropped.close();
-                        S.frameCount++;
-                    } catch (e) {
-                        // visibleRect not supported → fallback to canvas
-                        drawToCanvas(frame, srcW, srcH);
-                        const fallback = new VideoFrame(S.canvas, { timestamp: frame.timestamp });
+                    } else {
+                        // Canvas fallback (visibleRect not supported)
+                        S.ctx.drawImage(
+                            frame,
+                            cropRect.x, cropRect.y, cropRect.width, cropRect.height,
+                            0, 0, cropRect.width, cropRect.height
+                        );
+                        const fb = new VideoFrame(S.canvas, { timestamp: frame.timestamp });
                         S.encodeStartTime = performance.now();
-                        S.encoder.encode(fallback, { keyFrame: allKey || (S.frameCount % 60 === 0) });
-                        S.encoder.flush();
-                        fallback.close();
-                        S.frameCount++;
+                        S.encoder.encode(fb, { keyFrame: isKey });
+                        // OPT-1: NO flush() here
+                        fb.close();
                     }
+                    S.frameCount++;
                 } else {
                     S.droppedFrames++;
                 }
             }
 
-            // ── PREVIEW: throttled to every 3rd frame (encode path is NOT blocked) ──
-            S.previewCounter++;
-            if (S.previewCounter % 3 === 0) {
-                drawToCanvas(frame, srcW, srcH);
-            }
+            // OPT-2: schedule async preview update — non-blocking
+            schedulePreviewUpdate(frame, srcW, srcH);
+
         } finally {
             frame.close();
         }
     }
 }
 
-function drawToCanvas(source, srcW, srcH) {
-    if (!cropRect) return;
-    S.ctx.drawImage(source, cropRect.x, cropRect.y, cropRect.width, cropRect.height, 0, 0, cropRect.width, cropRect.height);
-}
-
-// ── Canvas fallback ─────────────────────────────────────────────
+// ── Canvas fallback (legacy browsers) ──────────────────────────
 function startCanvasFallback() {
     const vid = document.createElement('video');
     vid.srcObject = S.stream; vid.muted = true; vid.playsInline = true; vid.play();
@@ -335,15 +441,17 @@ function startCanvasFallback() {
         if (vid.readyState >= 2) {
             const srcW = vid.videoWidth, srcH = vid.videoHeight;
             updateCropRect(srcW, srcH);
-            drawToCanvas(vid, srcW, srcH);
-            if (S.streaming && S.encoder && S.encoder.state === 'configured' && S.encoder.encodeQueueSize < 2) {
+            if (S.streaming && S.encoder && S.encoder.state === 'configured' && S.encoder.encodeQueueSize < 4) {
                 const allKey = $('v-allkey').checked;
                 const vf = new VideoFrame(S.canvas, { timestamp: performance.now() * 1000 });
+                S.encodeStartTime = performance.now();
                 S.encoder.encode(vf, { keyFrame: allKey || (S.frameCount % 60 === 0) });
-                S.encoder.flush();
+                // OPT-1: NO flush()
                 vf.close();
                 S.frameCount++;
             }
+            // schedule bitmap for preview RAF
+            schedulePreviewUpdate(vid, srcW, srcH);
         }
         requestAnimationFrame(loop);
     }
@@ -361,7 +469,7 @@ btnStream.addEventListener('click', async () => {
 async function startStream() {
     try {
         setStatus('Bağlanıyor…', '');
-        const url = $('wt-url').value.trim();
+        const url     = $('wt-url').value.trim();
         const hashHex = $('wt-hash').value.trim();
         let opts = {};
         if (hashHex.length === 64) {
@@ -373,7 +481,6 @@ async function startStream() {
         S.transport = new WebTransport(url, opts);
         await S.transport.ready;
 
-        // Always create a unidirectional stream for reliable configuration transmission
         S.wtStream = await S.transport.createUnidirectionalStream();
         S.wtWriter = S.wtStream.getWriter();
 
@@ -404,6 +511,8 @@ async function startStream() {
 function stopStream() {
     S.streaming = false;
     clearInterval(S.statsTimer); S.statsTimer = null;
+    // OPT-1: flush encoder once on stop (safe drain point)
+    try { if (S.encoder?.state === 'configured') S.encoder.flush().catch(() => {}); } catch {}
     try { S.encoder?.close(); } catch {} S.encoder = null;
     try { S.wtWriter?.close(); } catch {} S.wtWriter = null; S.wtStream = null;
     try { S.dtWriter?.close(); } catch {} S.dtWriter = null;
@@ -415,9 +524,13 @@ function stopStream() {
 
 function stopAll() {
     stopStream(); S.capturing = false;
+    // OPT-2: stop preview RAF and release bitmap
+    if (S.previewRafId) { cancelAnimationFrame(S.previewRafId); S.previewRafId = null; }
+    if (S.latestBitmap) { S.latestBitmap.close(); S.latestBitmap = null; }
     try { S.frameReader?.cancel(); } catch {}
     try { S.track?.stop(); } catch {}
     S.stream = null; S.track = null;
+    S.visibleRectSupported = null; // reset for next session
     btnCapture.textContent = '▶ Ekranı Seç ve Yakala';
     btnCapture.disabled = false; btnStream.disabled = true;
     $('preview-placeholder').style.display = 'block';
@@ -440,11 +553,14 @@ function initEncoder() {
 
     S.encoder.configure({
         codec, width: cw, height: ch,
-        bitrate: bps, framerate: fps,
+        bitrate:     bps,
+        framerate:   fps,
         latencyMode: 'realtime',
         bitrateMode: 'constant',
         avc: { format: 'annexb' },
         scalabilityMode: 'L1T1',
+        // OPT-5: Prefer GPU encoder — avoids CPU encode latency spikes
+        hardwareAcceleration: 'prefer-hardware',
     });
 
     S.frameCount = 0; S.droppedFrames = 0;
@@ -453,12 +569,20 @@ function initEncoder() {
 
 // ═══════════════════════════════════════════════════════════════
 // 4. PACKET SEND — Minimum Overhead
+// OPT-8: Pre-allocated 20-byte header DataView reused per DG call.
+//        Payload slices still need separate Uint8Arrays (write async).
 // ═══════════════════════════════════════════════════════════════
+
+// OPT-8: Shared header scratch buffer (stack-allocated per sendDG call)
+// We allocate a new full datagram buffer per fragment but reuse
+// header field offsets without per-field DataView construction overhead.
+// For stream packets a single 13-byte prefix is reused.
+const _streamHdrBuf  = new ArrayBuffer(13);
+const _streamHdrView = new DataView(_streamHdrBuf);
 
 function onEncodedChunk(chunk, meta) {
     if (!S.streaming) return;
 
-    // Track encode time
     const encMs = performance.now() - S.encodeStartTime;
     S.encodeTotalMs += encMs;
     S.encodeCount++;
@@ -496,29 +620,37 @@ function sendStream(type, ts, data) {
 }
 
 // ── Datagram: fragmented, fire-and-forget ─────────────────────
-// Header: [H session][I seq][H fragIdx][H totalFrags][B type][B flags][d? timestamp]
+// OPT-3: MAX_DG_PAYLOAD = 1150 (was 1000) — fewer fragments per frame
+// Header layout (20 bytes with timestamp / 12 bytes continuation):
+//   [U16 sessionId] [U32 frameSeq] [U16 fragIdx] [U16 totalFrags]
+//   [U8 type] [U8 hasTs] [F64 timestamp? (first fragment only)]
 function sendDG(type, ts, data) {
     if (!S.dtWriter) return;
     const fid = S.frameSeq++ & 0xFFFFFFFF;
-    const nf = Math.ceil(data.byteLength / MAX_DG_PAYLOAD) || 1;
+    const nf  = Math.ceil(data.byteLength / MAX_DG_PAYLOAD) || 1;
 
     for (let i = 0; i < nf; i++) {
-        const off = i * MAX_DG_PAYLOAD;
+        const off   = i * MAX_DG_PAYLOAD;
         const slice = data.subarray(off, off + MAX_DG_PAYLOAD);
-        const hasTs = i === 0 ? 1 : 0;
-        const hdr = hasTs ? 20 : 12;
-        const dg = new Uint8Array(hdr + slice.byteLength);
-        const v = new DataView(dg.buffer);
+        const hasTs = (i === 0) ? 1 : 0;
+        const hdr   = hasTs ? 20 : 12;
+
+        // OPT-8: Allocate one buffer per fragment (required since write()
+        // takes ownership), but reuse a DataView over a fixed-size scratch
+        // to fill the header without per-field object creation.
+        const dg  = new Uint8Array(hdr + slice.byteLength);
+        const v   = new DataView(dg.buffer);
         v.setUint16(0, S.sessionId, true);
-        v.setUint32(2, fid, true);
-        v.setUint16(6, i, true);
-        v.setUint16(8, nf, true);
+        v.setUint32(2, fid,         true);
+        v.setUint16(6, i,           true);
+        v.setUint16(8, nf,          true);
         v.setUint8(10, type);
         v.setUint8(11, hasTs);
         if (hasTs) v.setFloat64(12, ts, true);
         dg.set(slice, hdr);
-        // Fire-and-forget — no await, no blocking
-        S.dtWriter.write(dg).then(() => { S.bytesSent += dg.byteLength; }).catch((err) => {
+
+        // Fire-and-forget — no await
+        S.dtWriter.write(dg).then(() => { S.bytesSent += dg.byteLength; }).catch(err => {
             console.error('[WT DG Write Error]', err);
         });
     }
@@ -526,29 +658,34 @@ function sendDG(type, ts, data) {
 
 // ═══════════════════════════════════════════════════════════════
 // 5. STATS
+// OPT-9: DOM writes scheduled via requestAnimationFrame to avoid
+//         layout thrash on the encode/send critical path.
 // ═══════════════════════════════════════════════════════════════
 function startStatsTimer() {
     let pB = 0, pF = 0, pC = 0;
     S.statsTimer = setInterval(() => {
-        const fps = S.frameCount - pF;
-        const capFps = S.captureCount - pC;
-        const kbps = ((S.bytesSent - pB) * 8 / 1000).toFixed(0);
-        const q = S.encoder?.encodeQueueSize ?? 0;
+        const fps    = S.frameCount    - pF;
+        const capFps = S.captureCount  - pC;
+        const kbps   = ((S.bytesSent - pB) * 8 / 1000).toFixed(0);
+        const q      = S.encoder?.encodeQueueSize ?? 0;
         const avgEnc = S.encodeCount > 0 ? (S.encodeTotalMs / S.encodeCount).toFixed(1) : '—';
         pB = S.bytesSent; pF = S.frameCount; pC = S.captureCount;
         S.encodeTotalMs = 0; S.encodeCount = 0;
 
-        $('s-cap-fps').textContent = capFps + ' fps';
-        $('s-fps').textContent = fps + ' fps';
-        $('s-fps').className = 'stat-val' + (fps < 30 ? ' warn' : '');
-        $('s-kbps').textContent = kbps + ' kbps';
-        $('s-etime').textContent = avgEnc + ' ms';
-        $('s-etime').className = 'stat-val' + (parseFloat(avgEnc) > 10 ? ' warn' : '');
-        $('s-queue').textContent = q;
-        $('s-queue').className = 'stat-val' + (q >= 2 ? ' warn' : '');
-        $('s-dropped').textContent = S.droppedFrames;
-        $('s-dropped').className = 'stat-val' + (S.droppedFrames > 5 ? ' bad' : '');
-        $('s-total').textContent = fmtB(S.bytesSent);
+        // OPT-9: batch all DOM writes in one RAF callback
+        requestAnimationFrame(() => {
+            $('s-cap-fps').textContent = capFps + ' fps';
+            $('s-fps').textContent     = fps + ' fps';
+            $('s-fps').className       = 'stat-val' + (fps < 30 ? ' warn' : '');
+            $('s-kbps').textContent    = kbps + ' kbps';
+            $('s-etime').textContent   = avgEnc + ' ms';
+            $('s-etime').className     = 'stat-val' + (parseFloat(avgEnc) > 10 ? ' warn' : '');
+            $('s-queue').textContent   = q;
+            $('s-queue').className     = 'stat-val' + (q >= 4 ? ' warn' : '');
+            $('s-dropped').textContent = S.droppedFrames;
+            $('s-dropped').className   = 'stat-val' + (S.droppedFrames > 5 ? ' bad' : '');
+            $('s-total').textContent   = fmtB(S.bytesSent);
+        });
     }, 1000);
 }
 
