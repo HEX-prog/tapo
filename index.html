@@ -168,13 +168,21 @@
 
     <!-- Preview Card -->
     <div class="card">
-        <div class="card-label">04 — Önizleme</div>
-        <div class="preview-wrap">
+        <div class="card-label">04 — Önizleme & İstatistikler</div>
+        <div class="chk-row" style="margin-bottom:8px;">
+            <input type="checkbox" id="v-show-preview" checked>
+            <label for="v-show-preview" style="margin:0;font-size:.72rem;">Önizleme Ekranını Göster (Kapatmak performansı artırır)</label>
+        </div>
+        <div class="chk-row" style="margin-bottom:12px;">
+            <input type="checkbox" id="v-show-stats" checked>
+            <label for="v-show-stats" style="margin:0;font-size:.72rem;">İstatistikleri Göster (Kapatmak arayüzü hafifletir)</label>
+        </div>
+        <div class="preview-wrap" id="preview-container">
             <canvas id="preview-canvas" width="640" height="640"></canvas>
             <div class="preview-overlay" id="res-label" style="display:none"></div>
             <div class="preview-placeholder" id="preview-placeholder">Ekran yakalanmayı bekliyor…</div>
         </div>
-        <div class="stats">
+        <div class="stats" id="stats-container">
             <div class="stats-inner" id="stats-inner">
                 <div class="stat-row"><span class="stat-key"><span class="status-dot" id="status-dot"></span>DURUM</span><span class="stat-val" id="s-status">Bekliyor</span></div>
                 <div class="stat-row"><span class="stat-key">TRANSPORT</span><span class="stat-val ok" id="s-mode">Datagram</span></div>
@@ -244,6 +252,13 @@ $('v-detectmode').addEventListener('change', (e) => {
 });
 $('v-detectlevel').addEventListener('change', (e) => {
     if($('v-detectmode').checked) $('s-det-mode').textContent = e.target.value.toUpperCase();
+});
+
+$('v-show-preview').addEventListener('change', e => {
+    $('preview-container').style.display = e.target.checked ? 'flex' : 'none';
+});
+$('v-show-stats').addEventListener('change', e => {
+    $('stats-container').style.display = e.target.checked ? 'block' : 'none';
 });
 
 const btnCapture = $('btn-capture');
@@ -394,9 +409,15 @@ async function runFrameLoop() {
             }
 
             // ── PREVIEW: throttled to every 3rd frame (encode path is NOT blocked) ──
-            S.previewCounter++;
-            if (S.previewCounter % 3 === 0) {
-                drawToCanvas(frame, srcW, srcH);
+            if ($('v-show-preview').checked) {
+                S.previewCounter++;
+                if (S.previewCounter % 3 === 0) {
+                    const detOn = $('v-detectmode').checked;
+                    // If detection is ON, the compressed frame is already on the canvas. Drawing the raw frame again causes flashing.
+                    if (!detOn) {
+                        drawToCanvas(frame, srcW, srcH);
+                    }
+                }
             }
         } finally {
             frame.close();
@@ -664,6 +685,8 @@ function startStatsTimer() {
         const avgEnc = S.encodeCount > 0 ? (S.encodeTotalMs / S.encodeCount).toFixed(1) : '—';
         pB = S.bytesSent; pF = S.frameCount; pC = S.captureCount;
         S.encodeTotalMs = 0; S.encodeCount = 0;
+
+        if (!$('v-show-stats').checked) return;
 
         $('s-cap-fps').textContent = capFps + ' fps';
         $('s-fps').textContent = fps + ' fps';
