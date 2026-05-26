@@ -59,6 +59,11 @@
     </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute;z-index:-1;">
+    <filter id="quant-low"><feComponentTransfer><feFuncR type="discrete" tableValues="0 0.14 0.28 0.42 0.57 0.71 0.85 1"/><feFuncG type="discrete" tableValues="0 0.14 0.28 0.42 0.57 0.71 0.85 1"/><feFuncB type="discrete" tableValues="0 0.14 0.28 0.42 0.57 0.71 0.85 1"/></feComponentTransfer></filter>
+    <filter id="quant-medium"><feComponentTransfer><feFuncR type="discrete" tableValues="0 0.25 0.5 0.75 1"/><feFuncG type="discrete" tableValues="0 0.25 0.5 0.75 1"/><feFuncB type="discrete" tableValues="0 0.25 0.5 0.75 1"/></feComponentTransfer></filter>
+    <filter id="quant-aggressive"><feComponentTransfer><feFuncR type="discrete" tableValues="0 0.5 1"/><feFuncG type="discrete" tableValues="0 0.5 1"/><feFuncB type="discrete" tableValues="0 0.5 1"/></feComponentTransfer></filter>
+</svg>
 <div class="layout">
 
     <div class="header">
@@ -128,6 +133,22 @@
                 Tüm kareler Keyframe (I-frame only — en düşük gecikme, yüksek bant)
             </label>
         </div>
+        <div class="chk-row" style="margin-top:12px;">
+            <input type="checkbox" id="v-detectmode">
+            <label for="v-detectmode" style="margin:0;font-size:.72rem;color:var(--amber);font-weight:700;">
+                Detection Compression Mode (Ultra Düşük Gecikme)
+            </label>
+        </div>
+        <div class="row" id="detect-settings" style="opacity:0.5; pointer-events:none;">
+            <div class="field">
+                <label style="color:var(--amber)">Detection Strength</label>
+                <select id="v-detectlevel">
+                    <option value="low">Low (Hafif Kayıp)</option>
+                    <option value="medium" selected>Medium (Orta Kayıp)</option>
+                    <option value="aggressive">Aggressive (Yüksek Kayıp)</option>
+                </select>
+            </div>
+        </div>
     </div>
 
     <!-- Control Card -->
@@ -156,6 +177,9 @@
                 <div class="stat-row"><span class="stat-key">ENCODE QUEUE</span><span class="stat-val" id="s-queue">—</span></div>
                 <div class="stat-row"><span class="stat-key">DROPPED</span><span class="stat-val" id="s-dropped">0</span></div>
                 <div class="stat-row"><span class="stat-key">TOTAL SENT</span><span class="stat-val" id="s-total">0 B</span></div>
+                <div class="stat-row" style="margin-top:8px;border-top:1px dashed var(--border2);padding-top:8px;"><span class="stat-key" style="color:var(--amber);">DETECTION MODE</span><span class="stat-val" id="s-det-mode" style="color:var(--amber);">OFF</span></div>
+                <div class="stat-row"><span class="stat-key">COMPRESSION SCALE</span><span class="stat-val" id="s-det-scale">—</span></div>
+                <div class="stat-row"><span class="stat-key">EST. LATENCY SAVING</span><span class="stat-val" id="s-det-save">—</span></div>
             </div>
         </div>
     </div>
@@ -188,6 +212,7 @@ const S = {
     statsTimer: null, frameSeq: 0,
     sessionId: (Math.random() * 0xFFFF) | 0,
     canvas: $('preview-canvas'), ctx: null,
+    detCanvas: document.createElement('canvas'), detCtx: null,
     // Encode timing
     encodeStartTime: 0, encodeTotalMs: 0, encodeCount: 0,
     // Preview throttle
@@ -195,6 +220,23 @@ const S = {
 };
 
 S.ctx = S.canvas.getContext('2d', { alpha: false, desynchronized: true });
+S.detCtx = S.detCanvas.getContext('2d', { alpha: false, desynchronized: true });
+
+$('v-detectmode').addEventListener('change', (e) => {
+    const ds = $('detect-settings');
+    if (e.target.checked) {
+        ds.style.opacity = '1'; ds.style.pointerEvents = 'auto';
+        $('s-det-mode').textContent = $('v-detectlevel').value.toUpperCase();
+    } else {
+        ds.style.opacity = '0.5'; ds.style.pointerEvents = 'none';
+        $('s-det-mode').textContent = 'OFF';
+        $('s-det-scale').textContent = '—';
+        $('s-det-save').textContent = '—';
+    }
+});
+$('v-detectlevel').addEventListener('change', (e) => {
+    if($('v-detectmode').checked) $('s-det-mode').textContent = e.target.value.toUpperCase();
+});
 
 const btnCapture = $('btn-capture');
 const btnStream  = $('btn-stream');
@@ -284,25 +326,58 @@ async function runFrameLoop() {
             if (S.streaming && S.encoder && S.encoder.state === 'configured') {
                 if (S.encoder.encodeQueueSize < 2) {
                     const allKey = $('v-allkey').checked;
-                    try {
-                        // Create a cropped VideoFrame WITHOUT canvas copy
-                        const cropped = new VideoFrame(frame, {
-                            visibleRect: cropRect,
-                            timestamp: frame.timestamp,
-                        });
+                    const detOn = $('v-detectmode').checked;
+                    const level = $('v-detectlevel').value;
+
+                    if (!detOn) {
+                        try {
+                            // Create a cropped VideoFrame WITHOUT canvas copy
+                            const cropped = new VideoFrame(frame, {
+                                visibleRect: cropRect,
+                                timestamp: frame.timestamp,
+                            });
+                            S.encodeStartTime = performance.now();
+                            S.encoder.encode(cropped, { keyFrame: allKey || (S.frameCount % 144 === 0) });
+                            // S.encoder.flush(); // Remove manual flush to prevent pipeline stalls
+                            cropped.close();
+                            S.frameCount++;
+                        } catch (e) {
+                            // visibleRect not supported → fallback to canvas
+                            drawToCanvas(frame, srcW, srcH);
+                            const fallback = new VideoFrame(S.canvas, { timestamp: frame.timestamp });
+                            S.encodeStartTime = performance.now();
+                            S.encoder.encode(fallback, { keyFrame: allKey || (S.frameCount % 144 === 0) });
+                            // S.encoder.flush(); // Remove manual flush to prevent pipeline stalls
+                            fallback.close();
+                            S.frameCount++;
+                        }
+                    } else {
+                        // ── Detection Compression Mode Path (Canvas Pipeline) ──
+                        let scale = 1.0, blur = '0px', quant = 'none';
+                        if (level === 'low') { scale = 0.75; blur = '0.5px'; quant = 'url(#quant-low)'; }
+                        else if (level === 'medium') { scale = 0.50; blur = '1px'; quant = 'url(#quant-medium)'; }
+                        else if (level === 'aggressive') { scale = 0.33; blur = '2px'; quant = 'url(#quant-aggressive)'; }
+
+                        const cropW = cropRect.width, cropH = cropRect.height;
+                        const dw = Math.max(1, Math.floor(cropW * scale));
+                        const dh = Math.max(1, Math.floor(cropH * scale));
+
+                        if (S.detCanvas.width !== dw || S.detCanvas.height !== dh) {
+                            S.detCanvas.width = dw; S.detCanvas.height = dh;
+                        }
+
+                        // 1. Downscale to detCanvas
+                        S.detCtx.drawImage(frame, cropRect.x, cropRect.y, cropW, cropH, 0, 0, dw, dh);
+
+                        // 2. Upscale + Filters to main canvas
+                        S.ctx.filter = `blur(${blur}) ${quant}`;
+                        S.ctx.drawImage(S.detCanvas, 0, 0, dw, dh, 0, 0, cropW, cropH);
+                        S.ctx.filter = 'none';
+
+                        const compressedFrame = new VideoFrame(S.canvas, { timestamp: frame.timestamp });
                         S.encodeStartTime = performance.now();
-                        S.encoder.encode(cropped, { keyFrame: allKey || (S.frameCount % 144 === 0) });
-                        // S.encoder.flush(); // Remove manual flush to prevent pipeline stalls
-                        cropped.close();
-                        S.frameCount++;
-                    } catch (e) {
-                        // visibleRect not supported → fallback to canvas
-                        drawToCanvas(frame, srcW, srcH);
-                        const fallback = new VideoFrame(S.canvas, { timestamp: frame.timestamp });
-                        S.encodeStartTime = performance.now();
-                        S.encoder.encode(fallback, { keyFrame: allKey || (S.frameCount % 144 === 0) });
-                        // S.encoder.flush(); // Remove manual flush to prevent pipeline stalls
-                        fallback.close();
+                        S.encoder.encode(compressedFrame, { keyFrame: allKey || (S.frameCount % 144 === 0) });
+                        compressedFrame.close();
                         S.frameCount++;
                     }
                 } else {
@@ -338,11 +413,38 @@ function startCanvasFallback() {
             drawToCanvas(vid, srcW, srcH);
             if (S.streaming && S.encoder && S.encoder.state === 'configured' && S.encoder.encodeQueueSize < 2) {
                 const allKey = $('v-allkey').checked;
-                const vf = new VideoFrame(S.canvas, { timestamp: performance.now() * 1000 });
-                S.encoder.encode(vf, { keyFrame: allKey || (S.frameCount % 144 === 0) });
-                // S.encoder.flush();
-                vf.close();
-                S.frameCount++;
+                const detOn = $('v-detectmode').checked;
+
+                if (!detOn) {
+                    const vf = new VideoFrame(S.canvas, { timestamp: performance.now() * 1000 });
+                    S.encoder.encode(vf, { keyFrame: allKey || (S.frameCount % 144 === 0) });
+                    vf.close();
+                    S.frameCount++;
+                } else {
+                    const level = $('v-detectlevel').value;
+                    let scale = 1.0, blur = '0px', quant = 'none';
+                    if (level === 'low') { scale = 0.75; blur = '0.5px'; quant = 'url(#quant-low)'; }
+                    else if (level === 'medium') { scale = 0.50; blur = '1px'; quant = 'url(#quant-medium)'; }
+                    else if (level === 'aggressive') { scale = 0.33; blur = '2px'; quant = 'url(#quant-aggressive)'; }
+
+                    const cropW = S.canvas.width, cropH = S.canvas.height;
+                    const dw = Math.max(1, Math.floor(cropW * scale));
+                    const dh = Math.max(1, Math.floor(cropH * scale));
+
+                    if (S.detCanvas.width !== dw || S.detCanvas.height !== dh) {
+                        S.detCanvas.width = dw; S.detCanvas.height = dh;
+                    }
+
+                    S.detCtx.drawImage(S.canvas, 0, 0, cropW, cropH, 0, 0, dw, dh);
+                    S.ctx.filter = `blur(${blur}) ${quant}`;
+                    S.ctx.drawImage(S.detCanvas, 0, 0, dw, dh, 0, 0, cropW, cropH);
+                    S.ctx.filter = 'none';
+
+                    const compressedFrame = new VideoFrame(S.canvas, { timestamp: performance.now() * 1000 });
+                    S.encoder.encode(compressedFrame, { keyFrame: allKey || (S.frameCount % 144 === 0) });
+                    compressedFrame.close();
+                    S.frameCount++;
+                }
             }
         }
         requestAnimationFrame(loop);
@@ -429,9 +531,20 @@ function stopAll() {
 // ═══════════════════════════════════════════════════════════════
 function initEncoder() {
     const codec = $('v-codec').value;
-    const bps   = (parseInt($('v-bitrate').value) || 5000) * 1000;
+    let bps   = (parseInt($('v-bitrate').value) || 5000) * 1000;
     const fps   = parseInt($('v-fps').value) || 60;
     const cw    = S.canvas.width, ch = S.canvas.height;
+
+    const detOn = $('v-detectmode').checked;
+    const level = $('v-detectlevel').value;
+    if (detOn) {
+        let mult = 1.0, sav = '0ms';
+        if (level === 'low') { mult = 0.75; sav = '~3-5ms'; $('s-det-scale').textContent = '0.75x'; }
+        else if (level === 'medium') { mult = 0.60; sav = '~5-8ms'; $('s-det-scale').textContent = '0.50x'; }
+        else if (level === 'aggressive') { mult = 0.45; sav = '~8-12ms'; $('s-det-scale').textContent = '0.33x'; }
+        bps = Math.floor(bps * mult);
+        $('s-det-save').textContent = sav;
+    }
 
     S.encoder = new VideoEncoder({
         output: onEncodedChunk,
