@@ -175,7 +175,7 @@
 //  6. Datagram varsayılan: QUIC unreliable = UDP gecikmesi
 // ═══════════════════════════════════════════════════════════════
 
-const MAX_DG_PAYLOAD = 1250;
+const MAX_DG_PAYLOAD = 1000;
 const $ = id => document.getElementById(id);
 
 const S = {
@@ -373,12 +373,14 @@ async function startStream() {
         S.transport = new WebTransport(url, opts);
         await S.transport.ready;
 
+        // Always create a unidirectional stream for reliable configuration transmission
+        S.wtStream = await S.transport.createUnidirectionalStream();
+        S.wtWriter = S.wtStream.getWriter();
+
         if (S.useDatagrams) {
             S.dtWriter = S.transport.datagrams.writable.getWriter();
             setStatus('Datagram Aktif ⚡', 'ok');
         } else {
-            S.wtStream = await S.transport.createUnidirectionalStream();
-            S.wtWriter = S.wtStream.getWriter();
             setStatus('Stream Aktif', 'ok');
         }
 
@@ -471,8 +473,12 @@ function onEncodedChunk(chunk, meta) {
 }
 
 function sendPkt(type, ts, data) {
-    if (S.useDatagrams) sendDG(type, ts, data);
-    else sendStream(type, ts, data);
+    if (type === 2) {
+        sendStream(type, ts, data);
+    } else {
+        if (S.useDatagrams) sendDG(type, ts, data);
+        else sendStream(type, ts, data);
+    }
 }
 
 // ── Stream: 13-byte header ──────────────────────────────────────
@@ -512,7 +518,9 @@ function sendDG(type, ts, data) {
         if (hasTs) v.setFloat64(12, ts, true);
         dg.set(slice, hdr);
         // Fire-and-forget — no await, no blocking
-        S.dtWriter.write(dg).then(() => { S.bytesSent += dg.byteLength; }).catch(() => {});
+        S.dtWriter.write(dg).then(() => { S.bytesSent += dg.byteLength; }).catch((err) => {
+            console.error('[WT DG Write Error]', err);
+        });
     }
 }
 
