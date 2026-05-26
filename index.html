@@ -615,7 +615,8 @@ function sendStream(type, ts, data) {
     v.setFloat64(1, ts, true);
     v.setUint32(9, data.byteLength, true);
     pkt.set(data, 13);
-    S.wtWriter.write(pkt).then(() => { S.bytesSent += pkt.byteLength; }).catch(() => {
+    S.wtWriter.write(pkt).then(() => { S.bytesSent += pkt.byteLength; }).catch((e) => {
+        console.error('[Stream Write Error]', e);
         if (S.streaming) stopStream();
     });
 }
@@ -645,6 +646,7 @@ function sendDG(type, ts, data) {
         // Fire-and-forget — no await, no blocking
         S.dtWriter.write(dg).then(() => { S.bytesSent += dg.byteLength; }).catch((err) => {
             console.error('[WT DG Write Error]', err);
+            if (S.streaming) stopStream();
         });
     }
 }
