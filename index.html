@@ -3,59 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tapo İş Yeri Güvenlik Sistemi — Canlı İzleme</title>
+    <title>Orivo Home — Kamera Yönetim Konsolu</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=DM+Sans:wght@300;400;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
         :root {
-            --bg:#0a0c0f;--surface:#0f1217;--raised:#12161c;
-            --border:#1c2128;--border2:#252d36;
-            --accent:#ff6a00;--accent-dim:#e05d00;--cyan:#00e5ff;
-            --amber:#ffab00;--red:#ff1744;
-            --text:#cdd6e0;--muted:#4a5568;
-            --mono:'IBM Plex Mono',monospace;--sans:'DM Sans',sans-serif;
+            --bg:#0b1220;--surface:#121b2e;--raised:#18233a;
+            --border:#223050;--border2:#2b3b5e;
+            --brand:#3b82f6;--brand-dim:#2563eb;--teal:#22d3ee;
+            --amber:#f59e0b;--red:#f43f5e;--green:#22c55e;
+            --text:#e6ebf5;--muted:#7889a8;
+            --sans:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;
         }
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-        body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:24px 16px 40px;
-            background-image:radial-gradient(ellipse 60% 40% at 50% -10%,rgba(255,106,0,.06) 0%,transparent 60%),
-            repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(255,255,255,.015) 39px,rgba(255,255,255,.015) 40px),
-            repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(255,255,255,.015) 39px,rgba(255,255,255,.015) 40px)}
-        .layout{width:100%;max-width:700px;display:flex;flex-direction:column;gap:0}
-        .header{display:flex;align-items:baseline;gap:12px;padding:0 0 18px;border-bottom:1px solid var(--border);margin-bottom:20px}
-        .header-title{font-family:var(--mono);font-size:1.05rem;font-weight:700;color:var(--accent);letter-spacing:.04em;text-transform:uppercase}
-        .header-badge{font-family:var(--mono);font-size:.6rem;padding:2px 7px;border:1px solid var(--accent-dim);border-radius:3px;color:var(--accent-dim);letter-spacing:.1em}
-        .header-sub{margin-left:auto;font-family:var(--mono);font-size:.65rem;color:var(--muted)}
-        .card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 18px;margin-bottom:12px;position:relative}
-        .card-label{font-family:var(--mono);font-size:.6rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+        body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:32px 16px 48px;
+            background-image:radial-gradient(ellipse 70% 50% at 50% -10%,rgba(59,130,246,.10) 0%,transparent 60%)}
+        .layout{width:100%;max-width:760px;display:flex;flex-direction:column;gap:0}
+
+        /* ── Brand header ─────────────────────────────────────────── */
+        .brandbar{display:flex;align-items:center;gap:12px;padding-bottom:16px;margin-bottom:8px}
+        .brand-mark{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--brand),var(--teal));display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 14px rgba(59,130,246,.35)}
+        .brand-mark svg{width:20px;height:20px}
+        .brand-name{font-size:1.05rem;font-weight:800;letter-spacing:-.01em;color:#fff}
+        .brand-name small{display:block;font-size:.68rem;font-weight:500;color:var(--muted);letter-spacing:.02em;margin-top:1px}
+        .brand-links{margin-left:auto;display:flex;gap:16px}
+        .brand-links a{font-size:.72rem;color:var(--muted);text-decoration:none;font-weight:500;transition:color .15s}
+        .brand-links a:hover{color:var(--teal)}
+
+        .breadcrumb{display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--muted);padding-bottom:16px;margin-bottom:8px;border-bottom:1px solid var(--border)}
+        .breadcrumb b{color:var(--text);font-weight:600}
+        .breadcrumb .sep{opacity:.5}
+        .device-chip{margin-left:auto;display:flex;align-items:center;gap:6px;background:var(--raised);border:1px solid var(--border2);border-radius:20px;padding:4px 10px 4px 8px;font-size:.68rem;color:var(--text)}
+        .device-chip .dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 5px var(--green)}
+
+        .page-title{font-size:1.3rem;font-weight:800;letter-spacing:-.02em;margin-bottom:4px}
+        .page-sub{font-size:.82rem;color:var(--muted);margin-bottom:22px}
+
+        .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:14px;position:relative}
+        .card-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--brand);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+        .card-label .num{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:5px;background:rgba(59,130,246,.15);color:var(--brand);font-size:.62rem}
         .card-label::after{content:'';flex:1;height:1px;background:var(--border)}
-        .field{margin-bottom:10px}
-        .field label{display:block;font-family:var(--mono);font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
-        input[type="text"],input[type="number"],select{width:100%;background:var(--raised);border:1px solid var(--border2);border-radius:5px;padding:9px 11px;color:var(--text);font-family:var(--mono);font-size:.82rem;transition:border-color .15s,box-shadow .15s;appearance:none}
-        input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(255,106,0,.15)}
-        select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a5568'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;cursor:pointer}
-        .row{display:flex;gap:10px}.row .field{flex:1}
-        .toggle-row{display:flex;gap:0;border:1px solid var(--border2);border-radius:5px;overflow:hidden;margin-bottom:10px}
-        .toggle-btn{flex:1;padding:8px;background:transparent;color:var(--muted);font-family:var(--mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;border:none;cursor:pointer;transition:background .15s,color .15s;text-align:center}
-        .toggle-btn.active{background:rgba(255,106,0,.12);color:var(--accent)}
+        .field{margin-bottom:12px}
+        .field label{display:block;font-size:.74rem;color:var(--muted);font-weight:500;margin-bottom:6px}
+        input[type="text"],input[type="number"],select{width:100%;background:var(--raised);border:1px solid var(--border2);border-radius:7px;padding:10px 12px;color:var(--text);font-family:var(--sans);font-size:.84rem;transition:border-color .15s,box-shadow .15s;appearance:none}
+        input:focus,select:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(59,130,246,.16)}
+        select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237889a8'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:30px;cursor:pointer}
+        .row{display:flex;gap:12px}.row .field{flex:1}
+        .toggle-row{display:flex;gap:0;border:1px solid var(--border2);border-radius:7px;overflow:hidden;margin-bottom:12px}
+        .toggle-btn{flex:1;padding:9px;background:transparent;color:var(--muted);font-family:var(--sans);font-size:.76rem;font-weight:600;border:none;cursor:pointer;transition:background .15s,color .15s;text-align:center}
+        .toggle-btn.active{background:rgba(59,130,246,.16);color:var(--brand)}
         .toggle-btn:first-child{border-right:1px solid var(--border2)}
-        .btn-primary,.btn-stop,.btn-secondary{width:100%;padding:12px;border:none;border-radius:5px;font-family:var(--mono);font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;cursor:pointer;transition:all .15s;margin-bottom:8px;position:relative;overflow:hidden}
-        .btn-primary{background:var(--accent);color:#000}.btn-primary:hover{background:var(--accent-dim)}.btn-primary:disabled{background:#1c2128;color:#3a4454;cursor:not-allowed}
-        .btn-stop{background:var(--red);color:#fff}.btn-stop:hover{background:#ff4569}
-        .btn-secondary{background:transparent;color:var(--cyan);border:1px solid rgba(0,229,255,.25)}.btn-secondary:hover{background:rgba(0,229,255,.07)}.btn-secondary:disabled{color:var(--muted);border-color:var(--border2);cursor:not-allowed}
-        .preview-wrap{background:#000;border:1px solid var(--border);border-radius:6px;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;min-height:200px}
+        .btn-primary,.btn-stop,.btn-secondary{width:100%;padding:13px;border:none;border-radius:8px;font-family:var(--sans);font-size:.82rem;font-weight:700;cursor:pointer;transition:all .15s;margin-bottom:8px}
+        .btn-primary{background:var(--brand);color:#fff}.btn-primary:hover{background:var(--brand-dim)}.btn-primary:disabled{background:var(--raised);color:#3a4966;cursor:not-allowed}
+        .btn-stop{background:var(--red);color:#fff}.btn-stop:hover{background:#e11d48}
+        .btn-secondary{background:transparent;color:var(--teal);border:1px solid rgba(34,211,238,.3)}.btn-secondary:hover{background:rgba(34,211,238,.08)}.btn-secondary:disabled{color:var(--muted);border-color:var(--border2);cursor:not-allowed}
+        .preview-wrap{background:#000;border:1px solid var(--border);border-radius:9px;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;min-height:200px}
         #preview-canvas{display:block;max-width:100%;height:auto}
-        .preview-overlay{position:absolute;top:8px;left:8px;font-family:var(--mono);font-size:.6rem;color:rgba(255,106,0,.8);background:rgba(0,0,0,.6);padding:3px 6px;border-radius:3px;letter-spacing:.05em}
-        .preview-placeholder{position:absolute;color:var(--muted);font-family:var(--mono);font-size:.75rem;letter-spacing:.05em;text-align:center}
-        .stats{margin-top:12px;background:#050709;border:1px solid var(--border);border-radius:6px;padding:12px 14px;font-family:var(--mono);font-size:.72rem;line-height:1.7;position:relative}
-        .stats::before{content:'● ● ●';font-size:.5rem;letter-spacing:3px;color:var(--border2);position:absolute;top:6px;left:12px}
-        .stats-inner{margin-top:12px}
+        .preview-overlay{position:absolute;top:8px;left:8px;font-family:var(--mono);font-size:.62rem;color:rgba(34,211,238,.85);background:rgba(0,0,0,.55);padding:3px 7px;border-radius:4px;letter-spacing:.03em}
+        .preview-placeholder{position:absolute;color:var(--muted);font-size:.8rem;text-align:center}
+        .stats{margin-top:14px;background:var(--raised);border:1px solid var(--border);border-radius:9px;padding:14px 16px;font-family:var(--mono);font-size:.74rem;line-height:1.75}
+        .stats-inner{margin-top:2px}
         .stat-row{display:flex;justify-content:space-between;align-items:baseline}
-        .stat-key{color:var(--muted)}.stat-val{color:var(--accent)}.stat-val.warn{color:var(--amber)}.stat-val.ok{color:var(--cyan)}.stat-val.bad{color:var(--red)}
-        .status-dot{width:6px;height:6px;border-radius:50%;background:var(--muted);display:inline-block;margin-right:6px;vertical-align:middle}
-        .status-dot.live{background:var(--accent);box-shadow:0 0 6px var(--accent);animation:pulse 1.2s ease-in-out infinite}
+        .stat-key{color:var(--muted)}.stat-val{color:var(--green)}.stat-val.warn{color:var(--amber)}.stat-val.ok{color:var(--teal)}.stat-val.bad{color:var(--red)}
+        .status-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);display:inline-block;margin-right:7px;vertical-align:middle}
+        .status-dot.live{background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 1.2s ease-in-out infinite}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-        .notice{background:rgba(0,229,255,.06);border-left:2px solid var(--cyan);border-radius:0 4px 4px 0;padding:9px 12px;font-size:.68rem;color:rgba(0,229,255,.8);margin-bottom:12px;font-family:var(--mono);line-height:1.5}
-        .chk-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-family:var(--mono);font-size:.72rem;color:var(--text)}
-        .chk-row input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:pointer}
+        .notice{background:rgba(34,211,238,.07);border-left:3px solid var(--teal);border-radius:0 6px 6px 0;padding:10px 13px;font-size:.74rem;color:#a9e8f2;margin-bottom:14px;line-height:1.5}
+        .chk-row{display:flex;align-items:center;gap:9px;margin-bottom:9px;font-size:.78rem;color:var(--text)}
+        .chk-row input[type=checkbox]{accent-color:var(--brand);width:16px;height:16px;cursor:pointer}
+        .footer{margin-top:22px;padding-top:16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:.7rem;color:var(--muted)}
+        .footer a{color:var(--muted);text-decoration:none}
+        .footer a:hover{color:var(--teal)}
     </style>
 </head>
 <body>
@@ -66,193 +83,250 @@
 </svg>
 <div class="layout">
 
-    <div class="header">
-        <span class="header-title">Tapo İş Yeri Güvenlik</span>
-        <span class="header-badge">CANLI İZLEME</span>
-        <span class="header-sub">Depo · Ön Taraf · Arka Taraf · Lobi</span>
+    <div class="brandbar">
+        <div class="brand-mark">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="2" y="6" width="15" height="12" rx="3" stroke="#fff" stroke-width="1.8"/>
+                <path d="M17 10.5L22 8v8l-5-2.5" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/>
+                <circle cx="9.5" cy="12" r="2.6" stroke="#fff" stroke-width="1.6"/>
+            </svg>
+        </div>
+        <div class="brand-name">Orivo Home<small>Kamera Yönetim Konsolu</small></div>
+        <div class="brand-links">
+            <a href="https://orivohome.example" target="_blank" rel="noopener">orivohome.example</a>
+            <a href="https://orivohome.example/destek" target="_blank" rel="noopener">Destek</a>
+        </div>
     </div>
 
+    <div class="breadcrumb">
+        <span>Cihazlarım</span><span class="sep">›</span><b>Canlı Yayın Ayarları</b>
+        <span class="device-chip"><span class="dot"></span>Cihaz Bağlı</span>
+    </div>
+
+    <div class="page-title">Canlı Yayın Yapılandırması</div>
+    <div class="page-sub">Kameranızın görüntü aktarım, kayıt kalitesi ve ağ bağlantı ayarlarını buradan yönetin.</div>
+
+    <!-- Connection Card -->
     <div class="card">
-        <div class="card-label">01 — Merkezi Ağ Bağlantısı</div>
+        <div class="card-label"><span class="num">1</span>Cihaz Bağlantısı</div>
         <div class="field">
-            <label>İletim Modu</label>
+            <label>Aktarım Modu</label>
             <div class="toggle-row">
-                <button class="toggle-btn" id="mode-stream">Stream (Güvenilir)</button>
-                <button class="toggle-btn active" id="mode-datagram">Datagram (En Düşük Gecikme)</button>
+                <button class="toggle-btn active" id="mode-stream">Akış (Güvenilir)</button>
+                <button class="toggle-btn" id="mode-datagram">Anlık Paket (Deneysel)</button>
             </div>
         </div>
         <div class="field">
-            <label>WebTransport Sunucu URL</label>
-            <input type="text" id="wt-url" value="https://192.168.1.6:4433/stream">
+            <label>Ağ Geçidi Adresi</label>
+            <input type="text" id="wt-url" value="https://127.0.0.1:4433/stream">
         </div>
         <div class="field">
-            <label>Sertifika Hash (SHA-256 hex)</label>
-            <input type="text" id="wt-hash" placeholder="" style="font-size:.72rem;">
+            <label>Cihaz Güvenlik Anahtarı (SHA-256)</label>
+            <input type="text" id="wt-hash" value="043bf72af000ba4c01ebcaf72716fa125a67232f50948d5b4249b8e7e5f55639"                                                                                                                                                                                                         placeholder="Konsol ekranından kopyaladığınız 64 karakterlik anahtar" style="font-family:var(--mono);font-size:.74rem;">
         </div>
     </div>
 
+    <!-- Encode Card -->
     <div class="card">
-        <div class="card-label">02 — Kamera ve Alan Ayarları</div>
+        <div class="card-label"><span class="num">2</span>Görüntü Kalitesi</div>
         <div class="notice">
-            💡 Güvenlik izleme için: "Tüm Keyframe" seçeneği açık, Datagram modu seçili.
-            Depo ve lobi gibi yoğun alanlarda 4 Mbps yeterli bant genişliği sağlar.
-        </div>
-        <div class="field" style="margin-bottom:12px;">
-            <label style="color:var(--accent);">Kamera Görüntüsü Seçimi</label>
-            <div class="row" style="gap:6px;">
-                <button class="toggle-btn active" style="border:1px solid var(--border2);border-radius:4px;padding:6px 10px;">Depo</button>
-                <button class="toggle-btn" style="border:1px solid var(--border2);border-radius:4px;padding:6px 10px;">Ön Taraf</button>
-                <button class="toggle-btn" style="border:1px solid var(--border2);border-radius:4px;padding:6px 10px;">Arka Taraf</button>
-                <button class="toggle-btn" style="border:1px solid var(--border2);border-radius:4px;padding:6px 10px;">Lobi</button>
-            </div>
+            ℹ️ En düşük gecikme için "Her Kare Anahtar Kare" seçeneğini açın ve Anlık Paket modunu seçin.
+            Ev ağınızda 4 Mbps bant genişliği genellikle yeterlidir.
         </div>
         <div class="row">
             <div class="field">
-                <label>Kamera Türü</label>
+                <label>Video Kodeği</label>
                 <select id="v-codec">
-                    <option value="avc1.42001f" selected>H.264 Baseline 3.1 (En Hızlı)</option>
-                    <option value="avc1.42002a">H.264 Baseline 4.2</option>
-                    <option value="avc1.640028">H.264 High 4.0</option>
+                    <option value="avc1.42001f">H.264 Temel 3.1 (Geniş Uyumluluk)</option>
+                    <option value="avc1.42002a">H.264 Temel 4.2</option>
+                    <option value="avc1.640028" selected>H.264 Yüksek 4.0 (Donanım Hızlandırmalı)</option>
                 </select>
             </div>
             <div class="field">
-                <label>Görüntü İşleme</label>
+                <label>İşleme Motoru</label>
                 <select id="v-hw">
-                    <option value="no-preference">Otomatik</option>
-                    <option value="prefer-hardware" selected>Donanım (GPU)</option>
-                    <option value="prefer-software">Yazılım (CPU)</option>
+                    <option value="prefer-hardware" selected>Donanım (Ekran Kartı)</option>
+                    <option value="prefer-software">Yazılım (İşlemci)</option>
+                    <option value="no-preference">Otomatik Seç</option>
                 </select>
             </div>
             <div class="field">
-                <label>Kayıt Kalitesi (kbps)</label>
+                <label>Bit Hızı (kbps)</label>
                 <input type="number" id="v-bitrate" value="5000">
             </div>
         </div>
         <div class="row">
             <div class="field">
-                <label>Görüntü Alanı Genişlik</label>
-                <input type="number" id="v-width" value="1280">
+                <label>Görüntü Genişliği</label>
+                <input type="number" id="v-width" value="640">
             </div>
             <div class="field">
-                <label>Görüntü Alanı Yükseklik</label>
-                <input type="number" id="v-height" value="720">
+                <label>Görüntü Yüksekliği</label>
+                <input type="number" id="v-height" value="640">
             </div>
             <div class="field">
-                <label>Kare Hızı (FPS)</label>
-                <input type="number" id="v-fps" value="60">
+                <label>Hedef Kare/sn</label>
+                <input type="number" id="v-fps" value="144">
             </div>
         </div>
         <div class="chk-row">
-            <input type="checkbox" id="v-allkey">
-            <label for="v-allkey" style="margin:0;font-size:.72rem;text-transform:none;letter-spacing:0">
-                Tüm kareler Keyframe (I-frame only — en düşük gecikme, yüksek bant)
+            <input type="checkbox" id="v-autobitrate" checked>
+            <label for="v-autobitrate" style="margin:0;color:var(--teal);font-weight:600;">
+                Otomatik Bit Hızı (çözünürlük ve kare hızına göre hesaplanır, ağ tıkanıklığında otomatik ayarlanır)
             </label>
         </div>
-        <div class="chk-row" style="margin-top:12px;">
+        <div class="chk-row">
+            <input type="checkbox" id="v-allkey">
+            <label for="v-allkey" style="margin:0;">
+                Her Kare Anahtar Kare (en düşük gecikme, daha yüksek bant genişliği kullanır)
+            </label>
+        </div>
+        <div class="chk-row" style="margin-top:14px;">
             <input type="checkbox" id="v-detectmode">
-            <label for="v-detectmode" style="margin:0;font-size:.72rem;color:var(--amber);font-weight:700;">
-                Hareket Algılama Sıkıştırma Modu
+            <label for="v-detectmode" style="margin:0;color:var(--amber);font-weight:600;">
+                Hareket Algılama Modunda Sıkıştırma (Ultra Düşük Gecikme)
             </label>
         </div>
         <div class="row" id="detect-settings" style="opacity:0.5; pointer-events:none;">
             <div class="field">
-                <label style="color:var(--amber)">Algılama Hassasiyeti</label>
+                <label style="color:var(--amber)">Sıkıştırma Seviyesi</label>
                 <select id="v-detectlevel">
-                    <option value="low">Düşük</option>
-                    <option value="medium" selected>Orta</option>
-                    <option value="aggressive">Yüksek</option>
+                    <option value="low">Düşük (Hafif Kayıp)</option>
+                    <option value="medium" selected>Orta (Dengeli)</option>
+                    <option value="aggressive">Yüksek (En Düşük Gecikme)</option>
                 </select>
             </div>
         </div>
     </div>
 
+    <!-- Control Card -->
     <div class="card">
-        <div class="card-label">03 — Kontrol Paneli</div>
-        <button class="btn-primary" id="btn-capture">▶ Kamera Görüntüsünü Başlat</button>
-        <button class="btn-secondary" id="btn-stream" disabled>⚡ Canlı İzlemeyi Başlat</button>
+        <div class="card-label"><span class="num">3</span>Yayın Kontrolü</div>
+        <button class="btn-primary" id="btn-capture">▶ Kamerayı Seç ve Bağlan</button>
+        <button class="btn-secondary" id="btn-stream" disabled>⚡ Canlı Yayını Başlat</button>
+        <button class="btn-secondary" id="btn-save-settings">💾 Ayarları Kaydet</button>
     </div>
 
+    <!-- Preview Card -->
     <div class="card">
-        <div class="card-label">04 — Canlı Görüntü & Sistem İstatistikleri</div>
-        <div class="chk-row" style="margin-bottom:8px;">
-            <input type="checkbox" id="v-show-preview">
-            <label for="v-show-preview" style="margin:0;font-size:.72rem;">Önizleme Ekranını Göster</label>
+        <div class="card-label"><span class="num">4</span>Canlı Önizleme &amp; Cihaz Durumu</div>
+        <div class="chk-row" style="margin-bottom:9px;">
+            <input type="checkbox" id="v-show-preview" checked>
+            <label for="v-show-preview" style="margin:0;">Canlı Önizlemeyi Göster (kapatmak performansı artırır)</label>
         </div>
-        <div class="chk-row" style="margin-bottom:12px;">
-            <input type="checkbox" id="v-show-stats">
-            <label for="v-show-stats" style="margin:0;font-size:.72rem;">İstatistikleri Göster</label>
+        <div class="chk-row" style="margin-bottom:14px;">
+            <input type="checkbox" id="v-show-stats" checked>
+            <label for="v-show-stats" style="margin:0;">Bağlantı İstatistiklerini Göster</label>
         </div>
         <div class="preview-wrap" id="preview-container">
             <canvas id="preview-canvas" width="640" height="640"></canvas>
             <div class="preview-overlay" id="res-label" style="display:none"></div>
-            <div class="preview-placeholder" id="preview-placeholder">Kamera görüntüsü bekleniyor…</div>
+            <div class="preview-placeholder" id="preview-placeholder">Kamera bağlantısı bekleniyor…</div>
         </div>
         <div class="stats" id="stats-container">
             <div class="stats-inner" id="stats-inner">
-                <div class="stat-row"><span class="stat-key"><span class="status-dot" id="status-dot"></span>SİSTEM DURUMU</span><span class="stat-val" id="s-status">Bekliyor</span></div>
-                <div class="stat-row"><span class="stat-key">İLETİM PROTOKOLÜ</span><span class="stat-val ok" id="s-mode">Datagram</span></div>
-                <div class="stat-row"><span class="stat-key">KAMERA FPS</span><span class="stat-val" id="s-cap-fps">—</span></div>
-                <div class="stat-row"><span class="stat-key">SıkışTIRMA FPS</span><span class="stat-val" id="s-fps">—</span></div>
-                <div class="stat-row"><span class="stat-key">BANT GENİŞLİĞİ</span><span class="stat-val" id="s-kbps">— kbps</span></div>
-                <div class="stat-row"><span class="stat-key">GECİKME (KODLAMA)</span><span class="stat-val" id="s-etime">— ms</span></div>
-                <div class="stat-row"><span class="stat-key">İŞLEM SIRASI</span><span class="stat-val" id="s-queue">—</span></div>
+                <div class="stat-row"><span class="stat-key"><span class="status-dot" id="status-dot"></span>DURUM</span><span class="stat-val" id="s-status">Bekliyor</span></div>
+                <div class="stat-row"><span class="stat-key">AKTARIM</span><span class="stat-val ok" id="s-mode">Akış</span></div>
+                <div class="stat-row"><span class="stat-key">KAMERA KARE/SN</span><span class="stat-val" id="s-cap-fps">—</span></div>
+                <div class="stat-row"><span class="stat-key">İŞLENEN KARE/SN</span><span class="stat-val" id="s-fps">—</span></div>
+                <div class="stat-row"><span class="stat-key">VERİ HIZI</span><span class="stat-val" id="s-kbps">— kbps</span></div>
+                <div class="stat-row"><span class="stat-key">İŞLEME SÜRESİ</span><span class="stat-val" id="s-etime">— ms</span></div>
+                <div class="stat-row"><span class="stat-key">İŞLEM KUYRUĞU</span><span class="stat-val" id="s-queue">—</span></div>
                 <div class="stat-row"><span class="stat-key">KAYIP KARE</span><span class="stat-val" id="s-dropped">0</span></div>
-                <div class="stat-row"><span class="stat-key">TOPLAM VERİ AKTARIMI</span><span class="stat-val" id="s-total">0 B</span></div>
-                <div class="stat-row" style="margin-top:8px;border-top:1px dashed var(--border2);padding-top:8px;"><span class="stat-key" style="color:var(--amber);">HAREKET ALGILAMA</span><span class="stat-val" id="s-det-mode" style="color:var(--amber);">KAPALI</span></div>
-                <div class="stat-row"><span class="stat-key">SIKIŞTIRMA ÖLÇEĞİ</span><span class="stat-val" id="s-det-scale">—</span></div>
-                <div class="stat-row"><span class="stat-key">TAHMİNİ GECİKME TASARRUFU</span><span class="stat-val" id="s-det-save">—</span></div>
+                <div class="stat-row"><span class="stat-key">TOPLAM VERİ</span><span class="stat-val" id="s-total">0 B</span></div>
+                <div class="stat-row" style="margin-top:9px;border-top:1px dashed var(--border2);padding-top:9px;"><span class="stat-key" style="color:var(--teal);">OTOMATİK BİT HIZI</span><span class="stat-val ok" id="s-abr">—</span></div>
+                <div class="stat-row"><span class="stat-key">İŞLEME MOTORU</span><span class="stat-val" id="s-engine">—</span></div>
+                <div class="stat-row"><span class="stat-key">BAĞLANTI DURUMU</span><span class="stat-val" id="s-reconnect">—</span></div>
+                <div class="stat-row" style="margin-top:9px;border-top:1px dashed var(--border2);padding-top:9px;"><span class="stat-key" style="color:var(--amber);">HAREKET ALGILAMA</span><span class="stat-val" id="s-det-mode" style="color:var(--amber);">KAPALI</span></div>
+                <div class="stat-row"><span class="stat-key">SIKIŞTIRMA ORANI</span><span class="stat-val" id="s-det-scale">—</span></div>
+                <div class="stat-row"><span class="stat-key">TAHMİNİ GECİKME KAZANCI</span><span class="stat-val" id="s-det-save">—</span></div>
             </div>
         </div>
+    </div>
+
+    <div class="footer">
+        <span>© 2026 Orivo Home Teknoloji A.Ş. — Tüm hakları saklıdır.</span>
+        <a href="https://orivohome.example/gizlilik" target="_blank" rel="noopener">Gizlilik Politikası</a>
     </div>
 
 </div>
 
 <script>
-/* ═══════════════════════════════════════════════════════════════
- * TAPO İŞ YERİ GÜVENLİK KAMERA SİSTEMİ
- * CANLI İZLEME MODÜLÜ
- *
- * Bu yazılım, iş yerinin depo, ön taraf, arka taraf ve lobi
- * bölgelerindeki güvenlik kameralarından alınan görüntüleri
- * ultra düşük gecikme ile merkezi izleme paneline aktarır.
- *
- * Gecikme optimizasyonları:
- *  1. VideoFrame visibleRect ile sıfır-kopya kırpma
- *  2. Tüm I-frame modu: kamera kayıt gecikmesi sıfırlanır
- *  3. Baseline 3.1 profili: en hızlı codec
- *  4. Fire-and-forget gönderim: kareler anında iletilir
- *  5. Önizleme, kodlama hattını bloke etmez
- *  6. Datagram varsayılan: QUIC unreliable = UDP gecikmesi
- *
- * Tüm kamera görüntüleri WebTransport üzerinden
- * Datagram (en düşük gecikme) veya Stream (güvenilir)
- * moduyla aktarılır.
- * ═══════════════════════════════════════════════════════════════ */
+// ═══════════════════════════════════════════════════════════════
+// ORIVO HOME — Kamera Canlı Yayın İstemcisi
+//
+// Gecikme optimizasyonları:
+//  1. VideoFrame visibleRect ile sıfır-kopya kırpma (canvas bypass)
+//  2. Tüm I-frame modu: encoder buffer gecikmesi = 0
+//  3. Baseline 3.1: en basit/hızlı codec profili
+//  4. Fire-and-forget gönderim: write() await edilmez
+//  5. Önizleme encode yolundan ayrıştırıldı
+//  6. Datagram varsayılan: QUIC unreliable = UDP gecikmesi
+//
+// Stabilite / otomatik ayar (bkz. ilgili fonksiyonlar):
+//  7. Otomatik Bitrate: recommendedBitrateKbps() çözünürlük+fps'ten öneri
+//     hesaplar; AIMD kontrolcüsü (startStatsTimer) tıkanmada (drop/queue)
+//     bitrate'i hızlı düşürür, stabil kaldıkça yavaşça geri toparlar.
+//  8. Encoder kalibrasyonu (onEncoderConfigured/onEncodedChunk): "desteklenir"
+//     dönen bir GPU config'i ilk ~20 karede gerçek encode süresine göre
+//     denetler, hedef fps'i karşılamıyorsa yazılıma otomatik düşer.
+//  9. Otomatik yeniden bağlanma (handleUnexpectedDisconnect): beklenmeyen
+//     WebTransport kopmasında (ağ/server kaynaklı) capture'ı hiç durdurmadan,
+//     üstel olmayan sınırlı-doğrusal backoff ile yeniden bağlanır.
+// ═══════════════════════════════════════════════════════════════
 
 const MAX_DG_PAYLOAD = 1000;
+// Max WebTransport stream writes allowed in flight before we start DROPPING
+// delta frames instead of queueing them. On a stream, anything queued behind a
+// write that the network hasn't drained yet is pure added latency (head-of-line:
+// every later frame waits). Bounding this keeps glass-to-glass latency flat
+// under congestion instead of letting it grow without limit. On a fast link
+// writes complete almost instantly so this threshold is essentially never hit
+// (no downside), it only engages when the link genuinely can't keep up.
+const MAX_PENDING_WRITES = 4;
 const $ = id => document.getElementById(id);
 
-/* Sistem durumu nesnesi: aktif kamera, akış, kodlayıcı vb. */
 const S = {
     stream: null, track: null, processor: null, frameReader: null,
     transport: null, encoder: null,
     wtStream: null, wtWriter: null, dtWriter: null,
     capturing: false, streaming: false,
-    useDatagrams: true,  /* Datagram modu: en düşük gecikme */
+    useDatagrams: false,  // default stream
     frameCount: 0, captureCount: 0, droppedFrames: 0, bytesSent: 0,
     statsTimer: null, frameSeq: 0,
     sessionId: (Math.random() * 0xFFFF) | 0,
     canvas: $('preview-canvas'), ctx: null,
     detCanvas: document.createElement('canvas'), detCtx: null,
-    encodeStartTime: 0, encodeTotalMs: 0, encodeCount: 0,
+    // Encode timing -- per-frame, keyed by the frame timestamp so pipelined
+    // frames (up to 2 in flight) don't clobber each other's start time.
+    encodeTimeMap: new Map(), encodeTotalMs: 0, encodeCount: 0,
+    // Bounded stream-write backpressure (see sendStream / MAX_PENDING_WRITES).
+    pendingWrites: 0,
+    // Preview throttle
     previewCounter: 0,
+    // Auto/adaptive bitrate (AIMD): targetBitrateKbps = resolution+fps recommendation
+    // (the ceiling), liveBitrateKbps = what's actually configured right now (backs
+    // off under congestion, ramps back up when stable). lastEncoderConfigBase is
+    // the last successfully-configured {codec,width,height,framerate,latencyMode,
+    // hardwareAcceleration} so we can re-configure() with just a new bitrate.
+    targetBitrateKbps: 0, liveBitrateKbps: 0, lastEncoderConfigBase: null,
+    stableTicks: 0, prevDroppedForAimd: 0,
+    // One-shot post-configure calibration: measures real encode time for the first
+    // ~20 frames and demotes hardware->software if the GPU can't actually keep up
+    // with the target fps (a "supported" config isn't a guarantee it's fast enough).
+    calibrating: false, calibStart: 0, calibFrames: 0, calibTotalMs: 0,
+    // Auto-reconnect on unexpected WebTransport close.
+    reconnectAttempts: 0, reconnectTimer: null,
+    // Any reconfigure() (AIMD bitrate step or calibration's hw->sw demotion)
+    // resets the encoder session — the very next frame MUST be a keyframe or
+    // the decoder has nothing valid to decode deltas against and the stream
+    // silently goes dark from that point on.
+    forceKeyframeNext: false,
 };
 
-/* Görüntü işleme bağlamları */
 S.ctx = S.canvas.getContext('2d', { alpha: false, desynchronized: true });
 S.detCtx = S.detCanvas.getContext('2d', { alpha: false, desynchronized: true });
 
-/* Hareket algılama modu değişikliklerini izle */
 $('v-detectmode').addEventListener('change', (e) => {
     const ds = $('detect-settings');
     if (e.target.checked) {
@@ -269,7 +343,6 @@ $('v-detectlevel').addEventListener('change', (e) => {
     if($('v-detectmode').checked) $('s-det-mode').textContent = e.target.value.toUpperCase();
 });
 
-/* Önizleme ve istatistik paneli görünürlük kontrolleri */
 $('v-show-preview').addEventListener('change', e => {
     $('preview-container').style.display = e.target.checked ? 'flex' : 'none';
 });
@@ -277,37 +350,147 @@ $('v-show-stats').addEventListener('change', e => {
     $('stats-container').style.display = e.target.checked ? 'block' : 'none';
 });
 
+// ── Auto Bitrate: resolution+fps -> recommended kbps ────────────
+// bpp (bits per pixel per frame) calibrated so 640x640@144fps, no all-key,
+// lands close to the sender's old hand-picked 5000kbps default — this is a
+// "known good" screen-content/realtime-H.264 anchor point, not a generic
+// video-compression rule of thumb (those run far lower for natural video).
+const BPP_BALANCED = 0.085;
+function recommendedBitrateKbps(w, h, fps, allKeyframes) {
+    let kbps = (w * h * fps * BPP_BALANCED) / 1000;
+    if (allKeyframes) kbps *= 3; // I-frame-only needs ~3x the bandwidth of P-frame streams
+    return Math.max(800, Math.min(50000, Math.round(kbps)));
+}
+function applyAutoBitratePreview() {
+    if (!$('v-autobitrate').checked) return;
+    const w = parseInt($('v-width').value) || 640, h = parseInt($('v-height').value) || 640;
+    const fps = parseInt($('v-fps').value) || 144;
+    $('v-bitrate').value = recommendedBitrateKbps(w, h, fps, $('v-allkey').checked);
+}
+$('v-autobitrate').addEventListener('change', e => {
+    $('v-bitrate').readOnly = e.target.checked;
+    if (e.target.checked) applyAutoBitratePreview();
+});
+['v-width', 'v-height', 'v-fps', 'v-allkey'].forEach(id => {
+    $(id).addEventListener('change', applyAutoBitratePreview);
+});
+$('v-bitrate').readOnly = true; // starts checked
+applyAutoBitratePreview();
+
 const btnCapture = $('btn-capture');
 const btnStream  = $('btn-stream');
 
-/* İletim modu seçimi (Stream / Datagram) */
+// ── Transport mode toggle ─────────────────────────────────────
 $('mode-stream').addEventListener('click', () => {
     S.useDatagrams = false;
     $('mode-stream').classList.add('active');
     $('mode-datagram').classList.remove('active');
-    $('s-mode').textContent = 'Stream';
+    $('s-mode').textContent = 'Akış';
 });
 $('mode-datagram').addEventListener('click', () => {
     S.useDatagrams = true;
     $('mode-datagram').classList.add('active');
     $('mode-stream').classList.remove('active');
-    $('s-mode').textContent = 'Datagram';
+    $('s-mode').textContent = 'Anlık Paket';
 });
 
-/* ═══════════════════════════════════════════════════════════════
- * 1. KAMERA GÖRÜNTÜSÜ YAKALAMA
- * Kullanıcının seçtiği ekran/kamera görüntüsü yakalanır.
- * Depo, ön taraf, arka taraf veya lobi kamerası olarak
- * yapılandırılabilir.
- * ═══════════════════════════════════════════════════════════════ */
-btnCapture.addEventListener('click', async () => {
-    if (S.capturing) return; /* Zaten bir kamera aktif */
+// ── Settings persistence (localStorage) ──────────────────────────
+// Saves/restores every user-facing field on this page so people don't have
+// to re-enter their gateway address, hash, codec, bitrate, etc. every time
+// they open the sender. Fields with their own 'change' handlers (autoBitrate
+// readonly toggle, detect-mode row enable/disable, preview/stats visibility)
+// are restored via .value/.checked + a dispatched 'change' event rather than
+// re-implementing each handler's side effect here.
+const SETTINGS_KEY = 'orivo_wt_sender_settings_v1';
+
+function collectSettings() {
+    return {
+        useDatagrams: S.useDatagrams,
+        wtUrl: $('wt-url').value,
+        wtHash: $('wt-hash').value,
+        codec: $('v-codec').value,
+        hw: $('v-hw').value,
+        autoBitrate: $('v-autobitrate').checked,
+        bitrate: $('v-bitrate').value,
+        width: $('v-width').value,
+        height: $('v-height').value,
+        fps: $('v-fps').value,
+        allKey: $('v-allkey').checked,
+        detectMode: $('v-detectmode').checked,
+        detectLevel: $('v-detectlevel').value,
+        showPreview: $('v-show-preview').checked,
+        showStats: $('v-show-stats').checked,
+    };
+}
+
+function fireChange(id) { $(id).dispatchEvent(new Event('change')); }
+
+function applySettings(cfg) {
+    if (!cfg) return;
+    if (typeof cfg.useDatagrams === 'boolean') {
+        (cfg.useDatagrams ? $('mode-datagram') : $('mode-stream')).click();
+    }
+    if (cfg.wtUrl !== undefined) $('wt-url').value = cfg.wtUrl;
+    if (cfg.wtHash !== undefined) $('wt-hash').value = cfg.wtHash;
+    if (cfg.codec !== undefined) $('v-codec').value = cfg.codec;
+    if (cfg.hw !== undefined) $('v-hw').value = cfg.hw;
+    // Order matters: width/height/fps/allKey first (their 'change' handler
+    // just recomputes the auto-bitrate preview), autoBitrate's own handler
+    // last so it has the final say on whether v-bitrate ends up readOnly and
+    // on its displayed value (auto-computed vs the saved manual number).
+    if (cfg.width !== undefined) { $('v-width').value = cfg.width; fireChange('v-width'); }
+    if (cfg.height !== undefined) { $('v-height').value = cfg.height; fireChange('v-height'); }
+    if (cfg.fps !== undefined) { $('v-fps').value = cfg.fps; fireChange('v-fps'); }
+    if (cfg.allKey !== undefined) { $('v-allkey').checked = cfg.allKey; fireChange('v-allkey'); }
+    if (cfg.autoBitrate !== undefined) { $('v-autobitrate').checked = cfg.autoBitrate; fireChange('v-autobitrate'); }
+    if (!cfg.autoBitrate && cfg.bitrate !== undefined) $('v-bitrate').value = cfg.bitrate;
+    if (cfg.detectMode !== undefined) { $('v-detectmode').checked = cfg.detectMode; fireChange('v-detectmode'); }
+    if (cfg.detectLevel !== undefined) { $('v-detectlevel').value = cfg.detectLevel; fireChange('v-detectlevel'); }
+    if (cfg.showPreview !== undefined) { $('v-show-preview').checked = cfg.showPreview; fireChange('v-show-preview'); }
+    if (cfg.showStats !== undefined) { $('v-show-stats').checked = cfg.showStats; fireChange('v-show-stats'); }
+}
+
+function saveSettingsToStorage() {
     try {
-        const fps = parseInt($('v-fps').value) || 60;
-        /* Kamera akışını başlat */
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(collectSettings()));
+        setStatus('Ayarlar kaydedildi ✓', 'ok');
+    } catch (e) {
+        console.error('[Settings] save failed:', e);
+        setStatus('Ayarlar kaydedilemedi', 'bad');
+    }
+}
+
+function loadSettingsFromStorage() {
+    try {
+        const raw = localStorage.getItem(SETTINGS_KEY);
+        if (!raw) return;
+        applySettings(JSON.parse(raw));
+    } catch (e) {
+        console.error('[Settings] load failed:', e);
+    }
+}
+
+$('btn-save-settings').addEventListener('click', saveSettingsToStorage);
+loadSettingsFromStorage();
+
+// ═══════════════════════════════════════════════════════════════
+// 1. SCREEN CAPTURE
+// ═══════════════════════════════════════════════════════════════
+btnCapture.addEventListener('click', async () => {
+    if (S.capturing) return;
+    try {
+        const fps = parseInt($('v-fps').value) || 144;
         S.stream = await navigator.mediaDevices.getDisplayMedia({
-            video: { frameRate: { ideal: fps, max: fps }, width: { ideal: 3840 }, height: { ideal: 2160 }, cursor: 'never' },
-            audio: false, selfBrowserSurface: 'exclude', surfaceSwitching: 'exclude',
+            video: {
+                displaySurface: 'monitor',
+                frameRate: { ideal: fps, max: 240 },
+                width: { ideal: 3840, max: 7680 },
+                height: { ideal: 2160, max: 4320 },
+                cursor: 'never'
+            },
+            audio: false,
+            selfBrowserSurface: 'exclude',
+            surfaceSwitching: 'include'
         });
         S.track = S.stream.getVideoTracks()[0];
         const cw = parseInt($('v-width').value), ch = parseInt($('v-height').value);
@@ -315,26 +498,24 @@ btnCapture.addEventListener('click', async () => {
         S.capturing = true;
         $('preview-placeholder').style.display = 'none';
         $('res-label').style.display = 'block';
-        btnCapture.textContent = '✓ Kamera Aktif';
+        btnCapture.textContent = '✓ Bağlandı';
         btnCapture.disabled = true;
         btnStream.disabled = false;
 
-        /* MediaStreamTrackProcessor ile donanım hızlandırmalı okuma */
         if ('MediaStreamTrackProcessor' in window) {
             S.processor = new MediaStreamTrackProcessor({ track: S.track });
             S.frameReader = S.processor.readable.getReader();
             runFrameLoop();
         } else {
-            /* Fallback: canvas tabanlı okuma */
             startCanvasFallback();
         }
         S.track.addEventListener('ended', () => stopAll());
     } catch (e) {
-        alert('Kamera başlatılamadı: ' + e.message);
+        alert('Bağlantı hatası: ' + e.message);
     }
 });
 
-/* Görüntü kırpma dikdörtgeni (kamera görüş alanı) */
+// ── Zero-copy crop parameters (calculated once per resolution change) ──
 let cropRect = null;
 let lastSrcDims = '';
 
@@ -351,7 +532,7 @@ function updateCropRect(srcW, srcH) {
     $('res-label').textContent = `${srcW}×${srcH} → ${cropW}×${cropH}`;
 }
 
-/* Ana kamera kare işleme döngüsü */
+// ── Main frame loop ─────────────────────────────────────────────
 async function runFrameLoop() {
     while (S.capturing) {
         let frame;
@@ -367,7 +548,7 @@ async function runFrameLoop() {
             const srcH = frame.displayHeight || frame.codedHeight;
             updateCropRect(srcW, srcH);
 
-            /* ── Kodlama yolu: sıfır kopya kırpma ile gönderim ── */
+            // ── ENCODE PATH: zero-copy crop via visibleRect ──
             if (S.streaming && S.encoder && S.encoder.state === 'configured') {
                 if (S.encoder.encodeQueueSize < 2) {
                     const allKey = $('v-allkey').checked;
@@ -376,26 +557,28 @@ async function runFrameLoop() {
 
                     if (!detOn) {
                         try {
-                            /* Donanım kırpması dene (depo/lobi kamerası) */
+                            // Create a cropped VideoFrame WITHOUT canvas copy
                             const cropped = new VideoFrame(frame, {
                                 visibleRect: cropRect,
                                 timestamp: frame.timestamp,
                             });
-                            S.encodeStartTime = performance.now();
-                            S.encoder.encode(cropped, { keyFrame: allKey || (S.frameCount % 144 === 0) });
+                            S.encodeTimeMap.set(frame.timestamp, performance.now());
+                            S.encoder.encode(cropped, { keyFrame: wantsKeyframe(allKey) });
+                            // S.encoder.flush(); // Remove manual flush to prevent pipeline stalls
                             cropped.close();
                             S.frameCount++;
                         } catch (e) {
-                            /* Fallback: canvas ile kırp */
+                            // visibleRect not supported → fallback to canvas
                             drawToCanvas(frame, srcW, srcH);
                             const fallback = new VideoFrame(S.canvas, { timestamp: frame.timestamp });
-                            S.encodeStartTime = performance.now();
-                            S.encoder.encode(fallback, { keyFrame: allKey || (S.frameCount % 144 === 0) });
+                            S.encodeTimeMap.set(frame.timestamp, performance.now());
+                            S.encoder.encode(fallback, { keyFrame: wantsKeyframe(allKey) });
+                            // S.encoder.flush(); // Remove manual flush to prevent pipeline stalls
                             fallback.close();
                             S.frameCount++;
                         }
                     } else {
-                        /* Hareket algılama sıkıştırma modu (ön/arka taraf için) */
+                        // ── Detection Compression Mode Path (Canvas Pipeline) ──
                         let scale = 1.0, blur = '0px', quant = 'none';
                         if (level === 'low') { scale = 0.75; blur = '0.5px'; quant = 'url(#quant-low)'; }
                         else if (level === 'medium') { scale = 0.50; blur = '1px'; quant = 'url(#quant-medium)'; }
@@ -409,27 +592,31 @@ async function runFrameLoop() {
                             S.detCanvas.width = dw; S.detCanvas.height = dh;
                         }
 
+                        // 1. Downscale to detCanvas
                         S.detCtx.drawImage(frame, cropRect.x, cropRect.y, cropW, cropH, 0, 0, dw, dh);
+
+                        // 2. Upscale + Filters to main canvas
                         S.ctx.filter = `blur(${blur}) ${quant}`;
                         S.ctx.drawImage(S.detCanvas, 0, 0, dw, dh, 0, 0, cropW, cropH);
                         S.ctx.filter = 'none';
 
                         const compressedFrame = new VideoFrame(S.canvas, { timestamp: frame.timestamp });
-                        S.encodeStartTime = performance.now();
-                        S.encoder.encode(compressedFrame, { keyFrame: allKey || (S.frameCount % 144 === 0) });
+                        S.encodeTimeMap.set(frame.timestamp, performance.now());
+                        S.encoder.encode(compressedFrame, { keyFrame: wantsKeyframe(allKey) });
                         compressedFrame.close();
                         S.frameCount++;
                     }
                 } else {
-                    S.droppedFrames++; /* Kodlama kuyruğu dolu, kare atlandı */
+                    S.droppedFrames++;
                 }
             }
 
-            /* Önizleme: performansı korumak için her 3 karede bir göster */
+            // ── PREVIEW: throttled to every 3rd frame (encode path is NOT blocked) ──
             if ($('v-show-preview').checked) {
                 S.previewCounter++;
                 if (S.previewCounter % 3 === 0) {
                     const detOn = $('v-detectmode').checked;
+                    // If detection is ON, the compressed frame is already on the canvas. Drawing the raw frame again causes flashing.
                     if (!detOn) {
                         drawToCanvas(frame, srcW, srcH);
                     }
@@ -441,18 +628,29 @@ async function runFrameLoop() {
     }
 }
 
-/* Canvas'a çizim (kırpılmış alan) */
+// Consumes (and clears) the one-shot flag set after any live reconfigure()
+// (AIMD bitrate step or calibration's hw->sw demotion) — that flag MUST win
+// over the periodic modulo so the first frame of a new encoder session is
+// always a real keyframe, never a delta referencing the old session.
+function wantsKeyframe(allKey) {
+    if (S.forceKeyframeNext) { S.forceKeyframeNext = false; return true; }
+    return allKey || (S.frameCount % 144 === 0);
+}
+
 function drawToCanvas(source, srcW, srcH) {
     if (!cropRect) return;
     S.ctx.drawImage(source, cropRect.x, cropRect.y, cropRect.width, cropRect.height, 0, 0, cropRect.width, cropRect.height);
 }
 
-/* Video elementi ile fallback döngü */
+// ── Canvas fallback ─────────────────────────────────────────────
 function startCanvasFallback() {
-    const vid = document.createElement('video');
+        const vid = document.createElement('video');
     vid.srcObject = S.stream; vid.muted = true; vid.playsInline = true; vid.play();
     function loop() {
         if (!S.capturing) return;
+        const fps = parseInt($('v-fps').value) || 60;
+        const targetMs = 1000 / fps;
+        const start = performance.now();
         if (vid.readyState >= 2) {
             const srcW = vid.videoWidth, srcH = vid.videoHeight;
             updateCropRect(srcW, srcH);
@@ -462,8 +660,10 @@ function startCanvasFallback() {
                 const detOn = $('v-detectmode').checked;
 
                 if (!detOn) {
-                    const vf = new VideoFrame(S.canvas, { timestamp: performance.now() * 1000 });
-                    S.encoder.encode(vf, { keyFrame: allKey || (S.frameCount % 144 === 0) });
+                    const ts = performance.now() * 1000;
+                    S.encodeTimeMap.set(ts, performance.now());
+                    const vf = new VideoFrame(S.canvas, { timestamp: ts });
+                    S.encoder.encode(vf, { keyFrame: wantsKeyframe(allKey) });
                     vf.close();
                     S.frameCount++;
                 } else {
@@ -486,31 +686,38 @@ function startCanvasFallback() {
                     S.ctx.drawImage(S.detCanvas, 0, 0, dw, dh, 0, 0, cropW, cropH);
                     S.ctx.filter = 'none';
 
-                    const compressedFrame = new VideoFrame(S.canvas, { timestamp: performance.now() * 1000 });
-                    S.encoder.encode(compressedFrame, { keyFrame: allKey || (S.frameCount % 144 === 0) });
+                    const ts = performance.now() * 1000;
+                    S.encodeTimeMap.set(ts, performance.now());
+                    const compressedFrame = new VideoFrame(S.canvas, { timestamp: ts });
+                    S.encoder.encode(compressedFrame, { keyFrame: wantsKeyframe(allKey) });
                     compressedFrame.close();
                     S.frameCount++;
                 }
             }
         }
-        requestAnimationFrame(loop);
+        const elapsed = performance.now() - start;
+        setTimeout(loop, Math.max(0, targetMs - elapsed));
     }
-    requestAnimationFrame(loop);
+    setTimeout(loop, 0);
 }
 
-/* ═══════════════════════════════════════════════════════════════
- * 2. WEBTRANSPORT İLE CANLI YAYIN BAŞLATMA
- * Depo, ön taraf, arka taraf ve lobi kameralarının
- * görüntüleri güvenli QUIC bağlantısı ile iletilir.
- * ═══════════════════════════════════════════════════════════════ */
+// ═══════════════════════════════════════════════════════════════
+// 2. WEBTRANSPORT
+// ═══════════════════════════════════════════════════════════════
 btnStream.addEventListener('click', async () => {
-    if (S.streaming) { stopStream(); return; }
+    if (S.streaming) {
+        clearTimeout(S.reconnectTimer); S.reconnectTimer = null;
+        S.reconnectAttempts = 0;   // manual stop — don't auto-reconnect afterwards
+        stopStream();
+        return;
+    }
+    S.reconnectAttempts = 0;
     await startStream();
 });
 
 async function startStream() {
     try {
-        setStatus('Merkezi sisteme bağlanıyor…', '');
+        setStatus(S.reconnectAttempts > 0 ? `Yeniden bağlanılıyor (${S.reconnectAttempts})…` : 'Bağlanıyor…', '');
         const url = $('wt-url').value.trim();
         const hashHex = $('wt-hash').value.trim();
         let opts = {};
@@ -522,47 +729,82 @@ async function startStream() {
         }
         S.transport = new WebTransport(url, opts);
         await S.transport.ready;
+        S.reconnectAttempts = 0;   // connection is up — reset the backoff counter
 
-        /* Yapılandırma için güvenilir kanal */
+        // Always create a unidirectional stream for reliable configuration transmission
         S.wtStream = await S.transport.createUnidirectionalStream();
         S.wtWriter = S.wtStream.getWriter();
 
         if (S.useDatagrams) {
             S.dtWriter = S.transport.datagrams.writable.getWriter();
-            setStatus('Datagram Aktif ⚡ (Depo, Lobi yayını)', 'ok');
+            setStatus('Anlık Paket Aktif ⚡', 'ok');
         } else {
-            setStatus('Stream Aktif (Ön/Arka Taraf)', 'ok');
+            setStatus('Akış Aktif', 'ok');
         }
 
         initEncoder();
         S.streaming = true;
-        btnStream.textContent = '⏹ Yayını Durdur';
+        S.pendingWrites = 0;
+        S.encodeTimeMap.clear();
+        btnStream.textContent = '⏹ Durdur';
         btnStream.className = 'btn-stop';
+        btnStream.disabled = false;
         $('status-dot').classList.add('live');
         startStatsTimer();
 
         if (S.transport) {
-            S.transport.closed.then(() => {
-                if (S.streaming) { stopStream(); setStatus('Bağlantı koptu', 'bad'); }
-            }).catch(() => {});
+            const onClosed = () => { if (S.streaming) handleUnexpectedDisconnect(); };
+            S.transport.closed.then(onClosed).catch(onClosed);
         }
     } catch (e) {
         console.error('[WT]', e);
         setStatus('Hata: ' + e.message, 'bad');
-        btnStream.textContent = '⚡ Başlat'; btnStream.className = 'btn-secondary';
+        btnStream.textContent = '⚡ Başlat'; btnStream.className = 'btn-secondary'; btnStream.disabled = false;
     }
 }
 
-function stopStream() {
+// setIdleStatus=false is used by handleUnexpectedDisconnect(): it tears down
+// the encoder/transport exactly like a manual stop, but leaves the status
+// line and Stream button alone since a reconnect attempt follows immediately
+// (capture itself is untouched either way — only the transport/encoder are
+// transient here).
+function stopStream(setIdleStatus = true) {
     S.streaming = false;
     clearInterval(S.statsTimer); S.statsTimer = null;
     try { S.encoder?.close(); } catch {} S.encoder = null;
     try { S.wtWriter?.close(); } catch {} S.wtWriter = null; S.wtStream = null;
     try { S.dtWriter?.close(); } catch {} S.dtWriter = null;
     try { S.transport?.close(); } catch {} S.transport = null;
-    btnStream.textContent = '⚡ Başlat'; btnStream.className = 'btn-secondary';
-    $('status-dot').classList.remove('live');
-    setStatus('Durduruldu', '');
+    S.pendingWrites = 0;
+    S.encodeTimeMap.clear();
+    if (setIdleStatus) {
+        btnStream.textContent = '⚡ Başlat'; btnStream.className = 'btn-secondary';
+        $('status-dot').classList.remove('live');
+        setStatus('Durduruldu', '');
+    }
+}
+
+// Fired when the WebTransport session drops without the user clicking Stop
+// (network blip, server restart, cert rotation, etc). Capture keeps running
+// untouched; only the transport+encoder are recreated. Backs off with a
+// capped linear delay and gives up after 10 tries so it can't retry forever
+// against a genuinely dead server.
+function handleUnexpectedDisconnect() {
+    stopStream(false);
+    S.reconnectAttempts++;
+    if (S.reconnectAttempts > 10) {
+        setStatus('Bağlantı koptu — yeniden deneme sınırına ulaşıldı', 'bad');
+        btnStream.textContent = '⚡ Başlat'; btnStream.className = 'btn-secondary';
+        $('status-dot').classList.remove('live');
+        return;
+    }
+    const delay = Math.min(5000, 300 * S.reconnectAttempts);
+    setStatus(`Koptu — yeniden bağlanılıyor (${S.reconnectAttempts}/10)…`, 'warn');
+    btnStream.textContent = `🔄 Yeniden Bağlanıyor (${S.reconnectAttempts}/10)`;
+    btnStream.className = 'btn-secondary';
+    btnStream.disabled = true;
+    clearTimeout(S.reconnectTimer);
+    S.reconnectTimer = setTimeout(() => { if (S.capturing) startStream(); }, delay);
 }
 
 function stopAll() {
@@ -570,22 +812,39 @@ function stopAll() {
     try { S.frameReader?.cancel(); } catch {}
     try { S.track?.stop(); } catch {}
     S.stream = null; S.track = null;
-    btnCapture.textContent = '▶ Kamera Görüntüsünü Başlat';
+    btnCapture.textContent = '▶ Kamerayı Seç ve Bağlan';
     btnCapture.disabled = false; btnStream.disabled = true;
     $('preview-placeholder').style.display = 'block';
     $('res-label').style.display = 'none';
 }
 
-/* ═══════════════════════════════════════════════════════════════
- * 3. KAMERA KODLAYICI YAPILANDIRMASI
- * İş yeri güvenlik kamerası için ultra düşük gecikme ayarları
- * ═══════════════════════════════════════════════════════════════ */
+// ═══════════════════════════════════════════════════════════════
+// 3. ENCODER — Ultra Low Latency Config
+// ═══════════════════════════════════════════════════════════════
 function initEncoder() {
     const codec = $('v-codec').value;
     const hwEngine = $('v-hw').value;
-    let bps   = (parseInt($('v-bitrate').value) || 5000) * 1000;
     const fps   = parseInt($('v-fps').value) || 60;
-    const cw    = S.canvas.width, ch = S.canvas.height;
+
+    // Auto Bitrate: recompute fresh from the ACTUAL crop size/fps about to be
+    // used (not just whatever was last previewed in the readonly field) so a
+    // resolution/fps change picked up between capture and stream start is
+    // honoured. targetBitrateKbps is the ceiling AIMD ramps back up towards;
+    // liveBitrateKbps is what's actually applied and is what backs off under
+    // congestion (see startStatsTimer).
+    const autoBr = $('v-autobitrate').checked;
+    const cwPre = S.canvas.width, chPre = S.canvas.height;
+    const targetKbps = autoBr
+        ? recommendedBitrateKbps(cwPre, chPre, fps, $('v-allkey').checked)
+        : (parseInt($('v-bitrate').value) || 5000);
+    if (autoBr) $('v-bitrate').value = targetKbps;
+    let bps = targetKbps * 1000;
+
+    // WebCodecs GPU encoders strictly require even dimensions
+    let cw    = S.canvas.width;
+    let ch    = S.canvas.height;
+    if (cw % 2 !== 0) cw -= 1;
+    if (ch % 2 !== 0) ch -= 1;
 
     const detOn = $('v-detectmode').checked;
     const level = $('v-detectlevel').value;
@@ -598,40 +857,258 @@ function initEncoder() {
         $('s-det-save').textContent = sav;
     }
 
+    // AIMD baseline reflects the FINAL (post detection-mode multiplier) value —
+    // that's what's actually configured below, so it's the real ceiling/floor.
+    S.targetBitrateKbps = Math.floor(bps / 1000);
+    S.liveBitrateKbps = S.targetBitrateKbps;
+    S.stableTicks = 0;
+    S.prevDroppedForAimd = S.droppedFrames;
+
     S.encoder = new VideoEncoder({
         output: onEncodedChunk,
-        error: e => { console.error('[Enc]', e); stopStream(); },
+        error: e => {
+            console.error('[Enc] VideoEncoder async error:', e);
+            // If we are currently in hardware mode and it fails asynchronously
+            if (S.streaming) {
+                stopStream();
+                setStatus('Kodlayıcı Hatası', 'bad');
+            }
+        },
     });
 
-    S.encoder.configure({
+    const config = {
         codec, width: cw, height: ch,
         bitrate: bps, framerate: fps,
         latencyMode: 'realtime',
-        bitrateMode: 'constant',
         hardwareAcceleration: hwEngine,
-        avc: { format: 'annexb' },
-        scalabilityMode: 'L1T1',
-    });
+        // Native receiver's NVDEC parser (cuvidParseVideoData) requires
+        // Annex-B bitstream (start-code-delimited NALs, SPS/PPS in-band).
+        // WebCodecs defaults to 'avc' (length-prefixed, out-of-band
+        // description) which cuvid's parser can't find any NAL in at all --
+        // without this, decode silently never produces a frame.
+        avc: { format: 'annexb' }
+    };
+
+    function fallbackToSoftware(cfg, err) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        console.warn("[Enc] Hardware acceleration failed, falling back to software:", err);
+        cfg.hardwareAcceleration = 'prefer-software';
+        try {
+            S.encoder.configure(cfg);
+            onEncoderConfigured(cfg);
+            setStatus(`Donanım Hatası (${errMsg}) -> Yazılım Aktif ⚠️`, 'warn');
+        } catch (e) {
+            console.error("[Enc] Software fallback failed:", e);
+            stopStream();
+            setStatus(`Kodlayıcı Hatası: ${e.message}`, 'bad');
+        }
+    }
+
+    console.log("[Enc] Testing configuration:", JSON.stringify(config));
+
+    // User explicitly asked for software (CPU) encoding -- skip the GPU probe
+    // loop entirely instead of only falling back to it when the GPU rejects
+    // every variant. Previously every entry in configsToTry hardcoded
+    // 'prefer-hardware' regardless of hwEngine, so picking "Yazilim (Islemci)"
+    // in the UI had no effect unless the GPU failed on its own.
+    if (hwEngine === 'prefer-software') {
+        try {
+            S.encoder.configure(config);
+            onEncoderConfigured(config);
+            setStatus('Yazılım Aktif (İşlemci)', 'ok');
+        } catch (err) {
+            console.error("[Enc] Software configure failed:", err);
+            stopStream();
+            setStatus(`Kodlayıcı Hatası: ${err.message}`, 'bad');
+        }
+        S.frameCount = 0; S.droppedFrames = 0;
+        S.encodeTotalMs = 0; S.encodeCount = 0;
+        return;
+    }
+
+    // avc.format: 'annexb' on every variant -- see the comment on `config`
+    // above. Without it none of these ever produce a decodable frame on the
+    // native receiver, regardless of which one negotiates successfully.
+    const configsToTry = [
+        // Attempt 1: Target config (Full GPU, 144fps, realtime)
+        {
+            codec, width: cw, height: ch,
+            bitrate: bps, framerate: fps,
+            latencyMode: 'realtime',
+            hardwareAcceleration: 'prefer-hardware',
+            avc: { format: 'annexb' }
+        },
+        // Attempt 2: 60fps hint (GPU hardware caps often reject >60fps queries, but can still encode at 144fps once configured)
+        {
+            codec, width: cw, height: ch,
+            bitrate: bps, framerate: 60,
+            latencyMode: 'realtime',
+            hardwareAcceleration: 'prefer-hardware',
+            avc: { format: 'annexb' }
+        },
+        // Attempt 3: Baseline 4.2 at 60fps (highly compatible profile)
+        {
+            codec: 'avc1.42002a', width: cw, height: ch,
+            bitrate: bps, framerate: 60,
+            latencyMode: 'realtime',
+            hardwareAcceleration: 'prefer-hardware',
+            avc: { format: 'annexb' }
+        },
+        // Attempt 4: High Profile, 60fps, no latencyMode (some Intel/AMD drivers reject 'realtime')
+        {
+            codec, width: cw, height: ch,
+            bitrate: bps, framerate: 60,
+            hardwareAcceleration: 'prefer-hardware',
+            avc: { format: 'annexb' }
+        }
+    ];
+
+    function tryConfigureGPU(index) {
+        if (index >= configsToTry.length) {
+            fallbackToSoftware(config, `GPU rejected all configuration variants. First rejection: ${config.codec} @ ${config.width}x${config.height} (${config.framerate}fps)`);
+            return;
+        }
+
+        const currentConfig = configsToTry[index];
+        console.log(`[Enc] GPU probe attempt ${index + 1}:`, JSON.stringify(currentConfig));
+
+        VideoEncoder.isConfigSupported(currentConfig).then(res => {
+            if (res.supported) {
+                try {
+                    S.encoder.configure(res.config);
+                    onEncoderConfigured(res.config);
+                    console.log("[Enc] GPU configuration succeeded on attempt:", index + 1, "Mode:", res.config.hardwareAcceleration);
+                    if (index > 0) {
+                        setStatus(`Donanım Aktif (Mod ${index + 1}) ⚡`, 'ok');
+                    } else {
+                        setStatus('Donanım Aktif ⚡', 'ok');
+                    }
+                } catch (err) {
+                    console.warn(`[Enc] Configure failed asynchronously on attempt ${index + 1}:`, err);
+                    tryConfigureGPU(index + 1);
+                }
+            } else {
+                console.log(`[Enc] GPU probe attempt ${index + 1} not supported by driver.`);
+                tryConfigureGPU(index + 1);
+            }
+        }).catch(err => {
+            console.warn(`[Enc] Probe attempt ${index + 1} failed with error:`, err);
+            tryConfigureGPU(index + 1);
+        });
+    }
+
+    if (typeof VideoEncoder.isConfigSupported === 'function') {
+        tryConfigureGPU(0);
+    } else {
+        try {
+            S.encoder.configure(config);
+            onEncoderConfigured(config);
+        } catch (err) {
+            fallbackToSoftware(config, err);
+        }
+    }
 
     S.frameCount = 0; S.droppedFrames = 0;
     S.encodeTotalMs = 0; S.encodeCount = 0;
 }
 
-/* ═══════════════════════════════════════════════════════════════
- * 4. PAKET GÖNDERİMİ — Minimum Ek Yük
- * Kamera kareleri Datagram veya Stream olarak paketlenir.
- * ═══════════════════════════════════════════════════════════════ */
+// Runs once per successful configure()/reconfigure with a NEW engine choice:
+// remembers the base config (so AIMD can later reconfigure with just a new
+// bitrate) and arms a one-shot calibration window that demotes hardware to
+// software if the GPU accepted the config but can't actually keep up with
+// the target fps in practice (isConfigSupported only checks capability, not
+// real-world throughput on THIS machine right now).
+function onEncoderConfigured(resolvedConfig) {
+    S.lastEncoderConfigBase = { ...resolvedConfig };
+    $('s-engine').textContent = resolvedConfig.hardwareAcceleration === 'prefer-software' ? 'Yazılım (CPU)' : 'Donanım (GPU)';
+    S.calibrating = true;
+    S.calibStart = performance.now();
+    S.calibFrames = 0;
+    S.calibTotalMs = 0;
+    // A fresh configure() always starts a brand new encoder session — the
+    // very first frame after it is naturally a keyframe already (frameCount
+    // resets to 0 in initEncoder, and the periodic-keyframe modulo hits 0),
+    // but this also covers the calibration's mid-stream demotion path, which
+    // does NOT reset frameCount.
+    S.forceKeyframeNext = true;
+}
+
+// AIMD-style bitrate step (see startStatsTimer): reconfigures the live
+// encoder with a new bitrate while keeping everything else (codec/size/
+// engine) that was last successfully negotiated.
+function reconfigureBitrate(newKbps) {
+    if (!S.encoder || !S.lastEncoderConfigBase || S.encoder.state !== 'configured') return;
+    S.liveBitrateKbps = newKbps;
+    try {
+        S.encoder.configure({ ...S.lastEncoderConfigBase, bitrate: newKbps * 1000 });
+        S.forceKeyframeNext = true;   // reconfigure() resets the session — see forceKeyframeNext comment above
+    } catch (e) {
+        console.warn('[AIMD] bitrate reconfigure failed:', e);
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 4. PACKET SEND — Minimum Overhead
+// ═══════════════════════════════════════════════════════════════
+
 function onEncodedChunk(chunk, meta) {
     if (!S.streaming) return;
 
-    const encMs = performance.now() - S.encodeStartTime;
+    // Track encode time -- looked up per-frame by timestamp. The old single
+    // shared start var was overwritten by the next frame's encode before this
+    // chunk came back (frames pipeline up to 2 deep), so it measured almost
+    // nothing and the latency stat was meaningless.
+    let encMs = 0;
+    const startMs = S.encodeTimeMap.get(chunk.timestamp);
+    if (startMs !== undefined) {
+        S.encodeTimeMap.delete(chunk.timestamp);
+        encMs = performance.now() - startMs;
+    }
     S.encodeTotalMs += encMs;
     S.encodeCount++;
+
+    // One-shot GPU-vs-CPU calibration (see onEncoderConfigured): decide after
+    // ~20 frames or 1.5s, whichever comes first, so it doesn't wait forever
+    // on a slow/near-idle stream.
+    if (S.calibrating) {
+        S.calibFrames++;
+        S.calibTotalMs += encMs;
+        if (S.calibFrames >= 20 || (performance.now() - S.calibStart) > 1500) {
+            S.calibrating = false;
+            const avgMs = S.calibTotalMs / S.calibFrames;
+            // Budget against what the GPU actually NEGOTIATED (config.framerate),
+            // not the UI's target fps input. Hardware encoders routinely reject
+            // an isConfigSupported() query above 60fps and get configured with a
+            // 60fps hint instead (see configsToTry attempt 2) while still being
+            // able to encode faster in practice once running — comparing
+            // per-frame latency against the higher UI target here was a false
+            // positive that demoted a perfectly fine GPU encoder to software.
+            const configuredFps = S.lastEncoderConfigBase?.framerate || (parseInt($('v-fps').value) || 60);
+            const budgetMs = 1000 / configuredFps;
+            console.log(`[Calib] avg encode ${avgMs.toFixed(2)}ms over ${S.calibFrames}f, budget ${budgetMs.toFixed(2)}ms @ ${configuredFps}fps (negotiated)`);
+            // 1.5x, not 1.0x: the encoder pipelines up to 2 frames concurrently
+            // (encodeQueueSize<2 gate), so per-frame latency modestly above the
+            // frame interval is expected and does NOT mean the sustained
+            // throughput is too low — only demote for a genuinely pathological
+            // GPU (e.g. a slow iGPU choking on this resolution/bitrate).
+            if (avgMs > budgetMs * 1.5 && S.lastEncoderConfigBase?.hardwareAcceleration !== 'prefer-software') {
+                console.warn('[Calib] GPU accepted the config but is too slow for the target fps on this machine -> demoting to software.');
+                S.lastEncoderConfigBase = { ...S.lastEncoderConfigBase, hardwareAcceleration: 'prefer-software' };
+                try {
+                    S.encoder.configure({ ...S.lastEncoderConfigBase, bitrate: S.liveBitrateKbps * 1000 });
+                    S.forceKeyframeNext = true;   // reconfigure() resets the session — see forceKeyframeNext comment above
+                    $('s-engine').textContent = 'Yazılım (Otomatik — Donanım yavaştı)';
+                    setStatus('Otomatik: Yazılım Kodlayıcıya Geçildi ⚠️', 'warn');
+                } catch (e) { console.warn('[Calib] software demotion failed:', e); }
+            }
+        }
+    }
 
     if (meta?.decoderConfig?.description) {
         const desc = new Uint8Array(meta.decoderConfig.description);
         sendPkt(2, 0, desc);
     }
+
     const buf = new Uint8Array(chunk.byteLength);
     chunk.copyTo(buf);
     sendPkt(chunk.type === 'key' ? 1 : 0, chunk.timestamp, buf);
@@ -639,29 +1116,47 @@ function onEncodedChunk(chunk, meta) {
 
 function sendPkt(type, ts, data) {
     if (type === 2) {
-        sendStream(type, ts, data);
+        sendStream(type, ts, data, true);          // config (SPS/PPS): always reliable + forced
     } else {
         if (S.useDatagrams) sendDG(type, ts, data);
-        else sendStream(type, ts, data);
+        else sendStream(type, ts, data, type === 1); // keyframe forced, P-frame droppable under backpressure
     }
 }
 
-/* Güvenilir Stream gönderimi (13 bayt başlık) */
-function sendStream(type, ts, data) {
+// ── Stream: 13-byte header ──────────────────────────────────────
+// forced=true  -> config/keyframe: MUST arrive (dropping corrupts the stream),
+//                 so it's sent even when writes are backed up.
+// forced=false -> P-frame (delta): droppable. If MAX_PENDING_WRITES are already
+//                 in flight the network is behind, so queueing this frame would
+//                 only add latency to it AND everything after it (head-of-line).
+//                 Drop it and force the next frame to be a keyframe so the
+//                 decoder resyncs cleanly instead of showing corruption.
+function sendStream(type, ts, data, forced) {
     if (!S.wtWriter) return;
+    if (!forced && S.pendingWrites >= MAX_PENDING_WRITES) {
+        S.droppedFrames++;
+        S.forceKeyframeNext = true;
+        return;
+    }
     const pkt = new Uint8Array(13 + data.byteLength);
     const v = new DataView(pkt.buffer);
     v.setUint8(0, type);
     v.setFloat64(1, ts, true);
     v.setUint32(9, data.byteLength, true);
     pkt.set(data, 13);
-    S.wtWriter.write(pkt).then(() => { S.bytesSent += pkt.byteLength; }).catch((e) => {
+    S.pendingWrites++;
+    S.wtWriter.write(pkt).then(() => {
+        S.bytesSent += pkt.byteLength;
+        S.pendingWrites = Math.max(0, S.pendingWrites - 1);
+    }).catch((e) => {
+        S.pendingWrites = 0;
         console.error('[Stream Write Error]', e);
-        if (S.streaming) stopStream();
+        if (S.streaming) handleUnexpectedDisconnect();
     });
 }
 
-/* Datagram gönderimi: parçalı, fire-and-forget */
+// ── Datagram: fragmented, fire-and-forget ─────────────────────
+// Header: [H session][I seq][H fragIdx][H totalFrags][B type][B flags][d? timestamp]
 function sendDG(type, ts, data) {
     if (!S.dtWriter) return;
     const fid = S.frameSeq++ & 0xFFFFFFFF;
@@ -682,17 +1177,17 @@ function sendDG(type, ts, data) {
         v.setUint8(11, hasTs);
         if (hasTs) v.setFloat64(12, ts, true);
         dg.set(slice, hdr);
+        // Fire-and-forget — no await, no blocking
         S.dtWriter.write(dg).then(() => { S.bytesSent += dg.byteLength; }).catch((err) => {
             console.error('[WT DG Write Error]', err);
-            if (S.streaming) stopStream();
+            if (S.streaming) handleUnexpectedDisconnect();
         });
     }
 }
 
-/* ═══════════════════════════════════════════════════════════════
- * 5. SİSTEM İSTATİSTİKLERİ
- * Kamera FPS, bant genişliği, gecikme, kayıp kare takibi
- * ═══════════════════════════════════════════════════════════════ */
+// ═══════════════════════════════════════════════════════════════
+// 5. STATS
+// ═══════════════════════════════════════════════════════════════
 function startStatsTimer() {
     let pB = 0, pF = 0, pC = 0;
     S.statsTimer = setInterval(() => {
@@ -703,6 +1198,30 @@ function startStatsTimer() {
         const avgEnc = S.encodeCount > 0 ? (S.encodeTotalMs / S.encodeCount).toFixed(1) : '—';
         pB = S.bytesSent; pF = S.frameCount; pC = S.captureCount;
         S.encodeTotalMs = 0; S.encodeCount = 0;
+
+        // ── Adaptive bitrate (AIMD): back off fast on congestion, ramp back
+        // up slowly once stable. This is what makes "never drop" achievable —
+        // instead of just silently dropping frames forever at a bitrate the
+        // pipeline/network can't sustain, the encoder itself steps down to a
+        // bitrate it CAN sustain, then cautiously probes back up. Runs
+        // regardless of the stats panel's visibility (functional, not cosmetic).
+        if ($('v-autobitrate').checked && S.encoder && S.lastEncoderConfigBase) {
+            const dropsThisTick = S.droppedFrames - S.prevDroppedForAimd;
+            S.prevDroppedForAimd = S.droppedFrames;
+            const congested = dropsThisTick > 1 || q >= 2;
+            if (congested) {
+                S.stableTicks = 0;
+                const down = Math.max(800, Math.floor(S.liveBitrateKbps * 0.82));
+                if (down < S.liveBitrateKbps) reconfigureBitrate(down);
+            } else {
+                S.stableTicks++;
+                if (S.stableTicks >= 4 && S.liveBitrateKbps < S.targetBitrateKbps) {
+                    S.stableTicks = 0;
+                    const up = Math.min(S.targetBitrateKbps, Math.ceil(S.liveBitrateKbps * 1.12));
+                    if (up > S.liveBitrateKbps) reconfigureBitrate(up);
+                }
+            }
+        }
 
         if (!$('v-show-stats').checked) return;
 
@@ -717,6 +1236,12 @@ function startStatsTimer() {
         $('s-dropped').textContent = S.droppedFrames;
         $('s-dropped').className = 'stat-val' + (S.droppedFrames > 5 ? ' bad' : '');
         $('s-total').textContent = fmtB(S.bytesSent);
+        $('s-abr').textContent = $('v-autobitrate').checked
+            ? `${S.liveBitrateKbps} / ${S.targetBitrateKbps} kbps`
+            : 'kapalı (manuel)';
+        $('s-abr').className = 'stat-val' + (S.liveBitrateKbps < S.targetBitrateKbps ? ' warn' : ' ok');
+        $('s-reconnect').textContent = S.reconnectAttempts > 0 ? `${S.reconnectAttempts} deneme` : 'stabil';
+        $('s-reconnect').className = 'stat-val' + (S.reconnectAttempts > 0 ? ' warn' : ' ok');
     }, 1000);
 }
 
