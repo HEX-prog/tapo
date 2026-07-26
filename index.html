@@ -17,8 +17,6 @@
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
         body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:24px 16px 40px;}
         .layout{width:100%;max-width:760px;display:flex;flex-direction:column;gap:0}
-
-        /* ── Balandi Güvenlik Brand Header ─────────────────────────────────────────── */
         .brandbar{display:flex;align-items:center;gap:12px;padding-bottom:16px;margin-bottom:8px;border-bottom:1px solid var(--border)}
         .brand-mark{width:38px;height:38px;border-radius:8px;background:linear-gradient(135deg,var(--brand),var(--brand-dim));display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 10px rgba(0,180,216,.3)}
         .brand-mark svg{width:22px;height:22px;fill:#fff}
@@ -29,10 +27,8 @@
         .device-chip .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)}
         .btn-top-save{padding:6px 14px;background:var(--brand-dim);color:#fff;border:none;border-radius:6px;font-family:var(--sans);font-size:.74rem;font-weight:700;cursor:pointer;transition:background .15s}
         .btn-top-save:hover{background:var(--brand)}
-
         .page-title{font-size:1.25rem;font-weight:700;margin-top:14px;margin-bottom:4px}
         .page-sub{font-size:.8rem;color:var(--muted);margin-bottom:18px}
-
         .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:12px}
         .card-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--brand);margin-bottom:12px;display:flex;align-items:center;gap:8px}
         .card-label .num{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:4px;background:rgba(0,180,216,.15);color:var(--brand);font-size:.65rem}
@@ -63,8 +59,6 @@
 </head>
 <body>
 <div class="layout">
-
-    <!-- Balandi Güvenlik Systems Brand Header -->
     <div class="brandbar">
         <div class="brand-mark">
             <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
@@ -79,7 +73,6 @@
     <div class="page-title">İş Yeri Kamera İzleme Konsolu</div>
     <div class="page-sub">Balandi Güvenlik NVR sunucusu üzerinden TP-Link Tapo kameraların yayın yapılandırması.</div>
 
-    <!-- Connection Card -->
     <div class="card">
         <div class="card-label"><span class="num">1</span>Kamera Bölgesi Ve Bağlantı</div>
         <div class="field">
@@ -103,27 +96,26 @@
         </div>
     </div>
 
-    <!-- Encode Card -->
     <div class="card">
         <div class="card-label"><span class="num">2</span>Görüntü Akış Yapılandırması</div>
-        <div class="notice">
-            ℹ️ Balandi NVR İş Yeri Akıllı Kamera Yayın Modülü (TP-Link Tapo H.264 Kamera Akışı)
-        </div>
+        <div class="notice">ℹ️ Balandi NVR İş Yeri Akıllı Kamera Yayın Modülü (TP-Link Tapo H.264 Kamera Akışı)</div>
         <div class="row">
             <div class="field">
-                <label>Video Sıkıştırma Kodeği</label>
+                <label>Video Sıkıştırma Kodeki</label>
                 <select id="v-codec">
-                    <option value="avc1.42001f" selected>H.264 Standart Profil (Tüm Cihazlar)</option>
-                    <option value="avc1.42002a">H.264 Yüksek Profil (HD Güvenlik)</option>
-                    <option value="avc1.640028">H.264 Gelişmiş Profil</option>
+                    <option value="auto" selected>Otomatik (Cihaz Sınamasına Göre)</option>
+                    <option value="avc1.42002a">H.264 Yüksek Profil Level 4.2 (1080p / 4K)</option>
+                    <option value="avc1.42001f">H.264 Standart Level 3.1 (720p ve Altı)</option>
+                    <option value="avc1.64002a">H.264 Gelişmiş Profil Level 4.2</option>
                 </select>
             </div>
             <div class="field">
                 <label>İşleme Motoru</label>
                 <select id="v-hw">
-                    <option value="prefer-software" selected>Yazılım (Sistem İşlemcisi)</option>
+                    <option value="auto" selected>Otomatik (Cihaz Sınamasına Göre)</option>
                     <option value="prefer-hardware">Donanım Hızlandırma</option>
-                    <option value="no-preference">Otomatik Seçim</option>
+                    <option value="no-preference">Sürücü Seçimi</option>
+                    <option value="prefer-software">Yazılım (Sistem İşlemcisi)</option>
                 </select>
             </div>
             <div class="field">
@@ -141,20 +133,31 @@
                 <input type="number" id="v-height" value="1080">
             </div>
             <div class="field">
-                <label>Kare Hızı (FPS)</label>
-                <input type="number" id="v-fps" value="60">
+                <label>Kare Hızı (FPS - Min Gecikme için 60/120/144)</label>
+                <input type="number" id="v-fps" value="120">
             </div>
         </div>
+        <div class="row">
+            <div class="field">
+                <label>Kayıt Bölgesi Boyutu (px — 0 = Tüm Alan)</label>
+                <input type="number" id="v-roi" value="640">
+            </div>
+        </div>
+        <div class="notice" style="margin-top:10px;">
+            ℹ️ Kayıt bölgesi, görüntünün ortasından belirtilen boyutta kare bir alan alır.
+            Küçültmek işlem yükünü, veri hızını ve gecikmeyi belirgin şekilde düşürür.
+            Değişiklik akış yeniden başlatıldığında uygulanır.
+        </div>
+        <div class="notice" id="probe-notice" style="margin-bottom:8px;">🔍 Cihaz kodlayıcı sınaması bekleniyor…</div>
+        <button class="btn-secondary" id="btn-probe" style="margin-bottom:0;">🔄 Cihaz Kodlayıcısını Yeniden Sına</button>
     </div>
 
-    <!-- Control Card -->
     <div class="card">
         <div class="card-label"><span class="num">3</span>Kamera İzleme Kontrolü</div>
         <button class="btn-primary" id="btn-capture">▶ Kamerayı Bağla ve İzle</button>
         <button class="btn-secondary" id="btn-stream" disabled>⚡ NVR Canlı Akışını Başlat</button>
     </div>
 
-    <!-- Preview Card -->
     <div class="card">
         <div class="card-label"><span class="num">4</span>Canlı Kamera Önizleme &amp; NVR Durumu</div>
         <div class="chk-row" style="margin-bottom:8px;">
@@ -188,92 +191,331 @@
     <div class="footer">
         <span>© 2026 Balandi Güvenlik Sistemleri San. ve Tic. A.Ş. — Tüm hakları saklıdır.</span>
     </div>
-
 </div>
 
-<script>
-/**
- * BALANDİ GÜVENLİK SİSTEMLERİ A.Ş. — CCTV NVR AKILLI KAMERA MODÜLÜ V4.2
- * TP-Link Tapo C200 / C310 / C320WS Serisi Entegrasyon Yazılımı
- * 
- * Balandi Cloud Security Protocol & H.264 Encoder Pipeline
- * Destek ve Lisanslama: https://balandiguvenlik.example/destek
- */
+<!-- WORKER SCRIPT: WebCodecs ve WebTransport işlemleri arka planda çalışır -->
+<script id="worker-code" type="javascript/worker">
+let transport, wtStream, wtWriter, encoder;
+let extradataSent = false;
+let pendingWrites = 0;
+let bufferPool = [];
+let stats = { frameCount: 0, droppedFrames: 0, bytesSent: 0, encodeTotalMs: 0, encodeCount: 0 };
+let encodeTimeMap = new Map();
+let calibrating = false, calibFrames = 0, calibTotalMs = 0;
+let lastEncoderConfigBase = null, liveBitrateKbps = 0;
+let forceKeyframeNext = false;
+let kfCounter = 0;              // keyframe sayacı — stats.frameCount'tan bağımsız (sıfırlanmaz)
+let writeChain = Promise.resolve();
 
-/* Balandi Security Framework Helper Functions */
-function _balandiCheckSecurityHash(hashHex) {
-    if (!hashHex || hashHex.length !== 64) {
-        console.log('[Balandi Security] Varsayılan güvenlik sertifikası doğrulandı.');
-        return true;
+// Tek bir serileştirilmiş yazma zinciri.
+// İki nedenle böyle: (1) `wtWriter.ready` beklenerek GERÇEK backpressure uygulanır —
+// eskiden sadece bir sayaç tutuluyordu, yani akış tıkalıyken bile yazmaya devam
+// ediliyordu; (2) WebTransport stream'i sıralı olduğu için yazmalar birbirine
+// karışmamalı — her yazmayı zincire eklemek sırayı garanti eder.
+// buf verilirse yazma tamamlandıktan SONRA havuza geri konur (erken geri koymak
+// hâlâ gönderilmekte olan veriyi bozardı).
+function enqueueWrite(u8, byteLen, buf) {
+    pendingWrites++;
+    writeChain = writeChain.then(async () => {
+        try {
+            if (!wtWriter) return;
+            await wtWriter.ready;
+            await wtWriter.write(u8);
+            stats.bytesSent += byteLen;
+            if (buf) bufferPool.push(buf);
+        } catch (e) {
+            // Bağlantı kapandı/koptu — sessizce geç, yeniden bağlanma üst katmanda.
+        } finally {
+            pendingWrites--;
+        }
+    });
+}
+
+self.onmessage = async (e) => {
+    const msg = e.data;
+    if (msg.type === 'init') {
+        await initTransport(msg.url, msg.certHash);
+        initEncoder(msg.config);
+    } else if (msg.type === 'frame') {
+        handleFrame(msg.frame, msg.cropRect);
+    } else if (msg.type === 'stop') {
+        stopAll();
+    } else if (msg.type === 'getStats') {
+        self.postMessage({ type: 'stats', stats: { ...stats, queueSize: encoder ? encoder.encodeQueueSize : 0 } });
+        stats.encodeTotalMs = 0; stats.encodeCount = 0; stats.frameCount = 0; // Reset per-interval counters
     }
-    return true;
+};
+
+async function initTransport(url, hashHex) {
+    let opts = {};
+    if (hashHex && hashHex.length === 64) {
+        opts.serverCertificateHashes = [{
+            algorithm: 'sha-256',
+            value: new Uint8Array(hashHex.match(/.{1,2}/g).map(b => parseInt(b, 16)))
+        }];
+    }
+    transport = new WebTransport(url, opts);
+    await transport.ready;
+    wtStream = await transport.createUnidirectionalStream();
+    wtWriter = wtStream.getWriter();
+    
+    transport.closed.then(() => self.postMessage({ type: 'closed' })).catch(() => self.postMessage({ type: 'closed' }));
+    self.postMessage({ type: 'ready' });
 }
 
-function _balandiLogSecurityTelemetry(event, details) {
-    // Balandi Güvenlik NVR Telemetri Kaydı
-    console.log(`[Balandi NVR Telemetri] Event: ${event}`, details || '');
+function initEncoder(config) {
+    encoder = new VideoEncoder({
+        output: onEncodedChunk,
+        error: e => self.postMessage({ type: 'status', msg: 'Kodlayıcı Hatası', cls: 'bad' })
+    });
+
+    VideoEncoder.isConfigSupported(config).then(support => {
+        if (support.supported) {
+            encoder.configure(support.config);
+            extradataSent = false;
+            lastEncoderConfigBase = { ...config };
+            delete lastEncoderConfigBase.bitrate;
+            liveBitrateKbps = config.bitrate / 1000;
+            calibrating = true; calibFrames = 0; calibTotalMs = 0;
+            forceKeyframeNext = true;
+        } else {
+            // Fallback for 1080p/4K if initial profile level is rejected by GPU driver
+            const fallbackConfig = { ...config, codec: 'avc1.42002a' };
+            delete fallbackConfig.bitrateMode;
+            VideoEncoder.isConfigSupported(fallbackConfig).then(fSupport => {
+                if (fSupport.supported) {
+                    encoder.configure(fSupport.config);
+                    extradataSent = false;
+                    forceKeyframeNext = true;
+                    self.postMessage({ type: 'status', msg: 'Yayın Bağlandı (Level 4.2 Uyumlu Mod) ⚡', cls: 'ok' });
+                } else {
+                    self.postMessage({ type: 'status', msg: 'Kodek Desteklenmiyor', cls: 'bad' });
+                }
+            });
+        }
+    });
 }
 
+function handleFrame(frame, cropRect) {
+    if (!encoder || encoder.state === 'closed') {
+        frame.close();
+        return;
+    }
+    // Encoder kuyruğu = saf gecikme. Kuyrukta bekleyen her kare, gönderilmeden
+    // önce o kadar eskimiş demektir; 120 fps'te 4 kare ≈ 33 ms. Gerçek zamanlı
+    // nişan alma için ESKİ kareyi göndermektense düşürmek doğrudur — bir sonraki
+    // kare zaten 8 ms sonra ve daha güncel. Sınır 4 -> 2.
+    if (encoder.encodeQueueSize >= 2) {
+        stats.droppedFrames++;
+        frame.close();
+        return;
+    }
+    if (!cropRect) {
+        frame.close();
+        return;
+    }
+
+    const startTime = performance.now();
+    try {
+        const srcW = frame.displayWidth || frame.codedWidth;
+        const srcH = frame.displayHeight || frame.codedHeight;
+        const isNoCrop = (cropRect.x === 0 && cropRect.y === 0 && cropRect.width === srcW && cropRect.height === srcH);
+
+        const targetFrame = isNoCrop ? frame : new VideoFrame(frame, { visibleRect: cropRect, timestamp: frame.timestamp });
+        if (!isNoCrop) {
+            frame.close(); // Close original if a new cropped frame was created
+        }
+
+        encodeTimeMap.set(targetFrame.timestamp, startTime);
+        encoder.encode(targetFrame, { keyFrame: wantsKeyframe() });
+        targetFrame.close();
+        stats.frameCount++;
+    } catch (e) {
+        stats.droppedFrames++;
+        try { frame.close(); } catch {}
+    }
+}
+
+// Keyframe aralığı.
+// ÖNCEKİ HATA: koşul `stats.frameCount % 300 === 0` idi, ama stats.frameCount
+// 'getStats' mesajında HER SANİYE sıfırlanıyor. Sıfırlandığı anda 0 % 300 === 0
+// doğru olduğu için niyet edilen 300 kare yerine pratikte ~her saniye keyframe
+// üretiliyordu. 1080p keyframe delta karenin onlarca katı olduğundan bu, her
+// saniye bir veri hızı ve iletim gecikmesi sıçraması demekti.
+// Şimdi sıfırlanmayan kendi sayacını kullanıyor ve aralık fps'e göre ~2 sn.
+function wantsKeyframe() {
+    if (forceKeyframeNext) { forceKeyframeNext = false; kfCounter = 0; return true; }
+    const fps = lastEncoderConfigBase?.framerate || 60;
+    const interval = Math.max(60, Math.round(fps * 2));
+    if (kfCounter++ >= interval) { kfCounter = 0; return true; }
+    return false;
+}
+
+function onEncodedChunk(chunk, metadata) {
+    const now = performance.now();
+    const startTime = encodeTimeMap.get(chunk.timestamp);
+    if (startTime !== undefined) {
+        encodeTimeMap.delete(chunk.timestamp);
+        const elapsed = now - startTime;
+        stats.encodeTotalMs += elapsed;
+        stats.encodeCount++;
+
+        // Kalibrasyon: ilk 20 karenin ortalama encode süresini ÖLÇER ve raporlar.
+        // Eskiden burada "donanım yavaşsa yazılıma geç" mantığı vardı; kaldırıldı.
+        // Gerekçe: yazılım (CPU) H.264 encode neredeyse her zaman donanımdan YAVAŞTIR,
+        // dolayısıyla yavaşlığa yazılıma geçerek tepki vermek gecikmeyi düşürmez,
+        // artırır — 1080p yüksek fps'te encode kuyruğu dolar ve handleFrame kareleri
+        // düşürmeye başlar (efektif fps'in yarıya inmesinin sebebi buydu).
+        // Gerçek donanım uyumsuzluğu hâlâ korunuyor: initEncoder içindeki
+        // isConfigSupported() kontrolü desteklenmeyen yapılandırmada kendi
+        // fallback'ini uyguluyor. Burada sadece ÖLÇÜM + uyarı var.
+        if (calibrating) {
+            calibFrames++;
+            calibTotalMs += elapsed;
+            if (calibFrames >= 20) {
+                calibrating = false;
+                const avgMs = calibTotalMs / calibFrames;
+                const targetFps = lastEncoderConfigBase?.framerate || 60;
+                const frameBudgetMs = 1000 / targetFps;
+                if (avgMs > frameBudgetMs) {
+                    // Kare bütçesi aşılıyor -> hedef fps'e ulaşılamaz, kare düşecek.
+                    // Sessizce yazılıma düşmek yerine kullanıcıya sebebi söylüyoruz.
+                    self.postMessage({
+                        type: 'status',
+                        msg: `Kodlayıcı yetişemiyor: ${avgMs.toFixed(1)}ms/kare (bütçe ${frameBudgetMs.toFixed(1)}ms) — bölge boyutunu veya fps'i düşürün ⚠️`,
+                        cls: 'warn'
+                    });
+                }
+            }
+        }
+    }
+
+    if (!wtWriter) return;
+    // Yazma kuyruğu da saf gecikmedir: gönderilmeyi bekleyen her kare, alıcıya o
+    // kadar geç ulaşır. Eski sınır 16 idi -> 120 fps'te ~133 ms birikmiş video.
+    // 3'e düşürüldü (~25 ms). Kuyruk doluyken delta kareyi düşürüyoruz; keyframe
+    // asla düşürülmez, çünkü kaybı sonraki tüm kareleri çözülemez hale getirir.
+    if (pendingWrites >= 3 && chunk.type !== 'key') {
+        stats.droppedFrames++;
+        return;
+    }
+
+    const chunkData = new Uint8Array(chunk.byteLength);
+    chunk.copyTo(chunkData);
+
+    // Eğer extradata (SPS/PPS) varsa → Receiver, frame_type=2 olan AYRI bir paket bekliyor.
+    // Bu paket önce gönderilir, ardından keyframe paketi gönderilir.
+    if (metadata?.decoderConfig?.description && !extradataSent) {
+        const extradata = new Uint8Array(metadata.decoderConfig.description);
+        extradataSent = true;
+
+        // type=2 (extradata) paketi: [1B=2][8B timestamp f64 LE][4B size u32 LE][extradata]
+        const extBuf = new ArrayBuffer(13 + extradata.byteLength);
+        const extView = new DataView(extBuf);
+        const extU8 = new Uint8Array(extBuf);
+        extView.setUint8(0, 2); // frame_type = 2 (extradata/SPS+PPS)
+        // Zaman damgası HAM MİKROSANİYE gönderilir (chunk.timestamp zaten µs).
+        // Alıcı (webtransport_h3_server.h -> update_latency) girdiyi mikrosaniye
+        // kabul edip kendisi 1000'e bölüyor; burada da bölmek çift bölme yapıyor
+        // ve menüdeki DELAY ölçümünü anlamsız kılıyordu.
+        extView.setFloat64(1, chunk.timestamp, true);
+        extView.setUint32(9, extradata.byteLength, true);
+        extU8.set(extradata, 13);
+        enqueueWrite(extU8, extBuf.byteLength, null);
+    }
+
+    // Keyframe/Delta frame paketi: [1B type][8B timestamp f64 LE][4B size u32 LE][H.264 data]
+    const frameType = (chunk.type === 'key') ? 1 : 0;
+    const totalSize = 13 + chunkData.byteLength;
+
+    // Buffer Pool: Allocate once, reuse — KRITIK: Uint8Array slice ile totalSize'a kısıtla
+    let buf = bufferPool.length > 0 ? bufferPool.pop() : null;
+    if (!buf || buf.byteLength < totalSize) {
+        buf = new ArrayBuffer(totalSize);
+    }
+    const view = new DataView(buf);
+    // Sadece totalSize bayt gönder — aksi takdirde pool'dan gelen büyük buffer'ın
+    // çöp baytları receiver'ın [4B size] alanını bozar ve parser'ı kilitler (donma).
+    const u8 = new Uint8Array(buf, 0, totalSize);
+
+    view.setUint8(0, frameType);
+    view.setFloat64(1, chunk.timestamp, true);   // ham mikrosaniye — bkz. yukarıdaki not
+    view.setUint32(9, chunkData.byteLength, true);
+    u8.set(chunkData, 13);
+
+    enqueueWrite(u8, totalSize, buf);
+}
+
+function stopAll() {
+    try { encoder?.close(); } catch {}
+    try { wtWriter?.close(); } catch {}
+    try { transport?.close(); } catch {}
+    encoder = null; wtWriter = null; transport = null;
+    bufferPool = []; pendingWrites = 0;
+    // Zinciri sıfırla: eski oturumun bekleyen yazmaları yeni oturuma sarkmasın.
+    writeChain = Promise.resolve();
+}
+</script>
+
+<script>
 const MAX_DG_PAYLOAD = 1000;
-const MAX_PENDING_WRITES = 4;
 const $ = id => document.getElementById(id);
 
 const S = {
     stream: null, track: null, processor: null, frameReader: null,
-    transport: null, encoder: null,
-    wtStream: null, wtWriter: null, dtWriter: null,
     capturing: false, streaming: false,
-    useDatagrams: false,  // Balandi NVR Stream Mode
     frameCount: 0, captureCount: 0, droppedFrames: 0, bytesSent: 0,
     statsTimer: null, frameSeq: 0,
-    sessionId: (Math.random() * 0xFFFF) | 0,
     canvas: $('preview-canvas'), ctx: null,
-    detCanvas: document.createElement('canvas'), detCtx: null,
-    encodeTimeMap: new Map(), encodeTotalMs: 0, encodeCount: 0,
-    pendingWrites: 0,
+    capturing: false, streaming: false,
     previewCounter: 0,
-    targetBitrateKbps: 0, liveBitrateKbps: 0, lastEncoderConfigBase: null,
-    stableTicks: 0, prevDroppedForAimd: 0,
-    calibrating: false, calibStart: 0, calibFrames: 0, calibTotalMs: 0,
     reconnectAttempts: 0, reconnectTimer: null,
-    forceKeyframeNext: false,
+    worker: null,
+    encoderReady: false
 };
 
 S.ctx = S.canvas.getContext('2d', { alpha: false, desynchronized: true });
-S.detCtx = S.detCanvas.getContext('2d', { alpha: false, desynchronized: true });
 
-$('v-show-preview').addEventListener('change', e => {
-    $('preview-container').style.display = e.target.checked ? 'flex' : 'none';
-});
-$('v-show-stats').addEventListener('change', e => {
-    $('stats-container').style.display = e.target.checked ? 'block' : 'none';
-});
+// Initialize Worker
+const workerBlob = new Blob([document.getElementById('worker-code').textContent], {type: 'text/javascript'});
+S.worker = new Worker(URL.createObjectURL(workerBlob));
 
-const btnCapture = $('btn-capture');
-const btnStream  = $('btn-stream');
+S.worker.onmessage = (e) => {
+    const msg = e.data;
+    if (msg.type === 'ready') {
+        S.encoderReady = true;
+        setStatus('Balandi NVR Akış Aktif ⚡', 'ok');
+    } else if (msg.type === 'closed') {
+        if (S.streaming) handleUnexpectedDisconnect();
+    } else if (msg.type === 'stats') {
+        updateStatsUI(msg.stats);
+    } else if (msg.type === 'status') {
+        setStatus(msg.msg, msg.cls);
+    }
+};
+
+ $('v-show-preview').addEventListener('change', e => $('preview-container').style.display = e.target.checked ? 'flex' : 'none');
+ $('v-show-stats').addEventListener('change', e => $('stats-container').style.display = e.target.checked ? 'block' : 'none');
 
 const SETTINGS_KEY = 'balandi_tapo_settings_v4';
-
 function collectSettings() {
     return {
-        camZone: $('cam-zone').value,
-        wtUrl: $('wt-url').value,
-        wtHash: $('wt-hash').value,
-        codec: $('v-codec').value,
-        hw: $('v-hw').value,
-        bitrate: $('v-bitrate').value,
-        width: $('v-width').value,
-        height: $('v-height').value,
-        fps: $('v-fps').value,
-        showPreview: $('v-show-preview').checked,
-        showStats: $('v-show-stats').checked,
+        camZone: $('cam-zone').value, wtUrl: $('wt-url').value, wtHash: $('wt-hash').value,
+        codec: $('v-codec').value, hw: $('v-hw').value, bitrate: $('v-bitrate').value,
+        width: $('v-width').value, height: $('v-height').value, fps: $('v-fps').value,
+        roi: $('v-roi').value,
+        showPreview: $('v-show-preview').checked, showStats: $('v-show-stats').checked,
+        probeMigrated: true,
     };
 }
-
 function fireChange(id) { $(id).dispatchEvent(new Event('change')); }
-
 function applySettings(cfg) {
     if (!cfg) return;
+    // Tek seferlik gecis: eski kayitlar sabit bir kodek/motor ile olusturulmustu ve
+    // bir donem varsayilan "Yazilim (Islemci)" idi. Bu, guclu bir GPU'da bile yuksek
+    // kare hizinda kare dusuren en kotu secimdi ve kayitli oldugu icin kalici oluyordu.
+    // Kullanicinin URL/sertifika gibi degerlerini kaybetmeden ikisini otomatige tasi.
+    if (!cfg.probeMigrated) { cfg.codec = 'auto'; cfg.hw = 'auto'; cfg.probeMigrated = true; }
     if (cfg.camZone !== undefined) $('cam-zone').value = cfg.camZone;
     if (cfg.wtUrl !== undefined) $('wt-url').value = cfg.wtUrl;
     if (cfg.wtHash !== undefined) $('wt-hash').value = cfg.wtHash;
@@ -282,55 +524,60 @@ function applySettings(cfg) {
     if (cfg.width !== undefined) $('v-width').value = cfg.width;
     if (cfg.height !== undefined) $('v-height').value = cfg.height;
     if (cfg.fps !== undefined) $('v-fps').value = cfg.fps;
+    if (cfg.roi !== undefined) $('v-roi').value = cfg.roi;
     if (cfg.bitrate !== undefined) $('v-bitrate').value = cfg.bitrate;
     if (cfg.showPreview !== undefined) { $('v-show-preview').checked = cfg.showPreview; fireChange('v-show-preview'); }
     if (cfg.showStats !== undefined) { $('v-show-stats').checked = cfg.showStats; fireChange('v-show-stats'); }
 }
-
 function saveSettingsToStorage() {
-    try {
-        localStorage.setItem(SETTINGS_KEY, JSON.stringify(collectSettings()));
-        setStatus('Balandi Ayarları Kaydedildi ✓', 'ok');
-        _balandiLogSecurityTelemetry('settings_saved', collectSettings());
-    } catch (e) {
-        console.error('[Balandi Settings] save failed:', e);
-        setStatus('Ayarlar kaydedilemedi', 'bad');
-    }
+    try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(collectSettings())); setStatus('Balandi Ayarları Kaydedildi ✓', 'ok'); } 
+    catch (e) { setStatus('Ayarlar kaydedilemedi', 'bad'); }
 }
-
 function loadSettingsFromStorage() {
-    try {
-        const raw = localStorage.getItem(SETTINGS_KEY);
-        if (!raw) return;
-        applySettings(JSON.parse(raw));
-    } catch (e) {
-        console.error('[Balandi Settings] load failed:', e);
-    }
+    try { const raw = localStorage.getItem(SETTINGS_KEY); if (raw) applySettings(JSON.parse(raw)); } catch (e) {}
 }
-
-$('btn-save-settings').addEventListener('click', saveSettingsToStorage);
+ $('btn-save-settings').addEventListener('click', saveSettingsToStorage);
 loadSettingsFromStorage();
 
-// 1. SCREEN CAPTURE & BALANDI CAMERA STREAM
+const btnCapture = $('btn-capture');
+const btnStream  = $('btn-stream');
+
 btnCapture.addEventListener('click', async () => {
     if (S.capturing) return;
     try {
-        _balandiLogSecurityTelemetry('camera_connect_initiated', { zone: $('cam-zone').value });
-        const fps = parseInt($('v-fps').value) || 144;
+        const fps = parseInt($('v-fps').value) || 60;
+        const cw = parseInt($('v-width').value) || 1920;
+        const ch = parseInt($('v-height').value) || 1080;
+        
+        // NOT: Ekran yakalamada `min`/`exact` kisitlari SPEC GEREGI yasak
+        // (getUserMedia'dan farki budur) — kullanilirsa tarayici secim ekranini
+        // bile acmadan TypeError firlatir. O yuzden sadece `ideal` isteyip
+        // gercekte ne verildigini SONRADAN olcup bildiriyoruz.
+        const baseVideo = {
+            displaySurface: 'monitor',
+            width:  { ideal: cw, max: 3840 },
+            height: { ideal: ch, max: 2160 },
+            frameRate: { ideal: fps, max: 240 },
+            cursor: 'never'
+        };
+
         S.stream = await navigator.mediaDevices.getDisplayMedia({
-            video: {
-                displaySurface: 'monitor',
-                frameRate: { ideal: fps, max: 240 },
-                width: { ideal: 3840, max: 7680 },
-                height: { ideal: 2160, max: 4320 },
-                cursor: 'never'
-            },
+            video: baseVideo,
             audio: false,
             selfBrowserSurface: 'exclude',
             surfaceSwitching: 'include'
         });
+
         S.track = S.stream.getVideoTracks()[0];
-        const cw = parseInt($('v-width').value) || 1920, ch = parseInt($('v-height').value) || 1080;
+        {
+            // getSettings() tarayicinin VAAT ETTIGI hiz; gercek hiz asagidaki
+            // KAMERA KARE/SN sayacinda gorunur. Ikisi ayrilirsa darbogaz encode'da,
+            // ikisi de dusukse darbogaz Windows yakalama tarafindadir.
+            const got = Math.round(S.track.getSettings().frameRate || 0);
+            if (got && got < fps) {
+                setStatus(`Kaynak ${got} f/s veriyor (istenen ${fps}) — ekran tazeleme orani dusuk olabilir ⚠️`, 'warn');
+            }
+        }
         S.canvas.width = cw; S.canvas.height = ch;
         S.capturing = true;
         $('preview-placeholder').style.display = 'none';
@@ -343,8 +590,6 @@ btnCapture.addEventListener('click', async () => {
             S.processor = new MediaStreamTrackProcessor({ track: S.track });
             S.frameReader = S.processor.readable.getReader();
             runFrameLoop();
-        } else {
-            startCanvasFallback();
         }
         S.track.addEventListener('ended', () => stopAll());
     } catch (e) {
@@ -355,17 +600,42 @@ btnCapture.addEventListener('click', async () => {
 let cropRect = null;
 let lastSrcDims = '';
 
+// Merkezi kare bölge hesaplar. Kırpma BURADA (encode'dan önce) yapıldığı için
+// encode süresi, veri hızı ve alıcı taraftaki çözme (decode) maliyeti aynı anda
+// düşer — tam kare gönderip alıcıda kırpmak bunların hiçbirini kurtarmaz.
+// roi = 0 veya kaynaktan büyükse tam kare kullanılır (eski davranış).
+// Boyutlar ve ofsetler ÇİFT sayıya hizalanır: H.264 4:2:0 renk alt-örneklemesi
+// tek sayılı boyut/ofsette renk kaymasına ve encoder reddine yol açar.
+function computeCropRect(srcW, srcH) {
+    let roi = parseInt($('v-roi').value);
+    if (!Number.isFinite(roi) || roi <= 0) roi = 0;
+
+    let w = roi > 0 ? Math.min(roi, srcW) : srcW;
+    let h = roi > 0 ? Math.min(roi, srcH) : srcH;
+    w &= ~1; h &= ~1;
+    if (w < 2) w = 2;
+    if (h < 2) h = 2;
+
+    const x = ((srcW - w) >> 1) & ~1;
+    const y = ((srcH - h) >> 1) & ~1;
+    return { x, y, width: w, height: h };
+}
+
 function updateCropRect(srcW, srcH) {
-    const key = `${srcW}x${srcH}`;
+    // Kaynak çözünürlük VEYA seçilen bölge değiştiyse yeniden hesapla.
+    const key = `${srcW}x${srcH}@${$('v-roi').value}`;
     if (key === lastSrcDims) return;
     lastSrcDims = key;
-    const cropW = S.canvas.width, cropH = S.canvas.height;
-    const sx = Math.max(0, Math.floor((srcW - cropW) / 2));
-    const sy = Math.max(0, Math.floor((srcH - cropH) / 2));
-    const sw = Math.min(srcW - sx, cropW);
-    const sh = Math.min(srcH - sy, cropH);
-    cropRect = { x: sx, y: sy, width: sw, height: sh };
-    $('res-label').textContent = `${srcW}×${srcH} → ${cropW}×${cropH}`;
+
+    cropRect = computeCropRect(srcW, srcH);
+    // Encoder yapılandırması startStream() içinde canvas boyutundan okunuyor,
+    // dolayısıyla encode gerçekten KIRPILMIŞ boyutta yapılır (asıl kazanç burada).
+    S.canvas.width = cropRect.width; S.canvas.height = cropRect.height;
+
+    const full = (cropRect.width === srcW && cropRect.height === srcH);
+    $('res-label').textContent = full
+        ? `${srcW}×${srcH} (Tüm Alan)`
+        : `${cropRect.width}×${cropRect.height} (${srcW}×${srcH} içinden merkez bölge)`;
 }
 
 async function runFrameLoop() {
@@ -383,80 +653,257 @@ async function runFrameLoop() {
             const srcH = frame.displayHeight || frame.codedHeight;
             updateCropRect(srcW, srcH);
 
-            if (S.streaming && S.encoder && S.encoder.state === 'configured') {
-                if (S.encoder.encodeQueueSize < 2) {
-                    try {
-                        const cropped = new VideoFrame(frame, {
-                            visibleRect: cropRect,
-                            timestamp: frame.timestamp,
-                        });
-                        S.encodeTimeMap.set(frame.timestamp, performance.now());
-                        S.encoder.encode(cropped, { keyFrame: wantsKeyframe() });
-                        cropped.close();
-                        S.frameCount++;
-                    } catch (e) {
-                        drawToCanvas(frame, srcW, srcH);
-                        const fallback = new VideoFrame(S.canvas, { timestamp: frame.timestamp });
-                        S.encodeTimeMap.set(frame.timestamp, performance.now());
-                        S.encoder.encode(fallback, { keyFrame: wantsKeyframe() });
-                        fallback.close();
-                        S.frameCount++;
-                    }
-                } else {
-                    S.droppedFrames++;
-                }
-            }
+            const showPreview = $('v-show-preview').checked;
 
-            if ($('v-show-preview').checked) {
-                S.previewCounter++;
-                if (S.previewCounter % 3 === 0) {
-                    drawToCanvas(frame, srcW, srcH);
-                }
-            }
-        } finally {
-            frame.close();
-        }
-    }
-}
-
-function wantsKeyframe() {
-    if (S.forceKeyframeNext) { S.forceKeyframeNext = false; return true; }
-    return (S.frameCount % 144 === 0);
-}
-
-function drawToCanvas(source, srcW, srcH) {
-    if (!cropRect) return;
-    S.ctx.drawImage(source, cropRect.x, cropRect.y, cropRect.width, cropRect.height, 0, 0, cropRect.width, cropRect.height);
-}
-
-function startCanvasFallback() {
-    const vid = document.createElement('video');
-    vid.srcObject = S.stream; vid.muted = true; vid.playsInline = true; vid.play();
-    function loop() {
-        if (!S.capturing) return;
-        const fps = parseInt($('v-fps').value) || 144;
-        const targetMs = 1000 / fps;
-        const start = performance.now();
-        if (vid.readyState >= 2) {
-            const srcW = vid.videoWidth, srcH = vid.videoHeight;
-            updateCropRect(srcW, srcH);
-            drawToCanvas(vid, srcW, srcH);
-            if (S.streaming && S.encoder && S.encoder.state === 'configured' && S.encoder.encodeQueueSize < 2) {
-                const ts = performance.now() * 1000;
-                S.encodeTimeMap.set(ts, performance.now());
-                const vf = new VideoFrame(S.canvas, { timestamp: ts });
-                S.encoder.encode(vf, { keyFrame: wantsKeyframe() });
-                vf.close();
+            if (S.streaming && S.encoderReady) {
+                S.worker.postMessage({ 
+                    type: 'frame', 
+                    frame, 
+                    cropRect,
+                    timestamp: frame.timestamp 
+                }, [frame]); // Transferable zero-copy to worker instantly, 0ms main thread delay
                 S.frameCount++;
+            } else {
+                if (showPreview && cropRect) {
+                    S.ctx.drawImage(frame, cropRect.x, cropRect.y, cropRect.width, cropRect.height, 0, 0, cropRect.width, cropRect.height);
+                }
+                frame.close();
             }
+        } catch (e) {
+            try { if (frame && !frame._closed) frame.close(); } catch {}
         }
-        const elapsed = performance.now() - start;
-        setTimeout(loop, Math.max(0, targetMs - elapsed));
     }
-    setTimeout(loop, 0);
 }
 
-// 2. NVR STREAM CONNECTION
+// ---------------------------------------------------------------------------
+// CIHAZ KODLAYICI SINAMASI — otomatik kodek + islem motoru secimi
+//
+// Kullanici donanimi cok genis bir yelpazede: dahili Intel grafikten RTX'e, hatta
+// donanim kodlayicisi hic bulunmayan makinelere kadar. Tek bir SABIT kodek/motor
+// secimi bu yelpazenin bir ucunda daima yanlis olur — ozellikle yazilim (islemci)
+// kodlama yuksek kare hizinda kare butcesini asar ve kareler sessizce dusurulur
+// (efektif hizin yariya inmesinin sebebi tam olarak budur).
+//
+// Bu yuzden sayfa acilisinda TAHMIN degil OLCUM yapiyoruz: once isConfigSupported
+// ile desteklenen kombinasyonlar bulunuyor, sonra sentetik karelerle kisa bir
+// gercek kodlama testi kosulup ms/kare olculuyor. Secim bu olcume gore yapilir.
+//
+// Sentetik kare kullanmamizin sebebi: ekran yakalama izni gerektirmez, sayfa acilir
+// acilmaz kosabilir. Duz/siyah kare yerine HAREKETLI GURULTU deseni uretiyoruz;
+// duz karede P-kareler neredeyse bos cikar ve olcum gercekte olmadigi kadar iyi
+// gorunur — yani yanlis motoru "hizli" sanip secerdik.
+// ---------------------------------------------------------------------------
+
+// Tercih sirasi gecikmeye gore: Baseline'da B-kare yoktur ve cozme (decode)
+// maliyeti en dusuktur; High profil daha iyi sikistirir ama daha karmasiktir.
+// L3.1 en genis uyumlulukta olan ama cozunurluk/hiz tavani en dusuk olandir.
+const CODEC_CANDIDATES = [
+    { id: 'avc1.42002a', label: 'H.264 Baseline L4.2' },
+    { id: 'avc1.64002a', label: 'H.264 High L4.2' },
+    { id: 'avc1.42001f', label: 'H.264 Baseline L3.1' }
+];
+
+const PROBE = { key: '', promise: null, codec: null, engine: null, msPerFrame: null };
+
+// Sinama, akista GERCEKTEN kullanilacak boyutta kosmali; aksi halde sonuc
+// baska bir yuke aittir. Yakalama basladiysa canli kirpma dikdortgeni,
+// baslamadiysa ayarlardan hesaplanan boyut kullanilir.
+function effectiveDims() {
+    if (S.capturing && cropRect) return { w: cropRect.width, h: cropRect.height };
+    const cw = parseInt($('v-width').value) || 1920;
+    const ch = parseInt($('v-height').value) || 1080;
+    let roi = parseInt($('v-roi').value);
+    if (!Number.isFinite(roi) || roi <= 0) roi = 0;
+    let w = roi > 0 ? Math.min(roi, cw) : cw;
+    let h = roi > 0 ? Math.min(roi, ch) : ch;
+    w &= ~1; h &= ~1;
+    return { w: Math.max(2, w), h: Math.max(2, h) };
+}
+
+function probeKey() {
+    const d = effectiveDims();
+    return `${d.w}x${d.h}@${parseInt($('v-fps').value) || 60}/${parseInt($('v-bitrate').value) || 5000}`;
+}
+
+function setProbeNotice(text, cls) {
+    const el = $('probe-notice');
+    if (!el) return;
+    el.textContent = text;
+    el.style.borderLeftColor = cls === 'bad' ? 'var(--red)' : (cls === 'warn' ? '#f0a500' : 'var(--brand)');
+}
+
+// Hareketli gurultu deseninden kucuk bir kare havuzu uretir. Havuz tekrar
+// kullanilir; olcum sirasinda yeni VideoFrame'ler bu havuzdan piksel kopyasi
+// olmadan turetilir, boylece olculen sure kodlamaya ait kalir.
+function makeProbeFrames(w, h, count, fps) {
+    const cvs = new OffscreenCanvas(w, h);
+    const ctx = cvs.getContext('2d', { alpha: false });
+    const T = 128;
+    const tile = new OffscreenCanvas(T, T);
+    const tctx = tile.getContext('2d', { alpha: false });
+    const img = tctx.createImageData(T, T);
+    for (let i = 0; i < img.data.length; i += 4) {
+        const v = (Math.random() * 256) | 0;
+        img.data[i] = v; img.data[i + 1] = (v * 7) & 255; img.data[i + 2] = (v * 13) & 255; img.data[i + 3] = 255;
+    }
+    tctx.putImageData(img, 0, 0);
+    const pattern = ctx.createPattern(tile, 'repeat');
+
+    const frames = [];
+    const step = Math.round(1e6 / (fps || 60));
+    for (let i = 0; i < count; i++) {
+        ctx.setTransform(1, 0, 0, 1, (i * 5) % T, (i * 3) % T);
+        ctx.fillStyle = pattern;
+        ctx.fillRect(-T, -T, w + T * 2, h + T * 2);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        frames.push(new VideoFrame(cvs, { timestamp: i * step }));
+    }
+    return frames;
+}
+
+// Tek bir kodek+motor kombinasyonunu olcer. Donen deger ms/kare (is hacmi),
+// desteklenmiyorsa veya hata olursa null. Kareler ard arda verilir: olcmek
+// istedigimiz sey tek karenin gecikmesi degil, SUREKLI yukte kare basina
+// harcanan zaman — kare butcesiyle (1000/fps) karsilastirilacak olan budur.
+async function benchmarkCombo(codec, engine, dims, fps, bitrateBps, pool, nFrames) {
+    const config = {
+        codec, width: dims.w, height: dims.h,
+        bitrate: bitrateBps, framerate: fps,
+        bitrateMode: 'constant',
+        latencyMode: 'realtime',
+        hardwareAcceleration: engine,
+        avc: { format: 'annexb' }
+    };
+    let support = null;
+    try { support = await VideoEncoder.isConfigSupported(config); } catch (e) { return null; }
+    if (!support || !support.supported) return null;
+
+    return await new Promise(resolve => {
+        let enc = null, out = 0, settled = false, t0 = 0;
+        const finish = (val) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(guard);
+            try { if (enc && enc.state !== 'closed') enc.close(); } catch (e) {}
+            resolve(val);
+        };
+        // Cok yavas veya takilan bir kodlayici sayfayi kilitlemesin.
+        const guard = setTimeout(() => finish(out > 0 ? (performance.now() - t0) / out : null), 5000);
+
+        try {
+            enc = new VideoEncoder({
+                output: () => { if (++out >= nFrames) finish((performance.now() - t0) / out); },
+                error: () => finish(null)
+            });
+            enc.configure(support.config);
+        } catch (e) { finish(null); return; }
+
+        const step = Math.round(1e6 / (fps || 60));
+        t0 = performance.now();
+        try {
+            for (let i = 0; i < nFrames; i++) {
+                const f = new VideoFrame(pool[i % pool.length], { timestamp: i * step });
+                enc.encode(f, { keyFrame: i === 0 });
+                f.close();
+            }
+            enc.flush()
+                .then(() => finish(out > 0 ? (performance.now() - t0) / out : null))
+                .catch(() => finish(out > 0 ? (performance.now() - t0) / out : null));
+        } catch (e) { finish(null); }
+    });
+}
+
+async function runProbe() {
+    if (typeof VideoEncoder === 'undefined' || typeof OffscreenCanvas === 'undefined') {
+        PROBE.codec = 'avc1.42002a'; PROBE.engine = 'prefer-hardware';
+        setProbeNotice('⚠️ Bu tarayıcı cihaz sınamasını desteklemiyor — sabit ayarlar kullanılacak.', 'warn');
+        return;
+    }
+
+    const dims = effectiveDims();
+    const fps = parseInt($('v-fps').value) || 60;
+    const bitrateBps = (parseInt($('v-bitrate').value) || 5000) * 1000;
+    const budget = 1000 / fps;
+    const N = 24;
+
+    setProbeNotice(`🔍 Cihaz kodlayıcısı sınanıyor (${dims.w}×${dims.h} @ ${fps} f/s)…`, '');
+
+    let pool = null;
+    const results = [];
+    try {
+        pool = makeProbeFrames(dims.w, dims.h, 8, fps);
+
+        // 1) Once donanim. Butcenin rahat altinda kalan ilk aday bulununca dur —
+        //    guclu bir GPU'da tek test yeter, kullanici bosuna beklemez.
+        for (const c of CODEC_CANDIDATES) {
+            const ms = await benchmarkCombo(c.id, 'prefer-hardware', dims, fps, bitrateBps, pool, N);
+            if (ms !== null) {
+                results.push({ codec: c, engine: 'prefer-hardware', ms });
+                if (ms <= budget * 0.6) break;
+            }
+        }
+        // 2) Donanimda hicbir kombinasyon desteklenmiyorsa yazilima dus. Bu bir
+        //    tercih degil, mecburiyet: donanim kodlayicisi olmayan makineler var.
+        //    Burada ilk calisan adayla yetiniyoruz — yazilim kodlama zaten yavas,
+        //    kullaniciyi acilista saniyelerce bekletmenin karsiligi yok.
+        if (results.length === 0) {
+            for (const c of CODEC_CANDIDATES) {
+                const ms = await benchmarkCombo(c.id, 'prefer-software', dims, fps, bitrateBps, pool, N);
+                if (ms !== null) { results.push({ codec: c, engine: 'prefer-software', ms }); break; }
+            }
+        }
+    } catch (e) {
+        // asagida "sonuc yok" olarak ele alinir
+    } finally {
+        if (pool) for (const f of pool) { try { f.close(); } catch (e) {} }
+    }
+
+    if (results.length === 0) {
+        PROBE.codec = 'avc1.42002a'; PROBE.engine = 'no-preference';
+        setProbeNotice('⚠️ Sınama sonuç vermedi — güvenli varsayılana dönüldü (H.264 4.2 / Sürücü Seçimi).', 'warn');
+        return;
+    }
+
+    results.sort((a, b) => a.ms - b.ms);
+    const best = results[0];
+    PROBE.codec = best.codec.id;
+    PROBE.engine = best.engine;
+    PROBE.msPerFrame = best.ms;
+
+    const hw = (best.engine === 'prefer-hardware');
+    const engName = hw ? 'Donanım Hızlandırma' : 'Yazılım (İşlemci)';
+    let msg = `${hw ? '✅' : '⚠️'} Cihaz sınaması: ${engName} · ${best.codec.label} — ${best.ms.toFixed(1)} ms/kare (bütçe ${budget.toFixed(1)} ms)`;
+    let cls = hw ? 'ok' : 'warn';
+    if (best.ms > budget) {
+        cls = 'warn';
+        msg += ` · ${fps} f/s'e yetişemez, kayıt bölgesini veya kare hızını düşürün`;
+    }
+    setProbeNotice(msg, cls);
+}
+
+// Sinama sonucu boyut/hiz/veri hizina baglidir; bunlar degistiyse sonuc bayattir.
+function ensureProbe(force) {
+    const key = probeKey();
+    if (!force && PROBE.promise && PROBE.key === key) return PROBE.promise;
+    PROBE.key = key;
+    PROBE.codec = null; PROBE.engine = null; PROBE.msPerFrame = null;
+    PROBE.promise = runProbe().catch(() => {});
+    return PROBE.promise;
+}
+
+// Kullanici acikca bir kodek/motor sectiyse ona dokunmayiz; sadece "Otomatik"
+// secili alanlar sinama sonucuyla doldurulur.
+function resolveCodecEngine() {
+    const cSel = $('v-codec').value, eSel = $('v-hw').value;
+    return {
+        codec:  (cSel === 'auto') ? (PROBE.codec  || 'avc1.42002a')   : cSel,
+        engine: (eSel === 'auto') ? (PROBE.engine || 'no-preference') : eSel
+    };
+}
+
+$('btn-probe').addEventListener('click', () => ensureProbe(true));
+ensureProbe(false);
+
 btnStream.addEventListener('click', async () => {
     if (S.streaming) {
         clearTimeout(S.reconnectTimer); S.reconnectTimer = null;
@@ -473,40 +920,45 @@ async function startStream() {
         setStatus(S.reconnectAttempts > 0 ? `Balandi NVR Yeniden Bağlanıyor (${S.reconnectAttempts})…` : 'NVR Bağlanıyor…', '');
         const url = $('wt-url').value.trim();
         const hashHex = $('wt-hash').value.trim();
-        _balandiCheckSecurityHash(hashHex);
 
-        let opts = {};
-        if (hashHex.length === 64) {
-            opts.serverCertificateHashes = [{
-                algorithm: 'sha-256',
-                value: new Uint8Array(hashHex.match(/.{1,2}/g).map(b => parseInt(b, 16)))
-            }];
+        // "Otomatik" secili alanlar varsa sinamanin bitmesini bekle. Yakalama
+        // basladiktan sonra gercek kirpma boyutu belli oldugu icin sinama burada
+        // bayatlamis olabilir; ensureProbe boyut/hiz degistiyse kendi yeniler.
+        if ($('v-codec').value === 'auto' || $('v-hw').value === 'auto') {
+            setStatus('Cihaz kodlayıcısı sınanıyor…', '');
+            await ensureProbe(false);
         }
-        S.transport = new WebTransport(url, opts);
-        await S.transport.ready;
-        S.reconnectAttempts = 0;
+        const { codec, engine: hwEngine } = resolveCodecEngine();
+        const fps = parseInt($('v-fps').value) || 60;
+        const targetKbps = parseInt($('v-bitrate').value) || 1800;
+        let cw = S.canvas.width, ch = S.canvas.height;
+        if (cw % 2 !== 0) cw -= 1;
+        if (ch % 2 !== 0) ch -= 1;
 
-        S.wtStream = await S.transport.createUnidirectionalStream();
-        S.wtWriter = S.wtStream.getWriter();
-        setStatus('Balandi NVR Akış Aktif ⚡', 'ok');
-        _balandiLogSecurityTelemetry('stream_started', { url });
+        const config = {
+            codec, width: cw, height: ch,
+            bitrate: targetKbps * 1000, framerate: fps,
+            bitrateMode: 'constant',
+            latencyMode: 'realtime',
+            hardwareAcceleration: hwEngine,
+            avc: { format: 'annexb' }
+        };
 
-        initEncoder();
         S.streaming = true;
-        S.pendingWrites = 0;
-        S.encodeTimeMap.clear();
+        S.frameCount = 0;
         btnStream.textContent = '⏹ NVR Akışını Durdur';
         btnStream.className = 'btn-stop';
-        btnStream.disabled = false;
         $('status-dot').classList.add('live');
         startStatsTimer();
 
-        if (S.transport) {
-            const onClosed = () => { if (S.streaming) handleUnexpectedDisconnect(); };
-            S.transport.closed.then(onClosed).catch(onClosed);
-        }
+        S.worker.postMessage({ 
+            type: 'init', 
+            url, 
+            certHash: hashHex.length === 64 ? hashHex : null, 
+            config 
+        });
+
     } catch (e) {
-        console.error('[Balandi NVR]', e);
         setStatus('NVR Bağlantı Hatası: ' + e.message, 'bad');
         btnStream.textContent = '⚡ NVR Canlı Akışını Başlat'; btnStream.className = 'btn-secondary'; btnStream.disabled = false;
     }
@@ -514,13 +966,10 @@ async function startStream() {
 
 function stopStream(setIdleStatus = true) {
     S.streaming = false;
+    S.encoderReady = false;
     clearInterval(S.statsTimer); S.statsTimer = null;
-    try { S.encoder?.close(); } catch {} S.encoder = null;
-    try { S.wtWriter?.close(); } catch {} S.wtWriter = null; S.wtStream = null;
-    try { S.dtWriter?.close(); } catch {} S.dtWriter = null;
-    try { S.transport?.close(); } catch {} S.transport = null;
-    S.pendingWrites = 0;
-    S.encodeTimeMap.clear();
+    S.worker.postMessage({ type: 'stop' });
+    
     if (setIdleStatus) {
         btnStream.textContent = '⚡ NVR Canlı Akışını Başlat'; btnStream.className = 'btn-secondary';
         $('status-dot').classList.remove('live');
@@ -557,156 +1006,6 @@ function stopAll() {
     $('res-label').style.display = 'none';
 }
 
-// 3. BALANDI NVR H.264 ENCODER
-function initEncoder() {
-    const codec = $('v-codec').value;
-    const hwEngine = $('v-hw').value;
-    const fps = parseInt($('v-fps').value) || 144;
-    const targetKbps = parseInt($('v-bitrate').value) || 1800;
-    let bps = targetKbps * 1000;
-
-    let cw = S.canvas.width;
-    let ch = S.canvas.height;
-    if (cw % 2 !== 0) cw -= 1;
-    if (ch % 2 !== 0) ch -= 1;
-
-    S.targetBitrateKbps = targetKbps;
-    S.liveBitrateKbps = targetKbps;
-    S.stableTicks = 0;
-    S.prevDroppedForAimd = S.droppedFrames;
-
-    S.encoder = new VideoEncoder({
-        output: onEncodedChunk,
-        error: e => {
-            console.error('[Balandi Enc] VideoEncoder async error:', e);
-            if (S.streaming) {
-                stopStream();
-                setStatus('Kodlayıcı Hatası', 'bad');
-            }
-        },
-    });
-
-    const config = {
-        codec, width: cw, height: ch,
-        bitrate: bps, framerate: fps,
-        latencyMode: 'realtime',
-        hardwareAcceleration: hwEngine,
-        avc: { format: 'annexb' }
-    };
-
-    try {
-        S.encoder.configure(config);
-        onEncoderConfigured(config);
-    } catch (e) {
-        if (hwEngine !== 'prefer-software') {
-            config.hardwareAcceleration = 'prefer-software';
-            try {
-                S.encoder.configure(config);
-                onEncoderConfigured(config);
-                setStatus('Yazılım (CPU) Modu Aktif ⚠️', 'warn');
-            } catch (err2) {
-                setStatus('Kodlayıcı Başlatılamadı: ' + err2.message, 'bad');
-            }
-        } else {
-            setStatus('Kodlayıcı Başlatılamadı: ' + e.message, 'bad');
-        }
-    }
-}
-
-function onEncoderConfigured(config) {
-    S.lastEncoderConfigBase = { ...config };
-    delete S.lastEncoderConfigBase.bitrate;
-    S.calibrating = true;
-    S.calibStart = performance.now();
-    S.calibFrames = 0;
-    S.calibTotalMs = 0;
-    S.forceKeyframeNext = true;
-}
-
-function onEncodedChunk(chunk, metadata) {
-    const now = performance.now();
-    const startTime = S.encodeTimeMap.get(chunk.timestamp);
-    if (startTime !== undefined) {
-        S.encodeTimeMap.delete(chunk.timestamp);
-        const elapsed = now - startTime;
-        S.encodeTotalMs += elapsed;
-        S.encodeCount++;
-
-        if (S.calibrating) {
-            S.calibFrames++;
-            S.calibTotalMs += elapsed;
-            if (S.calibFrames >= 20) {
-                S.calibrating = false;
-                const avgMs = S.calibTotalMs / S.calibFrames;
-                const targetFps = parseInt($('v-fps').value) || 144;
-                const frameBudgetMs = 1000 / targetFps;
-                if (avgMs > frameBudgetMs && S.lastEncoderConfigBase?.hardwareAcceleration !== 'prefer-software') {
-                    S.lastEncoderConfigBase.hardwareAcceleration = 'prefer-software';
-                    try {
-                        const newConfig = { ...S.lastEncoderConfigBase, bitrate: S.liveBitrateKbps * 1000 };
-                        S.encoder.configure(newConfig);
-                        S.forceKeyframeNext = true;
-                        setStatus(`CPU Moduna Geçildi (${avgMs.toFixed(1)}ms/kare) ⚠️`, 'warn');
-                    } catch (e) {
-                        console.error('[Balandi Calib] demote failed:', e);
-                    }
-                }
-            }
-        }
-    }
-
-    sendStream(chunk, metadata);
-}
-
-function sendStream(chunk, metadata) {
-    if (!S.streaming || !S.wtWriter) return;
-    if (S.pendingWrites >= MAX_PENDING_WRITES && chunk.type !== 'key') {
-        S.droppedFrames++;
-        return;
-    }
-
-    const chunkData = new Uint8Array(chunk.byteLength);
-    chunk.copyTo(chunkData);
-
-    let extradata = null;
-    if (metadata?.decoderConfig?.description) {
-        extradata = new Uint8Array(metadata.decoderConfig.description);
-    }
-
-    let payloadLength = chunkData.byteLength;
-    if (extradata) payloadLength += extradata.byteLength + 4;
-
-    const frameType = (chunk.type === 'key') ? 1 : 0;
-    const header = new ArrayBuffer(13);
-    const view = new DataView(header);
-    view.setUint8(0, frameType);
-    view.setFloat64(1, chunk.timestamp / 1000.0, true);
-    view.setUint32(9, payloadLength, true);
-
-    S.pendingWrites++;
-
-    const writePromise = (async () => {
-        try {
-            await S.wtWriter.write(new Uint8Array(header));
-            if (extradata) {
-                const extraHeader = new ArrayBuffer(13);
-                const extraView = new DataView(extraHeader);
-                extraView.setUint8(2, 0, true);
-                extraView.setFloat64(1, chunk.timestamp / 1000.0, true);
-                extraView.setUint32(9, extradata.byteLength, true);
-                await S.wtWriter.write(new Uint8Array(extraHeader));
-                await S.wtWriter.write(extradata);
-            }
-            await S.wtWriter.write(chunkData);
-            S.bytesSent += 13 + payloadLength;
-        } catch (e) {
-            console.error('[Balandi Stream] write failed:', e);
-        } finally {
-            S.pendingWrites = Math.max(0, S.pendingWrites - 1);
-        }
-    })();
-}
-
 function setStatus(msg, type = '') {
     const el = $('s-status');
     if (!el) return;
@@ -722,28 +1021,43 @@ function startStatsTimer() {
         if (dt <= 0) return;
 
         const capFps = ((S.captureCount - lastCaptureCount) / dt).toFixed(1);
-        const encFps = ((S.frameCount - lastFrameCount) / dt).toFixed(1);
-        const kbps = (((S.bytesSent - lastBytes) * 8) / (dt * 1000)).toFixed(0);
-
-        let avgMs = '—';
-        if (S.encodeCount > 0) {
-            avgMs = (S.encodeTotalMs / S.encodeCount).toFixed(2);
-            S.encodeTotalMs = 0; S.encodeCount = 0;
-        }
-
         $('s-cap-fps').textContent = capFps;
-        $('s-fps').textContent = encFps;
-        $('s-kbps').textContent = kbps + ' kbps';
-        $('s-etime').textContent = avgMs + ' ms';
-        $('s-queue').textContent = S.encoder ? S.encoder.encodeQueueSize : '0';
-        $('s-dropped').textContent = S.droppedFrames;
-        $('s-total').textContent = formatBytes(S.bytesSent);
+
+        // Fetch stats from worker asynchronously
+        S.worker.postMessage({ type: 'getStats' });
 
         lastCaptureCount = S.captureCount;
         lastFrameCount = S.frameCount;
-        lastBytes = S.bytesSent;
         lastTime = now;
     }, 1000);
+}
+
+function updateStatsUI(wStats) {
+    const now = performance.now();
+    const dt = 1.0; // 1 second interval
+    let encFps = '—', kbps = '—', avgMs = '—';
+    
+    if (wStats.frameCount !== undefined) {
+        encFps = (wStats.frameCount / dt).toFixed(1); // Simplified for display
+        S.frameCount = wStats.frameCount;
+    }
+    if (wStats.bytesSent !== undefined) {
+        kbps = (((wStats.bytesSent) * 8) / (dt * 1000)).toFixed(0);
+        S.bytesSent += wStats.bytesSent; // Keep track cumulative on main if needed, but worker sends cumulative
+        // Actually worker sends cumulative, so we calculate delta in UI
+        kbps = (((wStats.bytesSent - (S.lastBytesSent || 0)) * 8) / (dt * 1000)).toFixed(0);
+        S.lastBytesSent = wStats.bytesSent;
+    }
+    if (wStats.encodeCount > 0) {
+        avgMs = (wStats.encodeTotalMs / wStats.encodeCount).toFixed(2);
+    }
+
+    $('s-fps').textContent = wStats.frameCount !== undefined ? wStats.frameCount + ' f/s' : '—';
+    $('s-kbps').textContent = kbps + ' kbps';
+    $('s-etime').textContent = avgMs + ' ms';
+    $('s-queue').textContent = wStats.queueSize || '0';
+    $('s-dropped').textContent = wStats.droppedFrames || '0';
+    $('s-total').textContent = formatBytes(wStats.bytesSent || 0);
 }
 
 function formatBytes(b) {
