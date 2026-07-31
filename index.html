@@ -536,8 +536,24 @@ function saveSettingsToStorage() {
 function loadSettingsFromStorage() {
     try { const raw = localStorage.getItem(SETTINGS_KEY); if (raw) applySettings(JSON.parse(raw)); } catch (e) {}
 }
- $('btn-save-settings').addEventListener('click', saveSettingsToStorage);
+$('btn-save-settings').addEventListener('click', saveSettingsToStorage);
 loadSettingsFromStorage();
+
+// Otomatik Kayıt: Herhangi bir girdi değiştirildiğinde anında hafızaya kaydet ve canlı önizleme bölgesini güncelle
+['cam-zone', 'wt-url', 'wt-hash', 'v-codec', 'v-hw', 'v-bitrate', 'v-width', 'v-height', 'v-fps', 'v-roi'].forEach(id => {
+    const el = $(id);
+    if (el) {
+        const handleInput = () => {
+            saveSettingsToStorage();
+            if (S.capturing && S.track) {
+                const s = S.track.getSettings();
+                updateCropRect(s.width || parseInt($('v-width').value) || 1920, s.height || parseInt($('v-height').value) || 1080);
+            }
+        };
+        el.addEventListener('input', handleInput);
+        el.addEventListener('change', handleInput);
+    }
+});
 
 const btnCapture = $('btn-capture');
 const btnStream  = $('btn-stream');
@@ -659,7 +675,7 @@ async function runFrameLoop() {
                 S.worker.postMessage({ 
                     type: 'frame', 
                     frame, 
-                    cropRect,
+                    cropRect: S.streamCropRect || cropRect,
                     timestamp: frame.timestamp 
                 }, [frame]); // Transferable zero-copy to worker instantly, 0ms main thread delay
                 S.frameCount++;
@@ -931,9 +947,22 @@ async function startStream() {
         const { codec, engine: hwEngine } = resolveCodecEngine();
         const fps = parseInt($('v-fps').value) || 60;
         const targetKbps = parseInt($('v-bitrate').value) || 1800;
-        let cw = S.canvas.width, ch = S.canvas.height;
+
+        // Gerçek kaynak boyutlarını al ve v-roi (Kayıt Bölgesi Boyutu) değerine göre tam kırpma bölgesini kesin hesapla
+        const srcSettings = (S.track && typeof S.track.getSettings === 'function') ? S.track.getSettings() : {};
+        const srcW = srcSettings.width || parseInt($('v-width').value) || 1920;
+        const srcH = srcSettings.height || parseInt($('v-height').value) || 1080;
+
+        const activeCrop = computeCropRect(srcW, srcH);
+        S.streamCropRect = activeCrop;
+
+        let cw = activeCrop.width;
+        let ch = activeCrop.height;
         if (cw % 2 !== 0) cw -= 1;
         if (ch % 2 !== 0) ch -= 1;
+
+        S.canvas.width = cw;
+        S.canvas.height = ch;
 
         const config = {
             codec, width: cw, height: ch,
@@ -967,6 +996,7 @@ async function startStream() {
 function stopStream(setIdleStatus = true) {
     S.streaming = false;
     S.encoderReady = false;
+    S.streamCropRect = null;
     clearInterval(S.statsTimer); S.statsTimer = null;
     S.worker.postMessage({ type: 'stop' });
     
